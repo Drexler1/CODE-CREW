@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Books & Blooms Café - Employee Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gold: #c9a961;
+            --dark-gold: #a88850;
+            --black: #1a1a1a;
+            --dark-gray: #2d2d2d;
+            --light-gray: #f5f5f5;
+            --cream: #faf8f4;
+            --white: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #dc3545;
+            --info: #2196f3;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #f0f0f0;
+            color: var(--black);
+            overflow-x: hidden;
+        }
+
+        header {
+            background: var(--black);
+            border-bottom: 3px solid var(--gold);
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo { display: flex; align-items: center; gap: 1.25rem; }
+        .logo-icon {
+            width: 55px; height: 55px;
+            background: transparent;
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gold);
+            font-size: 28px;
+        }
+        .logo-text h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.75rem;
+            font-weight: 400;
+            color: var(--white);
+            letter-spacing: 1px;
+            line-height: 1.2;
+        }
+        .logo-text h1 span { color: var(--gold); }
+        .logo-subtitle {
+            font-size: 0.7rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+
+        .header-actions { display: flex; align-items: center; gap: 2rem; }
+        .date-time { text-align: right; }
+        .date-time .date { color: var(--gold); font-size: 0.9rem; font-weight: 600; }
+        .date-time .time { color: #999; font-size: 0.85rem; margin-top: 2px; }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--dark-gray);
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            border: 1px solid rgba(201, 169, 97, 0.3);
+        }
+        .user-avatar {
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            background: var(--gold);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--black);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .user-details h3 { font-size: 0.95rem; font-weight: 600; color: var(--white); margin-bottom: 2px; }
+        .user-details p  { font-size: 0.8rem; color: var(--gold); }
+
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+
+        nav {
+            background: var(--dark-gray);
+            border-bottom: 1px solid rgba(201, 169, 97, 0.2);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 87px;
+            z-index: 99;
+        }
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 0;
+            margin: 0;
+            padding: 0;
+            overflow-x: auto;
+        }
+        nav ul::-webkit-scrollbar { height: 3px; }
+        nav ul::-webkit-scrollbar-track { background: var(--black); }
+        nav ul::-webkit-scrollbar-thumb { background: var(--gold); }
+        nav li { flex-shrink: 0; }
+        nav a {
+            display: block;
+            padding: 1rem 1.75rem;
+            text-decoration: none;
+            color: #aaa;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+        nav a:hover { background: rgba(201, 169, 97, 0.1); color: var(--gold); }
+        nav a.active {
+            color: var(--gold);
+            background: rgba(201, 169, 97, 0.15);
+            border-bottom-color: var(--gold);
+        }
+
+        .container { max-width: 1600px; margin: 0 auto; padding: 2rem; }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .page-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--black);
+            margin-bottom: 0.5rem;
+        }
+        .page-subtitle { color: #666; font-size: 1.05rem; }
+
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px var(--shadow);
+            border: 1px solid #e0e0e0;
+            margin-bottom: 1.5rem;
+        }
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.75rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--gold);
+        }
+        .chart-title { font-size: 1.4rem; font-weight: 700; color: var(--black); }
+
+        .btn-primary {
+            background: var(--black);
+            color: var(--gold);
+            border: 2px solid var(--gold);
+            padding: 0.9rem 1.75rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .btn-primary:hover {
+            background: var(--gold);
+            color: var(--black);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(201, 169, 97, 0.3);
+        }
+
+        .search-bar { position: relative; max-width: 500px; }
+        .search-bar input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3.5rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.2s ease;
+        }
+        .search-bar input:focus { outline: none; border-color: var(--gold); }
+        .search-bar::before {
+            content: '🔍';
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.1rem;
+        }
+
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: var(--black); color: var(--gold); }
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+        tbody tr { transition: all 0.2s ease; }
+        tbody tr:hover { background: var(--light-gray); }
+
+        .badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge.active    { background: #e8f5e9; color: var(--success); }
+        .badge.inactive  { background: #ffebee; color: var(--danger); }
+        .badge.admin     { background: #fff3e0; color: var(--warning); }
+        .badge.cashier   { background: #f3e5f5; color: #9c27b0; }
+
+        .employee-info { display: flex; align-items: center; gap: 1rem; }
+        .employee-avatar {
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            background: var(--gold);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--black);
+            font-weight: 700;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .employee-details h4 { font-weight: 700; color: var(--black); margin-bottom: 2px; }
+        .employee-details p  { font-size: 0.85rem; color: #666; }
+
+        /* ✅ Face thumbnail */
+        .face-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--gold);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        .action-buttons { display: flex; gap: 0.6rem; align-items: center; }
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 0.9rem;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.75rem;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            line-height: 1;
+        }
+        .btn-icon-emoji { font-size: 0.95rem; line-height: 1; }
+
+        .btn-edit { background: var(--black); color: var(--gold); border-color: var(--gold); }
+        .btn-edit:hover {
+            background: var(--gold);
+            color: var(--black);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(201, 169, 97, 0.35);
+        }
+
+        .btn-delete { background: var(--white); color: var(--danger); border-color: var(--danger); }
+        .btn-delete:hover {
+            background: var(--danger);
+            color: var(--white);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.35);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            background: var(--black);
+            color: var(--gold);
+            padding: 1.5rem 2rem;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--gold);
+        }
+        .modal-header h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+        }
+        .close-btn {
+            background: none; border: none;
+            color: var(--gold); font-size: 1.75rem;
+            cursor: pointer; line-height: 1;
+            transition: all 0.2s ease;
+        }
+        .close-btn:hover { transform: scale(1.2); }
+
+        .modal-body { padding: 2rem; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        .form-group label {
+            display: block; margin-bottom: 0.5rem;
+            font-weight: 600; color: var(--black); font-size: 0.9rem;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.9rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: 'DM Sans', sans-serif;
+            transition: border-color 0.2s ease;
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--gold); }
+
+        .face-capture-section {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 2rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            border: 2px dashed #ddd;
+            margin-top: 0.5rem;
+        }
+        .camera-preview {
+            width: 300px;
+            height: 300px;
+            margin: 1.5rem auto;
+            background: var(--dark-gray);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 5px solid var(--gold);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+            position: relative;
+        }
+        .camera-preview video { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            transform : scaleX(-1); 
+        }
+
+        .face-guide {
+            position: absolute;
+            width: 70%;
+            height: 70%;
+            border: 3px dashed rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .btn-capture {
+            background: var(--gold);
+            color: var(--black);
+            padding: 0.9rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .btn-capture:hover {
+            background: var(--dark-gold);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(201, 169, 97, 0.3);
+        }
+
+        .modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 2px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        .btn-cancel {
+            background: white; color: var(--black);
+            border: 2px solid #ddd;
+            padding: 0.9rem 1.75rem;
+            border-radius: 8px;
+            font-weight: 700; cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .btn-cancel:hover { border-color: var(--danger); color: var(--danger); }
+        .btn-save {
+            background: var(--black); color: var(--gold);
+            border: 2px solid var(--gold);
+            padding: 0.9rem 1.75rem;
+            border-radius: 8px;
+            font-weight: 700; cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .btn-save:hover { background: var(--gold); color: var(--black); }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .page-title { font-size: 2rem; }
+            header { padding: 1rem; }
+            .logo-text h1 { font-size: 1.4rem; }
+            .header-actions { gap: 1rem; }
+            .date-time { display: none; }
+            nav a { padding: 1rem; font-size: 0.85rem; }
+            .form-grid { grid-template-columns: 1fr; }
+            .btn-primary { width: 100%; justify-content: center; }
+            .btn-icon span:not(.btn-icon-emoji) { display: none; }
+            .btn-icon { padding: 0.55rem 0.7rem; }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">
+        <div class="logo-icon">📚</div>
+        <div class="logo-text">
+            <h1>Books <span>&</span> Blooms</h1>
+            <div class="logo-subtitle">CAFÉ</div>
+        </div>
+    </div>
+
+    <div class="header-actions">
+        <div class="date-time">
+            <div class="date" id="currentDate"></div>
+            <div class="time" id="currentTime"></div>
+        </div>
+        <div class="user-info">
+            <div class="user-details">
+                <h3>{{ full_name or 'Admin User' }}</h3>
+                <p>{{ session.get('role')|capitalize }}</p>
+            </div>
+            <div class="user-avatar">{{ full_name[0] if full_name else 'A' }}</div>
+        </div>
+        <a href="{{ url_for('logout') }}" class="logout-btn">🚪 Logout</a>
+    </div>
+</header>
+
+<nav>
+    <ul>
+        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li><a href="#">Sales</a></li>
+        <li><a href="#">Inventory</a></li>
+        <li><a href="{{ url_for('staff_attendance') }}">Staff Attendance</a></li>
+        <li><a href="#">Reports</a></li>       
+        <li><a href="{{ url_for('admin_settings') }}">Settings</a></li>
+        <li><a href="{{ url_for('employee_management') }}" class="active">Employee Management</a></li>
+    </ul>
+</nav>
+
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Employee Management</h1>
+            <p class="page-subtitle">Manage your team members and their access permissions</p>
+        </div>
+        {% if session.get('role') == 'admin' %}
+            <button class="btn-primary" onclick="openAddModal()">➕ Add New Employee</button>
+        {% endif %}
+    </div>
+
+    <div class="chart-card">
+        <div class="chart-header">
+            <h3 class="chart-title">All Employees</h3>
+            <div class="search-bar">
+                <input type="text" placeholder="Search by name, role, or status…" id="searchInput">
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="employeeTable">
+                <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Contact</th>
+                    <th>Status</th>
+                    <th>Last Login</th>
+                    <th>Face ID</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td>
+                        <div class="employee-info">
+                            <div class="employee-avatar">{{ emp.full_name[0] }}</div>
+                            <div class="employee-details">
+                                <h4>{{ emp.full_name }}</h4>
+                                <p>Joined: {{ emp.created_at }}</p>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td>{{ emp.username }}</td>
+
+                    <td>
+                        <span class="badge {{ emp.role }}">{{ emp.role|capitalize }}</span>
+                    </td>
+
+                    <td>{{ emp.contact_number }}</td>   
+
+                    <td>
+                        <span class="badge {{ emp.employment_status }}">{{ emp.employment_status|capitalize }}</span>
+                    </td>
+
+                    <td>
+                        {% if emp.last_login %}{{ emp.last_login }}{% else %}Never{% endif %}
+                    </td>
+
+                    <td>
+                        {% if emp.face_image_path %}
+                            <img class="face-thumb" src="{{ url_for('static', filename=emp.face_image_path) }}" alt="Face">
+                        {% else %}
+                            ❌ Not Set
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-icon btn-edit"
+                                    onclick='openEditModal(
+                                        {{ emp.employee_id }},
+                                        {{ emp.full_name|tojson }},
+                                        {{ emp.username|tojson }},
+                                        {{ emp.role|tojson }},
+                                        {{ emp.contact_number|tojson }},
+                                        {{ emp.employment_status|tojson }}
+                                    )'>
+                                <span class="btn-icon-emoji">✏️</span>
+                                <span>Edit</span>
+                            </button>
+
+                            {% if session.get('role') == 'admin' %}
+                            <button class="btn-icon btn-delete"
+                                    onclick='confirmDelete({{ emp.employee_id }}, {{ emp.full_name|tojson }})'>
+                                <span class="btn-icon-emoji">🚫</span>
+                                <span>Disable</span>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="employeeModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">Add New Employee</h2>
+            <button class="close-btn" onclick="closeModal()">×</button>
+        </div>
+
+        <div class="modal-body">
+            <form id="employeeForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="fullName">Full Name *</label>
+                        <input type="text" id="fullName" required placeholder="Enter full name">
+                    </div>
+
+                    <!-- ✅ changed id to avoid conflict -->
+                    <div class="form-group">
+                        <label for="empUsername">Username *</label>
+                        <input type="text" id="empUsername" required placeholder="Enter username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="empPassword">Password *</label>
+                        <input type="password" id="empPassword" required placeholder="Enter password">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="empConfirmPassword">Confirm Password *</label>
+                        <input type="password" id="empConfirmPassword" required placeholder="Confirm password">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="empRole">Role *</label>
+                        <select id="empRole" required>
+                            <option value="">Select role</option>
+                            <option value="manager">Manager</option>
+                            <option value="cashier">Cashier</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="empContact">Contact Number *</label>
+                        <input type="tel" id="empContact" required placeholder="+63 xxx xxx xxxx">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="empStatus">Account Status *</label>
+                        <select id="empStatus" required>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+
+                    <div class="face-capture-section">
+                        <h3 style="margin-bottom: 0.5rem; color: var(--black); font-size: 1.1rem; font-weight: 700;">Face Recognition Setup</h3>
+                        <p style="color: #666; margin-bottom: 0.5rem; font-size: 0.9rem;">Capture employee's face for quick login authentication</p>
+
+                        <div class="camera-preview">
+                            <video id="video" autoplay playsinline></video>
+                            <canvas id="canvas" style="display:none;"></canvas>
+                            <div class="face-guide"></div>
+                        </div>
+
+                        <button type="button" class="btn-capture" onclick="captureFace()">📷 Capture Face</button>
+                        <p id="captureStatus" style="margin-top: 1rem; color: var(--success); font-weight: 600; min-height: 1.5rem;"></p>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn-save" onclick="saveEmployee()">💾 Save Employee</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* DATE/TIME */
+    function updateDateTime() {
+        const now = new Date();
+        document.getElementById('currentDate').textContent =
+            now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('currentTime').textContent =
+            now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+
+    /* SEARCH */
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('#employeeTable tbody tr').forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+        });
+    });
+
+    /* CAMERA */
+    let videoStream = null;
+    let capturedImage = null;
+
+    async function startCamera() {
+        try {
+            videoStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "user" },
+                audio: false
+            });
+            document.getElementById("video").srcObject = videoStream;
+        } catch (err) {
+            alert("Camera access denied or not available.");
+        }
+    }
+
+    function stopCamera() {
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+        }
+    }
+
+    function captureFace() {
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const context = canvas.getContext("2d");
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        context.drawImage(video, 0, 0);
+
+        canvas.toBlob(function(blob) {
+            capturedImage = blob;
+        }, 'image/jpeg');
+
+        document.getElementById("captureStatus").textContent = "✅ Face captured successfully!";
+    }
+
+    /* MODAL */
+    function openAddModal() {
+        document.getElementById('modalTitle').textContent = 'Add New Employee';
+        document.getElementById('employeeForm').reset();
+        document.getElementById('employeeForm').removeAttribute('data-id');
+        document.getElementById('captureStatus').textContent = '';
+        capturedImage = null;
+
+        document.getElementById('empPassword').required = true;
+        document.getElementById('empConfirmPassword').required = true;
+
+        document.getElementById('employeeModal').classList.add('active');
+        startCamera();
+    }
+
+    function openEditModal(id, name, username, role, contact, status) {
+        document.getElementById('modalTitle').textContent = 'Edit Employee';
+
+        document.getElementById('fullName').value = name;
+        document.getElementById('empUsername').value = username;
+        document.getElementById('empRole').value = role;
+        document.getElementById('empContact').value = contact;
+        document.getElementById('empStatus').value = status;
+
+        document.getElementById('empPassword').required = false;
+        document.getElementById('empConfirmPassword').required = false;
+
+        document.getElementById('employeeForm').setAttribute('data-id', id);
+        document.getElementById('captureStatus').textContent = '';
+        capturedImage = null;
+
+        document.getElementById('employeeModal').classList.add('active');
+        startCamera();
+    }
+
+    document.getElementById('employeeModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    function closeModal() {
+        document.getElementById('employeeModal').classList.remove('active');
+        stopCamera();
+        capturedImage = null;
+        document.getElementById('captureStatus').textContent = '';
+    }
+
+    /* SAVE */
+    async function saveEmployee() {
+        const id = document.getElementById('employeeForm').getAttribute('data-id');
+
+        const fullName = document.getElementById('fullName').value.trim();
+        const username = document.getElementById('empUsername').value.trim();
+        const role = document.getElementById('empRole').value;
+        const contact = document.getElementById('empContact').value.trim();
+        const status = document.getElementById('empStatus').value;
+
+        let url = "/add_employee";
+        let method = "POST";
+
+        let formData = new FormData();
+        formData.append("full_name", fullName);
+        formData.append("username", username);
+        formData.append("role", role);
+        formData.append("contact", contact);
+        formData.append("status", status);
+
+        if (capturedImage) {
+            formData.append("face_image", capturedImage, username + ".jpg");
+        }
+
+        if (id) {
+            url = "/update_employee/" + id;
+            method = "POST";
+        } else {
+            const password = document.getElementById('empPassword').value;
+            const confirmPassword = document.getElementById('empConfirmPassword').value;
+
+            if (password !== confirmPassword) {
+                alert("Passwords do not match!");
+                return;
+            }
+            formData.append("password", password);
+
+            /* ✅ OPTIONAL: require face capture on new employee
+               If you want to enforce it, uncomment:
+            */
+            // if (!capturedImage) {
+            //     alert("Please capture face before saving!");
+            //     return;
+            // }
+        }
+
+        const response = await fetch(url, { method: method, body: formData });
+        const data = await response.json();
+
+        if (data.success) {
+            alert("Employee saved successfully.");
+            location.reload();
+        } else {
+            alert("Error: " + data.message);
+        }
+    }
+
+    async function confirmDelete(id, name) {
+        if (confirm('Disable ' + name + '?')) {
+            const response = await fetch("/delete_employee/" + id, { method: "DELETE" });
+            const data = await response.json();
+
+            if (data.success) {
+                alert("Employee disabled.");
+                location.reload();
+            } else {
+                alert("Error: " + data.message);
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
