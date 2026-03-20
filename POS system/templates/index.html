@@ -190,7 +190,7 @@
         /* Role toggle */
         .role-toggle {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr;
             background: var(--warm);
             border: 1.5px solid var(--border);
             border-radius: calc(var(--radius) + 2px);
@@ -544,19 +544,12 @@
 
         <!-- Role selector -->
         <div class="role-toggle" role="tablist" aria-label="Select role">
-            <button class="role-btn active" id="btn-admin" data-role="admin"
-                    role="tab" aria-selected="true" aria-controls="panel-admin"
-                    type="button" onclick="switchRole('admin')">
-                <span class="icon">👨‍💼</span>
-                Admin
-                <span class="role-badge">Full Access</span>
-            </button>
-            <button class="role-btn" id="btn-manager" data-role="manager"
-                    role="tab" aria-selected="false" aria-controls="panel-manager"
+            <button class="role-btn active" id="btn-manager" data-role="manager"
+                    role="tab" aria-selected="true" aria-controls="panel-manager"
                     type="button" onclick="switchRole('manager')">
                 <span class="icon">📊</span>
                 Manager
-                <span class="role-badge" style="display:none">Reports</span>
+                <span class="role-badge">Staff Access</span>
             </button>
             <button class="role-btn" id="btn-cashier" data-role="cashier"
                     role="tab" aria-selected="false" aria-controls="panel-cashier"
@@ -578,51 +571,11 @@
             {% endif %}
             {% endwith %}
 
-            <!-- Admin form -->
-            <div class="form-panel active" id="panel-admin" role="tabpanel" aria-labelledby="btn-admin">
-                <div class="form-section-label">
-                    <span class="dot"></span>
-                    <span>Admin Credentials</span>
-                </div>
-
-                <form action="{{ url_for('login') }}" method="POST" onsubmit="lockSubmit(this)">
-                    <input type="hidden" name="login_role" value="admin">
-
-                    <div class="form-group">
-                        <label for="adminUsername">Username</label>
-                        <div class="input-wrap">
-                            <span class="input-icon">👤</span>
-                            <input type="text" id="adminUsername" name="adminUsername"
-                                   placeholder="Enter your username"
-                                   autocomplete="username" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="adminPassword">Password</label>
-                        <div class="input-wrap">
-                            <span class="input-icon">🔒</span>
-                            <input type="password" id="adminPassword" name="adminPassword"
-                                   placeholder="Enter your password"
-                                   autocomplete="current-password" required>
-                            <button type="button" class="pw-btn" onclick="togglePw('adminPassword', this)">Show</button>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="submit-btn">
-                        <span class="btn-inner">
-                            <span class="spinner" id="spinner-admin"></span>
-                            <span class="btn-label">Sign in as Admin</span>
-                        </span>
-                    </button>
-                </form>
-            </div>
-
-            <!-- Manager form -->
-            <div class="form-panel" id="panel-manager" role="tabpanel" aria-labelledby="btn-manager">
+            <!-- Manager form — also used by admins (backend detects and elevates) -->
+            <div class="form-panel active" id="panel-manager" role="tabpanel" aria-labelledby="btn-manager">
                 <div class="form-section-label">
                     <span class="dot" style="background: #4a5eb8"></span>
-                    <span>Manager Credentials</span>
+                    <span>Staff Credentials</span>
                 </div>
 
                 <form action="{{ url_for('login') }}" method="POST" onsubmit="lockSubmit(this)">
@@ -652,7 +605,7 @@
                     <button type="submit" class="submit-btn" style="background:#2e3560; color:#a0aadf;">
                         <span class="btn-inner">
                             <span class="spinner" id="spinner-manager"></span>
-                            <span class="btn-label">Sign in as Manager</span>
+                            <span class="btn-label">Sign In</span>
                         </span>
                     </button>
                 </form>
