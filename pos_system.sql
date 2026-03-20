@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 16, 2026 at 10:48 AM
+-- Generation Time: Mar 20, 2026 at 04:13 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -57,13 +57,6 @@ CREATE TABLE `attendance` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `attendance`
---
-
-INSERT INTO `attendance` (`attendance_id`, `employee_id`, `shift_type`, `clock_in`, `clock_out`, `attendance_date`, `created_at`) VALUES
-(19, 8, 'Night', '2026-03-16 15:54:21', '2026-03-16 16:14:18', '2026-03-16', '2026-03-16 07:54:21');
-
 -- --------------------------------------------------------
 
 --
@@ -91,7 +84,7 @@ CREATE TABLE `employees` (
 --
 
 INSERT INTO `employees` (`employee_id`, `application_id`, `full_name`, `username`, `password`, `role`, `contact_number`, `employment_status`, `face_image_path`, `face_model_path`, `last_login`, `created_at`, `disabled_at`) VALUES
-(8, NULL, 'Drexler Patrimonio', 'Drexler', 'Drexler123', 'cashier', '09213123', 'active', 'face_images/Drexler.jpg', 'face_models/Drexler.yml', NULL, '2026-03-16 07:50:57', NULL);
+(14, NULL, 'Drexler Patrimonio', 'patrimonio', 'drexler123', 'cashier', '123123', 'active', 'face_images/14.jpg', NULL, NULL, '2026-03-20 15:05:50', NULL);
 
 -- --------------------------------------------------------
 
@@ -163,13 +156,13 @@ ALTER TABLE `admins`
 -- AUTO_INCREMENT for table `attendance`
 --
 ALTER TABLE `attendance`
-  MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `employees`
 --
 ALTER TABLE `employees`
-  MODIFY `employee_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `employee_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `employee_applications`
