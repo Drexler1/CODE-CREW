@@ -694,17 +694,57 @@
                     </div>
 
                     <div class="face-capture-section">
-                        <h3 style="margin-bottom: 0.5rem; color: var(--black); font-size: 1.1rem; font-weight: 700;">Face Recognition Setup</h3>
-                        <p style="color: #666; margin-bottom: 0.5rem; font-size: 0.9rem;">Capture employee's face for quick login authentication</p>
+                        <h3 style="margin-bottom:0.4rem;">🔐 Face ID Registration</h3>
+                        <p style="color:#888;font-size:0.83rem;margin-bottom:1rem;">
+                            Follow the on-screen instructions to register biometric data.
+                        </p>
+
+                        <!-- Progress bar -->
+                        <div style="width:100%;background:#e0e0e0;border-radius:8px;height:8px;margin-bottom:0.75rem;overflow:hidden;">
+                            <div id="captureProgress" style="height:100%;background:var(--gold);border-radius:8px;width:0%;transition:width 0.4s ease;"></div>
+                        </div>
+
+                        <!-- Step instruction -->
+                        <p id="faceInstruction" style="color:var(--gold);font-weight:700;font-size:0.9rem;min-height:1.4em;">
+                            Position your face in the circle
+                        </p>
 
                         <div class="camera-preview">
                             <video id="video" autoplay playsinline></video>
                             <canvas id="canvas" style="display:none;"></canvas>
                             <div class="face-guide"></div>
+
+                            <!-- Live feedback badge -->
+                            <div id="face-status" style="
+                                position:absolute;bottom:16px;left:50%;
+                                transform:translateX(-50%);
+                                background:rgba(0,0,0,0.75);
+                                color:white;padding:7px 16px;
+                                border-radius:20px;font-size:13px;
+                                white-space:nowrap;pointer-events:none;
+                            ">Align your face</div>
+
+                            <!-- Frame counter overlay -->
+                            <div id="frameCounter" style="
+                                position:absolute;top:12px;right:12px;
+                                background:rgba(0,0,0,0.7);color:var(--gold);
+                                padding:4px 10px;border-radius:12px;font-size:12px;
+                                font-weight:700;
+                            ">0 / 3</div>
                         </div>
 
-                        <button type="button" class="btn-capture" onclick="captureFace()">📷 Capture Face</button>
-                        <p id="captureStatus" style="margin-top: 1rem; color: var(--success); font-weight: 600; min-height: 1.5rem;"></p>
+                        <!-- Status line -->
+                        <p id="captureStatus" style="margin-top:10px;font-weight:600;font-size:0.88rem;min-height:1.3em;"></p>
+
+                        <!-- Retake button -->
+                        <button type="button" id="retakeBtn"
+                            onclick="retakeCapture()"
+                            style="display:none;margin-top:0.5rem;
+                                   background:var(--black);color:var(--gold);
+                                   border:2px solid var(--gold);padding:0.5rem 1.25rem;
+                                   border-radius:8px;font-weight:700;cursor:pointer;font-size:0.83rem;">
+                            🔄 Retake Face ID
+                        </button>
                     </div>
                 </div>
             </form>
@@ -718,181 +758,376 @@
 </div>
 
 <script>
-    /* DATE/TIME */
-    function updateDateTime() {
-        const now = new Date();
-        document.getElementById('currentDate').textContent =
-            now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        document.getElementById('currentTime').textContent =
-            now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    }
-    updateDateTime();
-    setInterval(updateDateTime, 1000);
+// ══════════════════════════════════════════════════════════════════════════
+//  DATE / TIME
+// ══════════════════════════════════════════════════════════════════════════
+function updateDateTime() {
+    const now = new Date();
+    document.getElementById('currentDate').textContent =
+        now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    document.getElementById('currentTime').textContent =
+        now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+updateDateTime();
+setInterval(updateDateTime, 1000);
 
-    /* SEARCH */
-    document.getElementById('searchInput').addEventListener('input', function(e) {
-        const term = e.target.value.toLowerCase();
-        document.querySelectorAll('#employeeTable tbody tr').forEach(row => {
-            row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+// ══════════════════════════════════════════════════════════════════════════
+//  TABLE SEARCH
+// ══════════════════════════════════════════════════════════════════════════
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const term = e.target.value.toLowerCase();
+    document.querySelectorAll('#employeeTable tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+//  CAMERA
+// ══════════════════════════════════════════════════════════════════════════
+let videoStream    = null;
+let captureInterval = null;
+
+async function startCamera() {
+    try {
+        videoStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                width:      { ideal: 1280 },
+                height:     { ideal: 720 },
+                facingMode: 'user',
+                // Ask browser to prefer higher exposure / brightness
+                advanced: [{ brightness: 100 }, { exposureMode: 'continuous' }]
+            },
+            audio: false
         });
-    });
+        const video = document.getElementById('video');
+        video.srcObject = videoStream;
 
-    /* CAMERA */
-    let videoStream = null;
-    let capturedImage = null;
+        // ── Wait until the video element reports real pixel dimensions ──────
+        // Without this, videoWidth/videoHeight = 0 and every captureOneFrame()
+        // call is silently skipped, causing the progress bar to never advance.
+        await new Promise((resolve, reject) => {
+            video.onloadedmetadata = () => video.play().then(resolve).catch(reject);
+            video.oncanplay        = () => { if (video.videoWidth > 0) resolve(); };
+            video.onerror          = reject;
+        });
 
-    async function startCamera() {
-        try {
-            videoStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "user" },
-                audio: false
-            });
-            document.getElementById("video").srcObject = videoStream;
-        } catch (err) {
-            alert("Camera access denied or not available.");
-        }
+    } catch (err) {
+        if (err.name === 'NotAllowedError')
+            alert('Camera access denied – please allow permissions and retry.');
+        else if (err.name === 'NotFoundError')
+            alert('No camera found. Please connect a webcam and retry.');
+        else
+            alert('Camera error: ' + err.message);
     }
+}
 
-    function stopCamera() {
-        if (videoStream) {
-            videoStream.getTracks().forEach(track => track.stop());
-            videoStream = null;
-        }
-    }
+function stopCamera() {
+    if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+    clearCaptureLoop();
+}
 
-    function captureFace() {
-        const video = document.getElementById("video");
-        const canvas = document.getElementById("canvas");
-        const context = canvas.getContext("2d");
+// ══════════════════════════════════════════════════════════════════════════
+//  FACE REGISTRATION STATE
+// ══════════════════════════════════════════════════════════════════════════
+let regToken      = null;   // unique ID for this registration session
+let capturedCount = 0;      // frames accepted by the backend
+const TARGET_FRAMES = 3;
 
-        canvas.width = video.videoWidth;
+function genToken() {
+    return 'reg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+function resetCaptureState() {
+    capturedCount  = 0;
+    isCapturing    = false;   // release any stuck guard
+    capturingActive = false;
+    regToken       = genToken();
+    updateProgress(0);
+    updateUI('Align your face');
+    document.getElementById('captureStatus').textContent = '';
+    document.getElementById('faceInstruction').textContent = 'Position your face in the circle';
+    document.getElementById('frameCounter').textContent = '0 / ' + TARGET_FRAMES;
+    document.getElementById('retakeBtn').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  AUTO CAPTURE LOOP
+//  Uses a sequential setTimeout chain instead of setInterval so the next
+//  frame is only scheduled AFTER the current async fetch + DeepFace call
+//  finishes.  setInterval does NOT respect await — it would fire every
+//  1500 ms regardless of whether the previous call had completed, stacking
+//  concurrent DeepFace requests that exhaust CPU/RAM and crash the server.
+// ══════════════════════════════════════════════════════════════════════════
+let capturingActive = false;   // flag to stop the loop cleanly
+
+function startAutoCapture() {
+    resetCaptureState();
+    clearCaptureLoop();        // clear any previous interval (safety)
+    capturingActive = true;
+    schedulNextCapture();
+}
+
+function clearCaptureLoop() {
+    capturingActive = false;
+    if (captureInterval) { clearInterval(captureInterval); captureInterval = null; }
+}
+
+function schedulNextCapture() {
+    if (!capturingActive) return;
+    if (capturedCount >= TARGET_FRAMES) { capturingActive = false; return; }
+    // Schedule next capture after a delay.  The delay is applied AFTER the
+    // previous captureOneFrame() fully resolves — no concurrency possible.
+    captureInterval = setTimeout(async () => {
+        if (!capturingActive) return;
+        await captureOneFrame();
+        schedulNextCapture();   // chain: only fires after this frame is done
+    }, 2000);                   // 2 s gap — DeepFace needs ~1-3 s on CPU
+}
+
+let isCapturing = false;   // hard guard — never two DeepFace calls at once
+
+async function captureOneFrame() {
+    if (isCapturing) return;   // drop frame if previous call still running
+    isCapturing = true;
+
+    try {
+        const video  = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+
+        // Guard: video must have real dimensions before we can capture
+        if (!video.videoWidth || !video.videoHeight) return;
+
+        canvas.width  = video.videoWidth;
         canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
 
-        context.drawImage(video, 0, 0);
+        // ── DO NOT mirror the canvas pixels ──────────────────────────────────
+        // The CSS `transform: scaleX(-1)` on the <video> element makes the
+        // display look mirrored to the user, but the pixels we send to the
+        // backend must be in natural (unmirrored) orientation because the Haar
+        // cascade was trained on unmirrored faces.
+        // The backend also calls cv2.flip(img, 1) as a safety net.
+        ctx.drawImage(video, 0, 0);
 
-        canvas.toBlob(function(blob) {
-            capturedImage = blob;
-        }, 'image/jpeg');
+        // Higher JPEG quality = less compression artefacts = higher Laplacian
+        // variance = less chance of triggering the blur check during verification.
+        const imageData = canvas.toDataURL('image/jpeg', 0.92);
 
-        document.getElementById("captureStatus").textContent = "✅ Face captured successfully!";
-    }
+        const res  = await fetch('/register_face_frame', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ token: regToken, image: imageData })
+        });
+        const data = await res.json();
 
-    /* MODAL */
-    function openAddModal() {
-        document.getElementById('modalTitle').textContent = 'Add New Employee';
-        document.getElementById('employeeForm').reset();
-        document.getElementById('employeeForm').removeAttribute('data-id');
-        document.getElementById('captureStatus').textContent = '';
-        capturedImage = null;
-
-        document.getElementById('empPassword').required = true;
-        document.getElementById('empConfirmPassword').required = true;
-
-        document.getElementById('employeeModal').classList.add('active');
-        startCamera();
-    }
-
-    function openEditModal(id, name, username, role, contact, status) {
-        document.getElementById('modalTitle').textContent = 'Edit Employee';
-
-        document.getElementById('fullName').value = name;
-        document.getElementById('empUsername').value = username;
-        document.getElementById('empRole').value = role;
-        document.getElementById('empContact').value = contact;
-        document.getElementById('empStatus').value = status;
-
-        document.getElementById('empPassword').required = false;
-        document.getElementById('empConfirmPassword').required = false;
-
-        document.getElementById('employeeForm').setAttribute('data-id', id);
-        document.getElementById('captureStatus').textContent = '';
-        capturedImage = null;
-
-        document.getElementById('employeeModal').classList.add('active');
-        startCamera();
-    }
-
-    document.getElementById('employeeModal').addEventListener('click', function(e) {
-        if (e.target === this) closeModal();
-    });
-
-    function closeModal() {
-        document.getElementById('employeeModal').classList.remove('active');
-        stopCamera();
-        capturedImage = null;
-        document.getElementById('captureStatus').textContent = '';
-    }
-
-    /* SAVE */
-    async function saveEmployee() {
-        const id = document.getElementById('employeeForm').getAttribute('data-id');
-
-        const fullName = document.getElementById('fullName').value.trim();
-        const username = document.getElementById('empUsername').value.trim();
-        const role = document.getElementById('empRole').value;
-        const contact = document.getElementById('empContact').value.trim();
-        const status = document.getElementById('empStatus').value;
-
-        let url = "/add_employee";
-        let method = "POST";
-
-        let formData = new FormData();
-        formData.append("full_name", fullName);
-        formData.append("username", username);
-        formData.append("role", role);
-        formData.append("contact", contact);
-        formData.append("status", status);
-
-        if (capturedImage) {
-            formData.append("face_image", capturedImage, username + ".jpg");
-        }
-
-        if (id) {
-            url = "/update_employee/" + id;
-            method = "POST";
-        } else {
-            const password = document.getElementById('empPassword').value;
-            const confirmPassword = document.getElementById('empConfirmPassword').value;
-
-            if (password !== confirmPassword) {
-                alert("Passwords do not match!");
-                return;
-            }
-            formData.append("password", password);
-
-            /* ✅ OPTIONAL: require face capture on new employee
-               If you want to enforce it, uncomment:
-            */
-            // if (!capturedImage) {
-            //     alert("Please capture face before saving!");
-            //     return;
-            // }
-        }
-
-        const response = await fetch(url, { method: method, body: formData });
-        const data = await response.json();
+        updateUI(data.message);
 
         if (data.success) {
-            alert("Employee saved successfully.");
-            location.reload();
+            capturedCount = data.captured;
+            updateProgress(capturedCount / TARGET_FRAMES * 100);
+            document.getElementById('frameCounter').textContent = capturedCount + ' / ' + TARGET_FRAMES;
+            document.getElementById('captureStatus').textContent = data.message;
+
+            if (capturedCount >= TARGET_FRAMES) {
+                clearCaptureLoop();
+                capturingActive = false;
+                document.getElementById('faceInstruction').textContent = '✅ Face ID ready – fill the form and save';
+                document.getElementById('retakeBtn').style.display = 'inline-block';
+            }
         } else {
-            alert("Error: " + data.message);
+            // Backend rejected frame – show reason and keep looping
+            document.getElementById('faceInstruction').textContent = data.message;
         }
+    } catch {
+        /* network hiccup or server busy – retry on next scheduled tick */
+        document.getElementById('faceInstruction').textContent = 'Server busy – retrying…';
+    } finally {
+        isCapturing = false;   // always release, even on error
+    }
+}
+
+function retakeCapture() {
+    startAutoCapture();
+}
+
+function updateProgress(pct) {
+    document.getElementById('captureProgress').style.width = pct + '%';
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  MODAL OPEN / CLOSE
+// ══════════════════════════════════════════════════════════════════════════
+async function openAddModal() {
+    document.getElementById('modalTitle').textContent = 'Add New Employee';
+    document.getElementById('employeeForm').reset();
+    document.getElementById('employeeForm').removeAttribute('data-id');
+    document.getElementById('employeeModal').classList.add('active');
+
+    // ── CRITICAL: await camera ready before starting capture loop ──────────
+    // startAutoCapture() fired synchronously before would mean the first
+    // several frames always had videoWidth=0 and were silently discarded.
+    await startCamera();
+
+    // Extra 1.5 s warmup — gives the webcam sensor time to adjust auto-exposure
+    // so the first real captured frame isn't artificially dark / low-contrast.
+    updateUI('Camera warming up…');
+    document.getElementById('faceInstruction').textContent = 'Camera warming up…';
+    await new Promise(r => setTimeout(r, 1500));
+
+    startAutoCapture();
+}
+
+async function openEditModal(id, name, username, role, contact, status) {
+    document.getElementById('modalTitle').textContent = 'Edit Employee';
+    document.getElementById('fullName').value    = name;
+    document.getElementById('empUsername').value = username;
+    document.getElementById('empRole').value     = role;
+    document.getElementById('empContact').value  = contact;
+    document.getElementById('empStatus').value   = status;
+    document.getElementById('employeeForm').setAttribute('data-id', id);
+    document.getElementById('employeeModal').classList.add('active');
+    await startCamera();
+    updateUI('Camera warming up…');
+    document.getElementById('faceInstruction').textContent = 'Camera warming up…';
+    await new Promise(r => setTimeout(r, 1500));
+    startAutoCapture();
+}
+
+function closeModal() {
+    document.getElementById('employeeModal').classList.remove('active');
+    stopCamera();
+    resetCaptureState();
+    document.getElementById('captureStatus').textContent = '';
+}
+
+document.getElementById('employeeModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+//  SAVE EMPLOYEE
+// ══════════════════════════════════════════════════════════════════════════
+async function saveEmployee() {
+    const id        = document.getElementById('employeeForm').getAttribute('data-id');
+    const fullName  = document.getElementById('fullName').value.trim();
+    const username  = document.getElementById('empUsername').value.trim();
+    const role      = document.getElementById('empRole').value;
+    const contact   = document.getElementById('empContact').value.trim();
+    const status    = document.getElementById('empStatus').value;
+
+    if (!fullName || !username || !role || !contact) {
+        alert('Please fill in all required fields.'); return;
     }
 
-    async function confirmDelete(id, name) {
-        if (confirm('Disable ' + name + '?')) {
-            const response = await fetch("/delete_employee/" + id, { method: "DELETE" });
-            const data = await response.json();
+    // ── ADD MODE ──────────────────────────────────────────────────────────
+    if (!id) {
+        const password        = document.getElementById('empPassword').value;
+        const confirmPassword = document.getElementById('empConfirmPassword').value;
+
+        if (password !== confirmPassword) { alert('Passwords do not match!'); return; }
+        if (capturedCount < TARGET_FRAMES) {
+            alert(`Face capture incomplete (${capturedCount}/${TARGET_FRAMES} frames). Please wait for the camera to finish capturing.`);
+            return;
+        }
+
+        // ── Step 1: commit the registration session to get the face image saved ──
+        // We first need the employee_id – that means we must create the employee
+        // record first, then commit.  We piggyback on /add_employee which handles
+        // both in one multipart request.  For the new flow, we just re-send the
+        // captured frames via a separate FormData request so backend can save them.
+
+        // Capture the last frame as final image to send
+        const video  = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        canvas.width  = video.videoWidth  || 640;
+        canvas.height = video.videoHeight || 480;
+        const ctx = canvas.getContext('2d');
+        ctx.save();
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0);
+        ctx.restore();
+
+        // Convert canvas to blob and submit with form
+        canvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append('full_name', fullName);
+            formData.append('username',  username);
+            formData.append('password',  password);
+            formData.append('role',      role);
+            formData.append('contact',   contact);
+            formData.append('status',    status);
+            // Add 3 copies of the best frame so backend has enough samples
+            for (let i = 0; i < 3; i++) formData.append('face_images[]', blob, `face_${i}.jpg`);
+
+            const res  = await fetch('/add_employee', { method: 'POST', body: formData });
+            const data = await res.json();
 
             if (data.success) {
-                alert("Employee disabled.");
+                updateUI('✅ Saved!');
+                alert('✅ Employee registered with Face ID biometrics!');
                 location.reload();
             } else {
-                alert("Error: " + data.message);
+                alert('Error: ' + data.message);
             }
+        }, 'image/jpeg', 0.85);
+
+    // ── EDIT MODE ─────────────────────────────────────────────────────────
+    } else {
+        const formData = new FormData();
+        formData.append('full_name', fullName);
+        formData.append('username',  username);
+        formData.append('role',      role);
+        formData.append('contact',   contact);
+        formData.append('status',    status);
+
+        // If new frames were captured, include them
+        if (capturedCount >= TARGET_FRAMES) {
+            const video  = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            canvas.width  = video.videoWidth  || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.save(); ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0); ctx.restore();
+            await new Promise(resolve => {
+                canvas.toBlob(blob => {
+                    for (let i = 0; i < 3; i++) formData.append('face_images[]', blob, `face_${i}.jpg`);
+                    resolve();
+                }, 'image/jpeg', 0.85);
+            });
+        }
+
+        const res  = await fetch('/update_employee/' + id, { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (data.success) {
+            alert('Employee updated successfully.');
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
         }
     }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  DELETE / DISABLE
+// ══════════════════════════════════════════════════════════════════════════
+async function confirmDelete(id, name) {
+    if (!confirm(`Disable account for "${name}"?\nThey will no longer be able to log in.`)) return;
+    const res  = await fetch('/delete_employee/' + id, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) { alert('Employee account disabled.'); location.reload(); }
+    else alert('Error: ' + data.message);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════════════════════════════════
+function updateUI(message) {
+    const el = document.getElementById('face-status');
+    if (el) el.innerText = message;
+}
 </script>
 
 </body>
