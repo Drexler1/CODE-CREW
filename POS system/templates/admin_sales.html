@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Books & Blooms Café — Sales</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gold: #c9a961; --dark-gold: #a88850; --black: #1a1a1a;
+            --dark-gray: #2d2d2d; --light-gray: #f5f5f5; --white: #ffffff;
+            --shadow: rgba(0,0,0,0.1); --success: #4caf50; --warning: #ff9800;
+            --danger: #dc3545; --info: #2196f3;
+        }
+
+        body { font-family: 'DM Sans', sans-serif; background: #f0f0f0; color: var(--black); overflow-x: hidden; }
+
+        /* ── Header ── */
+        header { background: var(--black); border-bottom: 3px solid var(--gold); padding: 1.25rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 100; }
+        .logo { display: flex; align-items: center; gap: 1.25rem; }
+        .logo-icon { width: 55px; height: 55px; background: transparent; border: 2px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 28px; }
+        .logo-text h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.75rem; font-weight: 400; color: var(--white); letter-spacing: 1px; line-height: 1.2; }
+        .logo-text h1 span { color: var(--gold); }
+        .logo-subtitle { font-size: 0.7rem; color: var(--gold); text-transform: uppercase; letter-spacing: 4px; font-weight: 400; margin-top: 2px; }
+        .header-actions { display: flex; align-items: center; gap: 2rem; }
+        .date-time .date { color: var(--gold); font-size: 0.9rem; font-weight: 600; }
+        .date-time .time { color: #999; font-size: 0.85rem; margin-top: 2px; }
+        .user-info { display: flex; align-items: center; gap: 1rem; background: var(--dark-gray); padding: 0.75rem 1.25rem; border-radius: 8px; border: 1px solid rgba(201,169,97,0.3); }
+        .user-avatar { width: 45px; height: 45px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; color: var(--black); font-weight: 700; font-size: 1rem; }
+        .user-details h3 { font-size: 0.95rem; font-weight: 600; color: var(--white); margin-bottom: 2px; }
+        .user-details p { font-size: 0.8rem; color: var(--gold); }
+        .logout-btn { background: var(--danger); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; text-decoration: none; display: inline-block; }
+        .logout-btn:hover { background: #c82333; transform: translateY(-2px); }
+
+        /* ── Nav ── */
+        nav { background: var(--dark-gray); border-bottom: 1px solid rgba(201,169,97,0.2); box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: sticky; top: 87px; z-index: 99; }
+        nav ul { list-style: none; display: flex; margin: 0; padding: 0; overflow-x: auto; }
+        nav ul::-webkit-scrollbar { height: 3px; }
+        nav ul::-webkit-scrollbar-thumb { background: var(--gold); }
+        nav li { flex-shrink: 0; }
+        nav a { display: block; padding: 1rem 1.75rem; text-decoration: none; color: #aaa; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; border-bottom: 3px solid transparent; white-space: nowrap; }
+        nav a:hover { background: rgba(201,169,97,0.1); color: var(--gold); }
+        nav a.active { color: var(--gold); background: rgba(201,169,97,0.15); border-bottom-color: var(--gold); }
+
+        /* ── Layout ── */
+        .container { max-width: 1600px; margin: 0 auto; padding: 2rem; }
+        .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .page-title { font-family: 'Cormorant Garamond', serif; font-size: 2.5rem; font-weight: 600; color: var(--black); margin-bottom: 0.4rem; }
+        .page-subtitle { color: #666; font-size: 1rem; }
+        .header-btns { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+
+        /* ── Buttons ── */
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.25s; border: 2px solid transparent; text-decoration: none; white-space: nowrap; }
+        .btn-primary { background: var(--black); color: var(--gold); border-color: var(--black); }
+        .btn-primary:hover { background: var(--gold); color: var(--black); }
+        .btn-outline { background: white; color: var(--black); border-color: #ddd; }
+        .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+        .btn-success { background: var(--success); color: white; border-color: var(--success); }
+        .btn-success:hover { background: #388e3c; }
+        .btn-sm { padding: 0.4rem 0.9rem; font-size: 0.8rem; }
+
+        /* ── Summary Cards ── */
+        .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+        .stat-card { background: white; border-radius: 10px; padding: 1.5rem 1.75rem; box-shadow: 0 2px 10px var(--shadow); border: 1px solid #e0e0e0; position: relative; overflow: hidden; transition: all 0.3s; animation: fadeInUp 0.5s ease-out backwards; }
+        .stat-card::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--gold); }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(201,169,97,0.22); }
+        .stat-card:nth-child(1){animation-delay:.05s} .stat-card:nth-child(2){animation-delay:.1s} .stat-card:nth-child(3){animation-delay:.15s} .stat-card:nth-child(4){animation-delay:.2s} .stat-card:nth-child(5){animation-delay:.25s}
+        .stat-icon { width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1rem; }
+        .stat-icon.gold   { background: linear-gradient(135deg, var(--gold), var(--dark-gold)); }
+        .stat-icon.green  { background: linear-gradient(135deg, #4caf50, #388e3c); }
+        .stat-icon.blue   { background: linear-gradient(135deg, #2196f3, #1565c0); }
+        .stat-icon.purple { background: linear-gradient(135deg, #9c27b0, #6a1b9a); }
+        .stat-icon.orange { background: linear-gradient(135deg, #ff9800, #f57c00); }
+        .stat-label { font-size: 0.72rem; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 0.4rem; }
+        .stat-value { font-size: 2rem; font-weight: 800; color: var(--black); line-height: 1; margin-bottom: 0.3rem; }
+        .stat-sub { font-size: 0.75rem; color: #999; }
+
+        /* ── Controls ── */
+        .controls-bar { background: white; border-radius: 10px; padding: 1rem 1.5rem; border: 1px solid #e0e0e0; box-shadow: 0 2px 10px var(--shadow); display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .ctrl-label { font-size: 0.8rem; font-weight: 700; color: #666; white-space: nowrap; }
+        .ctrl-input { padding: 0.55rem 0.9rem; border: 2px solid #e0e0e0; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none; transition: border-color 0.2s; background: white; }
+        .ctrl-input:focus { border-color: var(--gold); }
+        .ctrl-select { padding: 0.55rem 0.9rem; border: 2px solid #e0e0e0; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none; cursor: pointer; background: white; }
+        .ctrl-select:focus { border-color: var(--gold); }
+        .ctrl-divider { width: 1px; height: 32px; background: #e0e0e0; }
+
+        /* ── Table Card ── */
+        .table-card { background: white; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 2px 10px var(--shadow); overflow: hidden; margin-bottom: 2rem; }
+        .table-card-header { display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 1.5rem; border-bottom: 2px solid var(--gold); flex-wrap: wrap; gap: 0.75rem; }
+        .table-card-header h3 { font-size: 1.1rem; font-weight: 700; }
+        .record-count { font-size: 0.78rem; color: #888; margin-top: 0.1rem; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: var(--black); color: var(--gold); }
+        th { padding: 0.85rem 1.1rem; text-align: left; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+        td { padding: 0.85rem 1.1rem; border-bottom: 1px solid #f0f0f0; font-size: 0.88rem; vertical-align: middle; }
+        tbody tr { transition: background 0.15s; }
+        tbody tr:hover { background: #fafafa; }
+        tbody tr:last-child td { border-bottom: none; }
+        .table-footer { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; border-top: 1px solid #f0f0f0; flex-wrap: wrap; gap: 0.65rem; }
+        .pagination-info { font-size: 0.82rem; color: #888; }
+
+        /* ── Badges ── */
+        .badge { display: inline-block; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+        .badge-cash    { background: #e8f5e9; color: #388e3c; }
+        .badge-card    { background: #e3f2fd; color: #1565c0; }
+        .badge-gcash   { background: #f3e5f5; color: #7b1fa2; }
+        .badge-maya    { background: #e0f7fa; color: #006064; }
+        .badge-other   { background: #fff3e0; color: #e65100; }
+        .badge-completed { background: #e8f5e9; color: #388e3c; }
+        .amount-col { font-weight: 800; color: var(--dark-gold); }
+
+        /* ── Cashier Report Section ── */
+        .section-title { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 600; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem; }
+        .cashier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+        .cashier-card { background: white; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 2px 10px var(--shadow); overflow: hidden; transition: all 0.3s; animation: fadeInUp 0.5s ease-out backwards; }
+        .cashier-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(201,169,97,0.2); }
+        .cashier-card-header { background: var(--black); padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); }
+        .cashier-name-wrap { display: flex; align-items: center; gap: 0.75rem; }
+        .cashier-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; color: var(--black); font-weight: 800; font-size: 0.95rem; flex-shrink: 0; }
+        .cashier-name { font-size: 0.95rem; font-weight: 700; color: var(--white); }
+        .cashier-txn-count { font-size: 0.75rem; color: #aaa; margin-top: 1px; }
+        .cashier-card-body { padding: 1rem 1.25rem; }
+        .cashier-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0; border-bottom: 1px dashed #f0f0f0; font-size: 0.85rem; }
+        .cashier-stat-row:last-child { border-bottom: none; }
+        .cashier-stat-label { color: #666; font-weight: 600; }
+        .cashier-stat-value { font-weight: 800; color: var(--black); }
+        .cashier-stat-value.gold { color: var(--dark-gold); font-size: 1.05rem; }
+        .cashier-card-footer { padding: 0.75rem 1.25rem; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 0.5rem; background: #fafafa; }
+
+        /* ── Toast ── */
+        #toastContainer { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.6rem; }
+        .toast { background: var(--dark-gray); border-left: 4px solid var(--gold); color: white; padding: 0.85rem 1.25rem; border-radius: 8px; font-size: 0.88rem; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.3); animation: slideInRight 0.3s ease; max-width: 320px; }
+        .toast.error { border-left-color: var(--danger); color: #ff8080; }
+        .toast.success { border-left-color: var(--success); color: #80e080; }
+
+        /* ── Empty State ── */
+        .empty-state { text-align: center; padding: 3.5rem 2rem; color: #999; }
+        .empty-state-icon { font-size: 3rem; opacity: 0.25; margin-bottom: 0.85rem; }
+        .empty-state p { font-size: 0.9rem; font-weight: 600; }
+
+        /* ── Loading ── */
+        .loading-row td { text-align: center; padding: 3rem; color: #aaa; font-size: 0.9rem; }
+
+        @keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes slideInRight { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+        @media (max-width: 768px) { .container { padding: 1rem; } header { padding: 1rem; } .date-time { display: none; } }
+
+        /* ════════════════════════════════════════════
+           PRINT STYLES — 80mm thermal / long receipt
+        ════════════════════════════════════════════ */
+        @media print {
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+            /* Hide everything except the receipt */
+            body > *:not(#receiptPrintArea) { display: none !important; }
+            #receiptPrintArea { display: block !important; }
+
+            @page {
+                size: 80mm auto;   /* thermal roll width; height auto = long receipt */
+                margin: 4mm 3mm;
+            }
+
+            #receiptPrintArea {
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 9pt;
+                color: #000;
+                width: 100%;
+                background: #fff;
+            }
+
+            .rp-store   { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 2mm; }
+            .rp-sub     { text-align: center; font-size: 8pt; margin-bottom: 1mm; }
+            .rp-divider { border: none; border-top: 1px dashed #000; margin: 2mm 0; }
+            .rp-section { font-size: 8.5pt; font-weight: bold; margin: 2mm 0 1mm; text-transform: uppercase; letter-spacing: 0.5px; }
+            .rp-row     { display: flex; justify-content: space-between; font-size: 8.5pt; margin: 0.5mm 0; }
+            .rp-row span:last-child { font-weight: bold; }
+            .rp-total-row { display: flex; justify-content: space-between; font-size: 10pt; font-weight: bold; margin: 1mm 0; border-top: 1px solid #000; padding-top: 1mm; }
+            .rp-txn-table { width: 100%; border-collapse: collapse; font-size: 7.5pt; margin: 1mm 0; }
+            .rp-txn-table th { text-align: left; border-bottom: 1px dashed #000; padding: 0.5mm 0; font-size: 7pt; }
+            .rp-txn-table td { padding: 0.4mm 0; vertical-align: top; }
+            .rp-txn-table td:last-child { text-align: right; white-space: nowrap; }
+            .rp-footer  { text-align: center; font-size: 8pt; margin-top: 3mm; }
+            .rp-cashier-block { border: 1px dashed #000; padding: 1.5mm; margin: 2mm 0; }
+            .rp-cashier-title { font-weight: bold; font-size: 9pt; margin-bottom: 1mm; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+    <div class="logo">
+        <div class="logo-icon">📚</div>
+        <div class="logo-text">
+            <h1>Books <span>&</span> Blooms</h1>
+            <div class="logo-subtitle">CAFÉ</div>
+        </div>
+    </div>
+    <div class="header-actions">
+        <div class="date-time">
+            <div class="date" id="currentDate"></div>
+            <div class="time" id="currentTime"></div>
+        </div>
+        <div class="user-info">
+            <div class="user-details">
+                <h3>{{ full_name or 'Admin' }}</h3>
+                <p>{{ session.get('role')|capitalize }}</p>
+            </div>
+            <div class="user-avatar">{{ full_name[0] if full_name else 'A' }}</div>
+        </div>
+        <a href="{{ url_for('logout') }}" class="logout-btn">🚪 Logout</a>
+    </div>
+</header>
+
+<!-- ── Nav ── -->
+<nav>
+    <ul>
+        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('admin_sales') }}" class="active">Sales</a></li>
+        <li><a href="{{ url_for('inventory') }}">Inventory</a></li>
+        <li><a href="{{ url_for('staff_attendance') }}">Staff Attendance</a></li>
+        <li><a href="{{ url_for('product_management') }}">Product Management</a></li>
+        <li><a href="{{ url_for('admin_settings') }}">Settings</a></li>
+        <li><a href="{{ url_for('employee_management') }}">Employee Management</a></li>
+        <li><a href="{{ url_for('payroll') }}">Payroll</a></li>
+    </ul>
+</nav>
+
+<div class="container">
+
+    <!-- ── Page Header ── -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Sales Overview</h1>
+            <p class="page-subtitle">Track transactions, revenue, and cashier performance.</p>
+        </div>
+        <div class="header-btns">
+            <button class="btn btn-outline" id="refreshBtn">↺ Refresh</button>
+            <button class="btn btn-primary" id="printAllReportsBtn">🖨️ Print All Shift Reports</button>
+        </div>
+    </div>
+
+    <!-- ── Summary Cards ── -->
+    <div class="summary-cards">
+        <div class="stat-card">
+            <div class="stat-icon gold">💰</div>
+            <div class="stat-label">Today's Revenue</div>
+            <div class="stat-value" id="statRevenue">—</div>
+            <div class="stat-sub">total sales</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green">🧾</div>
+            <div class="stat-label">Transactions</div>
+            <div class="stat-value" id="statTxns">—</div>
+            <div class="stat-sub">completed today</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon blue">📈</div>
+            <div class="stat-label">Avg. Order Value</div>
+            <div class="stat-value" id="statAvg">—</div>
+            <div class="stat-sub">per transaction</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon purple">💳</div>
+            <div class="stat-label">Top Payment</div>
+            <div class="stat-value" id="statTopMethod">—</div>
+            <div class="stat-sub" id="statTopMethodSub">most used today</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon orange">👤</div>
+            <div class="stat-label">Active Cashiers</div>
+            <div class="stat-value" id="statCashiers">—</div>
+            <div class="stat-sub">with sales today</div>
+        </div>
+    </div>
+
+    <!-- ── Filters ── -->
+    <div class="controls-bar">
+        <span class="ctrl-label">Date:</span>
+        <input type="date" class="ctrl-input" id="filterDate">
+        <div class="ctrl-divider"></div>
+        <span class="ctrl-label">Cashier:</span>
+        <select class="ctrl-select" id="filterCashier">
+            <option value="">All Cashiers</option>
+        </select>
+        <div class="ctrl-divider"></div>
+        <span class="ctrl-label">Payment:</span>
+        <select class="ctrl-select" id="filterPayment">
+            <option value="">All Methods</option>
+            <option value="cash">Cash</option>
+        </select>
+        <div class="ctrl-divider"></div>
+        <input type="text" class="ctrl-input" id="filterSearch" placeholder="🔍 Search ID or cashier…" style="min-width:200px;">
+        <button class="btn btn-outline btn-sm" id="clearFiltersBtn">✕ Clear</button>
+    </div>
+
+    <!-- ── Transactions Table ── -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <div>
+                <h3>Transaction History</h3>
+                <div class="record-count" id="recordCount">Loading…</div>
+            </div>
+            <div style="display:flex;gap:0.5rem;">
+                <button class="btn btn-outline btn-sm" id="exportCsvBtn">📥 Export CSV</button>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Txn ID</th>
+                        <th>Cashier</th>
+                        <th>Items</th>
+                        <th>Subtotal</th>
+                        <th>Discount</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Tendered</th>
+                        <th>Change</th>
+                        <th>Date & Time</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="txnTableBody">
+                    <tr class="loading-row"><td colspan="11">⏳ Loading transactions…</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-footer">
+            <span class="pagination-info" id="paginationInfo"></span>
+            <div style="display:flex;gap:0.5rem;">
+                <button class="btn btn-outline btn-sm" id="prevBtn">‹ Prev</button>
+                <button class="btn btn-outline btn-sm" id="nextBtn">Next ›</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Cashier Shift Reports ── -->
+    <div class="section-title">📋 Cashier Shift Reports</div>
+    <div class="cashier-grid" id="cashierGrid">
+        <div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">⏳</div><p>Loading cashier reports…</p></div>
+    </div>
+
+</div><!-- /container -->
+
+<div id="toastContainer"></div>
+
+<!-- ════════════════════════════════════════════
+     RECEIPT DETAIL MODAL
+════════════════════════════════════════════ -->
+<div id="receiptModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:999;align-items:center;justify-content:center;padding:1rem;">
+    <div style="background:white;border-radius:16px;width:100%;max-width:440px;box-shadow:0 24px 80px rgba(0,0,0,0.4);display:flex;flex-direction:column;max-height:92vh;overflow:hidden;">
+        <div style="background:var(--black);padding:1.2rem 1.6rem;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--gold);flex-shrink:0;">
+            <span style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:white;">🧾 <span style="color:var(--gold);">Receipt</span></span>
+            <button onclick="closeReceiptModal()" style="width:32px;height:32px;border-radius:6px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;cursor:pointer;font-size:1rem;">✕</button>
+        </div>
+        <div id="receiptModalBody" style="padding:1.5rem;overflow-y:auto;flex:1;font-size:0.88rem;"></div>
+        <div style="padding:0.85rem 1.5rem;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;gap:0.5rem;background:#fafafa;flex-shrink:0;">
+            <button onclick="closeReceiptModal()" class="btn btn-outline btn-sm">Close</button>
+            <button onclick="window.print()" class="btn btn-primary btn-sm">🖨️ Print</button>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PRINT RECEIPT AREA (hidden on screen)
+════════════════════════════════════════════ -->
+<div id="receiptPrintArea" style="display:none;"></div>
+
+<script>
+/* ── Clock ── */
+function updateClock() {
+    const now = new Date();
+    const d = document.getElementById('currentDate');
+    const t = document.getElementById('currentTime');
+    if (d) d.textContent = now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    if (t) t.textContent = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+updateClock(); setInterval(updateClock, 1000);
+
+/* ── Toast ── */
+function showToast(msg, type = 'success') {
+    const c = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = msg;
+    c.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+}
+
+/* ── State ── */
+let allTxns    = [];
+let filtered   = [];
+let cashierMap = {};   // cashier_name → aggregate stats
+let page       = 1;
+const perPage  = 20;
+
+const methodLabels = { cash:'Cash', card:'Card', gcash:'GCash', maya:'Maya', other:'Other' };
+const methodBadge  = { cash:'badge-cash', card:'badge-card', gcash:'badge-gcash', maya:'badge-maya', other:'badge-other' };
+
+/* ── Set default date to today ── */
+document.getElementById('filterDate').value = new Date().toISOString().slice(0, 10);
+
+/* ── Load all data ── */
+async function loadData() {
+    const date    = document.getElementById('filterDate').value;
+    const cashier = document.getElementById('filterCashier').value;
+
+    document.getElementById('txnTableBody').innerHTML = `<tr class="loading-row"><td colspan="11">⏳ Loading…</td></tr>`;
+    document.getElementById('cashierGrid').innerHTML  = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">⏳</div><p>Loading…</p></div>`;
+
+    const qs = new URLSearchParams({ limit: 500 });
+    if (date) qs.set('date', date);
+
+    try {
+        const r = await fetch('/api/pos/transactions?' + qs.toString());
+        const d = await r.json();
+        if (!d.success) throw new Error(d.message);
+
+        allTxns = d.transactions;
+        buildCashierOptions();
+        applyFilters();
+        updateSummaryCards();
+        buildCashierReports();
+    } catch (e) {
+        showToast('❌ ' + e.message, 'error');
+        document.getElementById('txnTableBody').innerHTML = `<tr class="loading-row"><td colspan="11">⚠️ ${e.message}</td></tr>`;
+    }
+}
+
+/* ── Cashier dropdown ── */
+function buildCashierOptions() {
+    const names = [...new Set(allTxns.map(t => t.cashier_name))].sort();
+    const sel   = document.getElementById('filterCashier');
+    const cur   = sel.value;
+    sel.innerHTML = `<option value="">All Cashiers</option>` +
+        names.map(n => `<option value="${n}" ${n === cur ? 'selected' : ''}>${n}</option>`).join('');
+}
+
+/* ── Summary cards ── */
+function updateSummaryCards() {
+    const source = filtered.length ? filtered : allTxns;
+    const total    = source.reduce((s, t) => s + t.total_amount, 0);
+    const count    = source.length;
+    const avg      = count ? total / count : 0;
+    const cashiers = new Set(source.map(t => t.cashier_name)).size;
+
+    // Top payment method
+    const methodCount = {};
+    source.forEach(t => { methodCount[t.payment_method] = (methodCount[t.payment_method] || 0) + 1; });
+    const topMethod = Object.entries(methodCount).sort((a,b) => b[1]-a[1])[0];
+
+    document.getElementById('statRevenue').textContent   = `₱${total.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+    document.getElementById('statTxns').textContent      = count;
+    document.getElementById('statAvg').textContent       = count ? `₱${avg.toFixed(2)}` : '—';
+    document.getElementById('statTopMethod').textContent = topMethod ? methodLabels[topMethod[0]] : '—';
+    document.getElementById('statTopMethodSub').textContent = topMethod ? `${topMethod[1]} transactions` : 'no data';
+    document.getElementById('statCashiers').textContent  = cashiers;
+}
+
+/* ── Filters ── */
+function applyFilters() {
+    const search  = document.getElementById('filterSearch').value.toLowerCase();
+    const cashier = document.getElementById('filterCashier').value;
+    const payment = document.getElementById('filterPayment').value;
+
+    filtered = allTxns.filter(t => {
+        const matchSearch  = !search  || String(t.transaction_id).includes(search) || (t.cashier_name||'').toLowerCase().includes(search);
+        const matchCashier = !cashier || t.cashier_name === cashier;
+        const matchPayment = !payment || t.payment_method === payment;
+        return matchSearch && matchCashier && matchPayment;
+    });
+
+    page = 1;
+    renderTable();
+    updateSummaryCards();
+}
+
+/* ── Render table ── */
+function renderTable() {
+    const tbody  = document.getElementById('txnTableBody');
+    const total  = filtered.length;
+    const start  = (page - 1) * perPage;
+    const slice  = filtered.slice(start, start + perPage);
+
+    document.getElementById('recordCount').textContent  = `${total} record${total !== 1 ? 's' : ''}`;
+    document.getElementById('paginationInfo').textContent = total
+        ? `Showing ${start + 1}–${Math.min(start + perPage, total)} of ${total}`
+        : 'No records';
+
+    if (!slice.length) {
+        tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="empty-state-icon">📊</div><p>No transactions match your filters.</p></div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = slice.map(t => {
+        const dt = new Date(t.created_at);
+        const badge = methodBadge[t.payment_method] || 'badge-other';
+        const method = methodLabels[t.payment_method] || t.payment_method;
+        return `<tr>
+            <td style="font-weight:700;color:var(--dark-gold);font-family:monospace;">#${t.transaction_id}</td>
+            <td style="font-weight:600;">${t.cashier_name}</td>
+            <td style="font-weight:700;">${t.item_count}</td>
+            <td>₱${t.subtotal.toFixed(2)}</td>
+            <td style="color:var(--success);">${t.discount_amount > 0 ? `−₱${t.discount_amount.toFixed(2)}` : '—'}</td>
+            <td class="amount-col">₱${t.total_amount.toFixed(2)}</td>
+            <td><span class="badge ${badge}">${method}</span></td>
+            <td>₱${t.amount_tendered.toFixed(2)}</td>
+            <td style="color:var(--success);font-weight:700;">₱${t.change_amount.toFixed(2)}</td>
+            <td style="font-size:0.8rem;color:#666;">${dt.toLocaleDateString('en-US',{month:'short',day:'numeric'})} ${dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}</td>
+            <td><button class="btn btn-outline btn-sm" onclick="viewReceipt(${t.transaction_id})">🧾</button></td>
+        </tr>`;
+    }).join('');
+}
+
+/* ── Cashier reports ── */
+function buildCashierReports() {
+    const grid  = document.getElementById('cashierGrid');
+    const date  = document.getElementById('filterDate').value;
+
+    // Aggregate per cashier
+    cashierMap = {};
+    allTxns.forEach(t => {
+        if (!cashierMap[t.cashier_name]) {
+            cashierMap[t.cashier_name] = {
+                name: t.cashier_name,
+                txns: [], revenue: 0, discount: 0,
+                items: 0, methods: {},
+                first_txn: t.created_at, last_txn: t.created_at,
+            };
+        }
+        const c = cashierMap[t.cashier_name];
+        c.txns.push(t);
+        c.revenue  += t.total_amount;
+        c.discount += t.discount_amount;
+        c.items    += t.item_count;
+        c.methods[t.payment_method] = (c.methods[t.payment_method] || 0) + 1;
+        if (t.created_at < c.first_txn) c.first_txn = t.created_at;
+        if (t.created_at > c.last_txn)  c.last_txn  = t.created_at;
+    });
+
+    const cashiers = Object.values(cashierMap).sort((a,b) => b.revenue - a.revenue);
+
+    if (!cashiers.length) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">📋</div><p>No cashier data for this period.</p></div>`;
+        return;
+    }
+
+    grid.innerHTML = cashiers.map((c, idx) => {
+        const avg      = c.txns.length ? c.revenue / c.txns.length : 0;
+        const topM     = Object.entries(c.methods).sort((a,b) => b[1]-a[1])[0];
+        const firstFmt = new Date(c.first_txn).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+        const lastFmt  = new Date(c.last_txn).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+        const initials = c.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+        const methodRows = Object.entries(c.methods)
+            .sort((a,b) => b[1]-a[1])
+            .map(([m, cnt]) => `<div class="cashier-stat-row"><span class="cashier-stat-label">${methodLabels[m]||m}</span><span class="cashier-stat-value">${cnt} txn${cnt!==1?'s':''}</span></div>`)
+            .join('');
+
+        return `
+        <div class="cashier-card" style="animation-delay:${idx * 0.06}s">
+            <div class="cashier-card-header">
+                <div class="cashier-name-wrap">
+                    <div class="cashier-avatar">${initials}</div>
+                    <div>
+                        <div class="cashier-name">${c.name}</div>
+                        <div class="cashier-txn-count">${c.txns.length} transaction${c.txns.length!==1?'s':''} · ${firstFmt} – ${lastFmt}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="cashier-card-body">
+                <div class="cashier-stat-row">
+                    <span class="cashier-stat-label">Total Revenue</span>
+                    <span class="cashier-stat-value gold">₱${c.revenue.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+                </div>
+                <div class="cashier-stat-row">
+                    <span class="cashier-stat-label">Items Sold</span>
+                    <span class="cashier-stat-value">${c.items}</span>
+                </div>
+                <div class="cashier-stat-row">
+                    <span class="cashier-stat-label">Avg. Order</span>
+                    <span class="cashier-stat-value">₱${avg.toFixed(2)}</span>
+                </div>
+                <div class="cashier-stat-row">
+                    <span class="cashier-stat-label">Total Discounts</span>
+                    <span class="cashier-stat-value" style="color:var(--success);">₱${c.discount.toFixed(2)}</span>
+                </div>
+                <div style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed #eee;">
+                    <div style="font-size:0.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.4rem;">By Payment Method</div>
+                    ${methodRows}
+                </div>
+            </div>
+            <div class="cashier-card-footer">
+                <button class="btn btn-outline btn-sm" onclick="filterByCashier('${c.name}')">🔍 View Txns</button>
+                <button class="btn btn-primary btn-sm" onclick="printShiftReport('${c.name}')">🖨️ Print Report</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+/* ── Filter by cashier shortcut ── */
+function filterByCashier(name) {
+    document.getElementById('filterCashier').value = name;
+    applyFilters();
+    document.querySelector('.table-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ── View receipt modal ── */
+async function viewReceipt(txnId) {
+    document.getElementById('receiptModal').style.display = 'flex';
+    document.getElementById('receiptModalBody').innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;">⏳ Loading…</div>';
+
+    try {
+        const r = await fetch(`/api/pos/transactions/${txnId}`);
+        const d = await r.json();
+        if (!d.success) throw new Error(d.message);
+
+        const receipt = d.transaction;
+        const method  = methodLabels[receipt.payment_method] || receipt.payment_method;
+        const itemsHtml = (receipt.items || []).map(i =>
+            `<div style="display:flex;justify-content:space-between;font-size:0.82rem;padding:0.3rem 0;border-bottom:1px dashed #f0f0f0;">
+                <span>${i.product_name} <span style="color:#999;">×${i.quantity}</span></span>
+                <span style="font-weight:700;">₱${i.line_total.toFixed(2)}</span>
+            </div>`).join('');
+
+        document.getElementById('receiptModalBody').innerHTML = `
+            <div style="text-align:center;margin-bottom:1rem;">
+                <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;">📚 Books & Blooms Café</div>
+                <div style="font-size:0.72rem;color:#999;text-transform:uppercase;letter-spacing:2px;margin-top:2px;">Official Receipt</div>
+                <div style="margin-top:0.4rem;display:inline-block;background:#f5f5f5;border-radius:6px;padding:0.2rem 0.7rem;font-size:0.75rem;font-weight:700;color:#666;">TXN #${receipt.transaction_id}</div>
+                <div style="font-size:0.75rem;color:#aaa;margin-top:3px;">${receipt.created_at}</div>
+                <div style="font-size:0.8rem;color:#666;margin-top:2px;">Cashier: <strong>${receipt.cashier_name}</strong></div>
+            </div>
+            <hr style="border:none;border-top:1px dashed #ccc;margin:0.75rem 0;">
+            ${itemsHtml}
+            <hr style="border:none;border-top:1px dashed #ccc;margin:0.75rem 0;">
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;color:#555;"><span>Subtotal</span><span>₱${receipt.subtotal.toFixed(2)}</span></div>
+            ${receipt.discount_amount > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;color:var(--success);"><span>Discount</span><span>−₱${receipt.discount_amount.toFixed(2)}</span></div>` : ''}
+            <div style="display:flex;justify-content:space-between;font-size:1rem;font-weight:800;padding:0.5rem 0;border-top:2px solid var(--gold);margin-top:0.3rem;"><span>TOTAL</span><span style="color:var(--dark-gold);">₱${receipt.total_amount.toFixed(2)}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;color:#555;"><span>Tendered (${method})</span><span>₱${receipt.amount_tendered.toFixed(2)}</span></div>
+            ${receipt.change_amount > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;color:var(--success);font-weight:700;"><span>Change</span><span>₱${receipt.change_amount.toFixed(2)}</span></div>` : ''}
+            <hr style="border:none;border-top:1px dashed #ccc;margin:0.75rem 0;">
+            <div style="text-align:center;font-size:0.75rem;color:#aaa;">Thank you for visiting Books & Blooms Café! ☕</div>`;
+
+        // Also prep the print area for this single receipt
+        buildSingleReceiptPrintArea(receipt);
+    } catch (e) {
+        document.getElementById('receiptModalBody').innerHTML = `<div style="text-align:center;padding:2rem;color:#c00;">⚠️ ${e.message}</div>`;
+    }
+}
+
+function closeReceiptModal() {
+    document.getElementById('receiptModal').style.display = 'none';
+}
+document.getElementById('receiptModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('receiptModal')) closeReceiptModal();
+});
+
+/* ── Build single receipt print area ── */
+function buildSingleReceiptPrintArea(receipt) {
+    const method = methodLabels[receipt.payment_method] || receipt.payment_method;
+    const itemRows = (receipt.items || []).map(i =>
+        `<tr><td>${i.product_name}</td><td style="text-align:center;">${i.quantity}</td><td style="text-align:right;">₱${i.line_total.toFixed(2)}</td></tr>`
+    ).join('');
+
+    document.getElementById('receiptPrintArea').innerHTML = `
+        <div class="rp-store">📚 Books & Blooms Café</div>
+        <div class="rp-sub">Official Receipt</div>
+        <div class="rp-sub">TXN #${receipt.transaction_id} · ${receipt.created_at}</div>
+        <div class="rp-sub">Cashier: ${receipt.cashier_name}</div>
+        <hr class="rp-divider">
+        <table class="rp-txn-table">
+            <thead><tr><th>Item</th><th>Qty</th><th>Amt</th></tr></thead>
+            <tbody>${itemRows}</tbody>
+        </table>
+        <hr class="rp-divider">
+        <div class="rp-row"><span>Subtotal</span><span>₱${receipt.subtotal.toFixed(2)}</span></div>
+        ${receipt.discount_amount > 0 ? `<div class="rp-row"><span>Discount</span><span>−₱${receipt.discount_amount.toFixed(2)}</span></div>` : ''}
+        <div class="rp-total-row"><span>TOTAL</span><span>₱${receipt.total_amount.toFixed(2)}</span></div>
+        <div class="rp-row"><span>Tendered (${method})</span><span>₱${receipt.amount_tendered.toFixed(2)}</span></div>
+        ${receipt.change_amount > 0 ? `<div class="rp-row"><span>Change</span><span>₱${receipt.change_amount.toFixed(2)}</span></div>` : ''}
+        <hr class="rp-divider">
+        <div class="rp-footer">Thank you for visiting!<br>Books & Blooms Café ☕</div>`;
+}
+
+/* ── Print single cashier shift report ── */
+function printShiftReport(cashierName) {
+    const c    = cashierMap[cashierName];
+    if (!c) return;
+
+    const date       = document.getElementById('filterDate').value || new Date().toISOString().slice(0,10);
+    const avg        = c.txns.length ? c.revenue / c.txns.length : 0;
+    const firstFmt   = new Date(c.first_txn).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+    const lastFmt    = new Date(c.last_txn).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+    const printedAt  = new Date().toLocaleString('en-US', {month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+    const methodRows = Object.entries(c.methods)
+        .sort((a,b) => b[1]-a[1])
+        .map(([m, cnt]) => {
+            const revenue = c.txns.filter(t => t.payment_method === m).reduce((s,t) => s+t.total_amount, 0);
+            return `<div class="rp-row"><span>${methodLabels[m]||m} (${cnt})</span><span>₱${revenue.toFixed(2)}</span></div>`;
+        }).join('');
+
+    const txnRows = c.txns
+        .sort((a,b) => a.transaction_id - b.transaction_id)
+        .map(t => {
+            const time = new Date(t.created_at).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+            return `<tr>
+                <td>#${t.transaction_id}</td>
+                <td>${time}</td>
+                <td>${t.item_count}</td>
+                <td style="text-align:right;">₱${t.total_amount.toFixed(2)}</td>
+                <td style="text-align:right;">${methodLabels[t.payment_method]||t.payment_method}</td>
+            </tr>`;
+        }).join('');
+
+    document.getElementById('receiptPrintArea').innerHTML = `
+        <div class="rp-store">📚 Books & Blooms Café</div>
+        <div class="rp-sub">CASHIER END-OF-SHIFT REPORT</div>
+        <div class="rp-sub">${date}</div>
+        <hr class="rp-divider">
+
+        <div class="rp-cashier-block">
+            <div class="rp-cashier-title">👤 ${c.name}</div>
+            <div class="rp-row"><span>Shift Start</span><span>${firstFmt}</span></div>
+            <div class="rp-row"><span>Shift End</span><span>${lastFmt}</span></div>
+            <div class="rp-row"><span>Transactions</span><span>${c.txns.length}</span></div>
+            <div class="rp-row"><span>Items Sold</span><span>${c.items}</span></div>
+        </div>
+
+        <div class="rp-section">Revenue Summary</div>
+        <div class="rp-row"><span>Gross Sales</span><span>₱${c.revenue.toFixed(2)}</span></div>
+        <div class="rp-row"><span>Total Discounts</span><span>₱${c.discount.toFixed(2)}</span></div>
+        <div class="rp-row"><span>Avg. Order Value</span><span>₱${avg.toFixed(2)}</span></div>
+        <div class="rp-total-row"><span>NET REVENUE</span><span>₱${(c.revenue - c.discount).toFixed(2)}</span></div>
+
+        <hr class="rp-divider">
+        <div class="rp-section">By Payment Method</div>
+        ${methodRows}
+
+        <hr class="rp-divider">
+        <div class="rp-section">Transaction Log</div>
+        <table class="rp-txn-table">
+            <thead><tr><th>#</th><th>Time</th><th>Items</th><th>Total</th><th>Method</th></tr></thead>
+            <tbody>${txnRows}</tbody>
+        </table>
+
+        <hr class="rp-divider">
+        <div class="rp-row"><span>Printed by</span><span>{{ full_name or 'Admin' }}</span></div>
+        <div class="rp-row"><span>Printed at</span><span>${printedAt}</span></div>
+        <div class="rp-footer">— End of Shift Report —<br>Books & Blooms Café</div>`;
+
+    window.print();
+}
+
+/* ── Print all shift reports (one block per cashier) ── */
+function printAllShiftReports() {
+    if (!Object.keys(cashierMap).length) {
+        showToast('No data to print yet.', 'error');
+        return;
+    }
+
+    const date      = document.getElementById('filterDate').value || new Date().toISOString().slice(0,10);
+    const printedAt = new Date().toLocaleString('en-US', {month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+    const cashiers = Object.values(cashierMap).sort((a,b) => b.revenue - a.revenue);
+    let html = `
+        <div class="rp-store">📚 Books & Blooms Café</div>
+        <div class="rp-sub">ALL CASHIERS END-OF-SHIFT REPORT</div>
+        <div class="rp-sub">${date}</div>
+        <div class="rp-sub">Printed at ${printedAt}</div>
+        <hr class="rp-divider">`;
+
+    const grandTotal    = cashiers.reduce((s,c) => s + c.revenue, 0);
+    const grandDiscount = cashiers.reduce((s,c) => s + c.discount, 0);
+    const grandTxns     = cashiers.reduce((s,c) => s + c.txns.length, 0);
+    const grandItems    = cashiers.reduce((s,c) => s + c.items, 0);
+
+    html += `
+        <div class="rp-section">Overall Summary</div>
+        <div class="rp-row"><span>Total Cashiers</span><span>${cashiers.length}</span></div>
+        <div class="rp-row"><span>Total Transactions</span><span>${grandTxns}</span></div>
+        <div class="rp-row"><span>Total Items Sold</span><span>${grandItems}</span></div>
+        <div class="rp-row"><span>Total Discounts</span><span>₱${grandDiscount.toFixed(2)}</span></div>
+        <div class="rp-total-row"><span>GRAND TOTAL</span><span>₱${grandTotal.toFixed(2)}</span></div>
+        <hr class="rp-divider">`;
+
+    cashiers.forEach(c => {
+        const avg      = c.txns.length ? c.revenue / c.txns.length : 0;
+        const firstFmt = new Date(c.first_txn).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+        const lastFmt  = new Date(c.last_txn).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+        const methodRows = Object.entries(c.methods)
+            .sort((a,b) => b[1]-a[1])
+            .map(([m, cnt]) => {
+                const rev = c.txns.filter(t=>t.payment_method===m).reduce((s,t)=>s+t.total_amount,0);
+                return `<div class="rp-row"><span>${methodLabels[m]||m} (${cnt})</span><span>₱${rev.toFixed(2)}</span></div>`;
+            }).join('');
+
+        const txnRows = c.txns
+            .sort((a,b) => a.transaction_id - b.transaction_id)
+            .map(t => {
+                const time = new Date(t.created_at).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+                return `<tr><td>#${t.transaction_id}</td><td>${time}</td><td>${t.item_count}</td><td style="text-align:right;">₱${t.total_amount.toFixed(2)}</td><td style="text-align:right;">${methodLabels[t.payment_method]||t.payment_method}</td></tr>`;
+            }).join('');
+
+        html += `
+        <div class="rp-cashier-block">
+            <div class="rp-cashier-title">👤 ${c.name}</div>
+            <div class="rp-row"><span>Shift</span><span>${firstFmt} – ${lastFmt}</span></div>
+            <div class="rp-row"><span>Transactions</span><span>${c.txns.length}</span></div>
+            <div class="rp-row"><span>Items Sold</span><span>${c.items}</span></div>
+            <div class="rp-row"><span>Avg. Order</span><span>₱${avg.toFixed(2)}</span></div>
+            <div class="rp-row"><span>Discounts Given</span><span>₱${c.discount.toFixed(2)}</span></div>
+            <div class="rp-total-row"><span>Total Revenue</span><span>₱${c.revenue.toFixed(2)}</span></div>
+            <div style="margin:1mm 0 0.5mm;font-size:7pt;font-weight:bold;text-transform:uppercase;">Payment Breakdown</div>
+            ${methodRows}
+            <div style="margin-top:1mm;font-size:7pt;font-weight:bold;text-transform:uppercase;">Transactions</div>
+            <table class="rp-txn-table">
+                <thead><tr><th>#</th><th>Time</th><th>Items</th><th>Total</th><th>Method</th></tr></thead>
+                <tbody>${txnRows}</tbody>
+            </table>
+        </div>`;
+    });
+
+    html += `<hr class="rp-divider"><div class="rp-footer">— End of Report —<br>Books & Blooms Café</div>`;
+
+    document.getElementById('receiptPrintArea').innerHTML = html;
+    window.print();
+}
+
+/* ── Export CSV ── */
+function exportCSV() {
+    if (!filtered.length) { showToast('No data to export.', 'error'); return; }
+
+    const headers = ['TxnID','Cashier','Items','Subtotal','Discount','Total','Payment','Tendered','Change','DateTime'];
+    const rows = filtered.map(t => [
+        t.transaction_id, `"${t.cashier_name}"`,
+        t.item_count, t.subtotal.toFixed(2), t.discount_amount.toFixed(2),
+        t.total_amount.toFixed(2), t.payment_method,
+        t.amount_tendered.toFixed(2), t.change_amount.toFixed(2),
+        `"${t.created_at}"`
+    ].join(','));
+
+    const csv  = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `sales_${document.getElementById('filterDate').value || 'all'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('✅ CSV exported!');
+}
+
+/* ── Event listeners ── */
+document.getElementById('refreshBtn').addEventListener('click', loadData);
+document.getElementById('printAllReportsBtn').addEventListener('click', printAllShiftReports);
+document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
+document.getElementById('filterDate').addEventListener('change', loadData);
+document.getElementById('filterCashier').addEventListener('change', applyFilters);
+document.getElementById('filterPayment').addEventListener('change', applyFilters);
+document.getElementById('filterSearch').addEventListener('input', applyFilters);
+document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+    document.getElementById('filterSearch').value = '';
+    document.getElementById('filterCashier').value = '';
+    document.getElementById('filterPayment').value = '';
+    applyFilters();
+});
+document.getElementById('prevBtn').addEventListener('click', () => { if (page > 1) { page--; renderTable(); } });
+document.getElementById('nextBtn').addEventListener('click', () => { if (page * perPage < filtered.length) { page++; renderTable(); } });
+
+/* ── Init ── */
+loadData();
+</script>
+</body>
+</html>
