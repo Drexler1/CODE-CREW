@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Books & Blooms Café — Utility</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gold: #c9a961; --dark-gold: #a88850; --black: #1a1a1a;
+            --dark-gray: #2d2d2d; --light-gray: #f5f5f5; --white: #ffffff;
+            --shadow: rgba(0,0,0,0.1); --danger: #dc3545; --success: #4caf50;
+            --info: #2196f3;
+            --header-h: 72px; --nav-h: 50px;
+        }
+
+        html, body { height: 100%; width: 100%; overflow: hidden; font-family: 'DM Sans', sans-serif; background: #f0f0f0; color: var(--black); }
+        .app-shell { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+
+        /* ── Header ── */
+        header { flex: 0 0 var(--header-h); background: var(--black); border-bottom: 3px solid var(--gold); padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 100; }
+        .logo { display: flex; align-items: center; gap: 1.25rem; }
+        .logo-icon { width: 48px; height: 48px; border: 2px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 24px; flex-shrink: 0; }
+        .logo-text h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 400; color: var(--white); letter-spacing: 1px; line-height: 1.2; }
+        .logo-text h1 span { color: var(--gold); }
+        .logo-subtitle { font-size: 0.65rem; color: var(--gold); text-transform: uppercase; letter-spacing: 4px; font-weight: 400; margin-top: 1px; }
+        .header-actions { display: flex; align-items: center; gap: 1.5rem; }
+        .date-time .date { color: var(--gold); font-size: 0.85rem; font-weight: 600; }
+        .date-time .time { color: #999; font-size: 0.8rem; margin-top: 1px; }
+        .user-info { display: flex; align-items: center; gap: 0.85rem; background: var(--dark-gray); padding: 0.6rem 1.1rem; border-radius: 8px; border: 1px solid rgba(201,169,97,0.3); }
+        .user-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; color: var(--black); font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+        .user-details h3 { font-size: 0.88rem; font-weight: 600; color: var(--white); margin-bottom: 1px; }
+        .user-details p { font-size: 0.75rem; color: var(--gold); }
+        .logout-btn { background: var(--danger); color: white; border: none; padding: 0.45rem 0.95rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.82rem; transition: all 0.3s; text-decoration: none; display: inline-block; white-space: nowrap; }
+        .logout-btn:hover { background: #c82333; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(220,53,69,0.4); }
+
+        /* ── Nav ── */
+        nav { flex: 0 0 var(--nav-h); background: var(--dark-gray); border-bottom: 1px solid rgba(201,169,97,0.2); box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 99; overflow: hidden; }
+        nav ul { list-style: none; display: flex; height: 100%; margin: 0; padding: 0; overflow-x: auto; }
+        nav ul::-webkit-scrollbar { height: 3px; }
+        nav ul::-webkit-scrollbar-thumb { background: var(--gold); }
+        nav li { flex-shrink: 0; display: flex; }
+        nav a { display: flex; align-items: center; gap: 0.45rem; padding: 0 1.6rem; text-decoration: none; color: #aaa; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; border-bottom: 3px solid transparent; white-space: nowrap; }
+        nav a:hover { background: rgba(201,169,97,0.1); color: var(--gold); }
+        nav a.active { color: var(--gold); background: rgba(201,169,97,0.15); border-bottom-color: var(--gold); }
+
+        /* ── Content ── */
+        .page-content { flex: 1 1 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; }
+        .page-content::-webkit-scrollbar { width: 6px; }
+        .page-content::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+        .container { width: 100%; padding: 1.5rem 2rem; display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
+        .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+        .page-title { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 600; color: var(--black); margin-bottom: 0.3rem; }
+        .page-subtitle { color: #666; font-size: 0.98rem; }
+
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.25s; border: 2px solid transparent; }
+        .btn-primary { background: var(--black); color: var(--gold); border-color: var(--black); }
+        .btn-primary:hover { background: var(--gold); color: var(--black); border-color: var(--gold); transform: translateY(-2px); }
+        .btn-outline { background: white; color: var(--black); border-color: #ddd; }
+        .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+        .btn-danger { background: var(--danger); color: white; border-color: var(--danger); }
+        .btn-danger:hover { background: #c82333; transform: translateY(-2px); }
+        .btn-sm { padding: 0.38rem 0.8rem; font-size: 0.78rem; }
+
+        /* Utility grid */
+        .util-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
+
+        /* Section card */
+        .util-card { background: white; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 2px 10px var(--shadow); overflow: hidden; animation: fadeInUp 0.5s ease-out backwards; }
+        .util-card:nth-child(1){animation-delay:.05s} .util-card:nth-child(2){animation-delay:.1s} .util-card:nth-child(3){animation-delay:.15s} .util-card:nth-child(4){animation-delay:.2s} .util-card:nth-child(5){animation-delay:.25s} .util-card:nth-child(6){animation-delay:.3s}
+        .util-card-header { background: var(--black); padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.85rem; border-bottom: 2px solid var(--gold); }
+        .util-card-icon { width: 38px; height: 38px; background: rgba(201,169,97,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+        .util-card-title { color: white; font-weight: 700; font-size: 0.95rem; }
+        .util-card-desc { color: #999; font-size: 0.75rem; margin-top: 1px; }
+        .util-card-body { padding: 1.1rem 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; }
+
+        /* Setting rows */
+        .setting-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+        .setting-label { font-size: 0.88rem; font-weight: 600; color: var(--black); }
+        .setting-sub { font-size: 0.75rem; color: #999; margin-top: 1px; }
+
+        /* Toggle switch */
+        .toggle-wrap { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+        .toggle-wrap input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; inset: 0; background: #ccc; border-radius: 26px; cursor: pointer; transition: 0.3s; }
+        .toggle-slider::before { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: 0.3s; }
+        input:checked + .toggle-slider { background: var(--gold); }
+        input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+        /* Input field */
+        .util-input { width: 100%; padding: 0.6rem 0.9rem; border: 2px solid #e0e0e0; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none; transition: border-color 0.2s; }
+        .util-input:focus { border-color: var(--gold); }
+        .input-group { display: flex; gap: 0.5rem; align-items: center; }
+        .input-group .util-input { flex: 1; }
+        .input-prefix { font-size: 0.88rem; font-weight: 700; color: #888; white-space: nowrap; }
+
+        /* Divider */
+        .util-divider { height: 1px; background: #f0f0f0; }
+
+        /* Info alert */
+        .info-alert { background: #e3f2fd; border-left: 4px solid var(--info); border-radius: 6px; padding: 0.7rem 1rem; font-size: 0.82rem; color: #1565c0; font-weight: 500; }
+        .warn-alert  { background: #fff8e1; border-left: 4px solid #f9a825; border-radius: 6px; padding: 0.7rem 1rem; font-size: 0.82rem; color: #7c5200; font-weight: 500; }
+
+        /* Activity log */
+        .log-item { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.6rem 0; border-bottom: 1px solid #f5f5f5; }
+        .log-item:last-child { border-bottom: none; }
+        .log-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); flex-shrink: 0; margin-top: 5px; }
+        .log-dot.red { background: var(--danger); }
+        .log-dot.green { background: var(--success); }
+        .log-text { font-size: 0.82rem; color: #555; flex: 1; }
+        .log-time { font-size: 0.72rem; color: #bbb; white-space: nowrap; }
+
+        .toast-container { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.6rem; }
+        .toast { background: var(--dark-gray); border-left: 4px solid var(--gold); color: white; padding: 0.85rem 1.25rem; border-radius: 8px; font-size: 0.88rem; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.3); animation: slideInRight 0.3s ease; max-width: 320px; }
+        .toast.error { border-left-color: var(--danger); color: #ff8080; }
+        .toast.success { border-left-color: var(--success); color: #80e080; }
+
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 768px) { .container { padding: 1rem; } header { padding: 0 1rem; } .date-time { display: none; } }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+
+    <!-- HEADER -->
+    <header>
+        <div class="logo">
+            <div class="logo-icon">📚</div>
+            <div class="logo-text">
+                <h1>Books <span>&</span> Blooms</h1>
+                <div class="logo-subtitle">CAFÉ</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="date-time">
+                <div class="date" id="currentDate"></div>
+                <div class="time" id="currentTime"></div>
+            </div>
+            <div class="user-info">
+                <div class="user-details">
+                    <h3>{{ employee.full_name if employee else 'Cashier' }}</h3>
+                    <p>Cashier</p>
+                </div>
+                <div class="user-avatar">{{ (employee.full_name or 'C')[0] }}</div>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-btn">🚪 Logout</a>
+        </div>
+    </header>
+
+    <!-- NAV -->
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('cashier_dashboard') }}">🏠 Dashboard</a></li>
+            <li><a href="#">📦 Products</a></li>
+            <li><a href="#">👥 Customers</a></li>
+            <li><a href="#">📊 Transactions</a></li>
+            <li><a href="#">⚙️ Utility</a></li>
+            <li><a href="{{ url_for('cashier_attendance') }}">📅 My Attendance</a></li>
+        </ul>
+    </nav>
+
+    <!-- CONTENT -->
+    <div class="page-content">
+        <div class="container">
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Utility</h1>
+                    <p class="page-subtitle">Manage settings, preferences, and session tools.</p>
+                </div>
+            </div>
+
+            <div class="util-grid">
+
+                <!-- POS Settings -->
+                <div class="util-card">
+                    <div class="util-card-header">
+                        <div class="util-card-icon">🖥️</div>
+                        <div>
+                            <div class="util-card-title">POS Settings</div>
+                            <div class="util-card-desc">Point-of-sale preferences</div>
+                        </div>
+                    </div>
+                    <div class="util-card-body">
+                        <div class="setting-row">
+                            <div>
+                                <div class="setting-label">Auto-print Receipt</div>
+                                <div class="setting-sub">Print receipt after each sale</div>
+                            </div>
+                            <label class="toggle-wrap"><input type="checkbox" id="autoPrint" checked><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="util-divider"></div>
+                        <div class="setting-row">
+                            <div>
+                                <div class="setting-label">Sound Effects</div>
+                                <div class="setting-sub">Beep on scan / checkout</div>
+                            </div>
+                            <label class="toggle-wrap"><input type="checkbox" id="soundFx"><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="util-divider"></div>
+                        <div>
+                            <div class="setting-label" style="margin-bottom:0.45rem">Default Tax Rate</div>
+                            <div class="input-group">
+                                <input class="util-input" type="number" id="taxRate" value="12" min="0" max="100">
+                                <span class="input-prefix">%</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-sm" id="savePOS">💾 Save Settings</button>
+                    </div>
+                </div>
+
+                <!-- Cash Drawer -->
+                <div class="util-card">
+                    <div class="util-card-header">
+                        <div class="util-card-icon">💵</div>
+                        <div>
+                            <div class="util-card-title">Cash Drawer</div>
+                            <div class="util-card-desc">Opening balance & reconciliation</div>
+                        </div>
+                    </div>
+                    <div class="util-card-body">
+                        <div>
+                            <div class="setting-label" style="margin-bottom:0.45rem">Opening Balance</div>
+                            <div class="input-group">
+                                <span class="input-prefix">₱</span>
+                                <input class="util-input" type="number" id="openBalance" value="5000" min="0">
+                            </div>
+                        </div>
+                        <div class="info-alert">💡 Cash drawer opened at 8:00 AM with ₱5,000.00</div>
+                        <div class="setting-row" style="background:var(--light-gray);border-radius:8px;padding:0.65rem 0.85rem">
+                            <div class="setting-label">Expected Cash</div>
+                            <div style="font-weight:800;color:var(--dark-gold)">₱8,143.00</div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                            <button class="btn btn-outline btn-sm" id="openDrawer">🔓 Open Drawer</button>
+                            <button class="btn btn-primary btn-sm" id="reconcile">📋 Reconcile</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Discount & Promo -->
+                <div class="util-card">
+                    <div class="util-card-header">
+                        <div class="util-card-icon">🏷️</div>
+                        <div>
+                            <div class="util-card-title">Discounts & Promos</div>
+                            <div class="util-card-desc">Active promotions</div>
+                        </div>
+                    </div>
+                    <div class="util-card-body">
+                        <div class="setting-row">
+                            <div>
+                                <div class="setting-label">Senior Citizen Discount</div>
+                                <div class="setting-sub">20% off on total</div>
+                            </div>
+                            <label class="toggle-wrap"><input type="checkbox" id="scDiscount" checked><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="util-divider"></div>
+                        <div class="setting-row">
+                            <div>
+                                <div class="setting-label">PWD Discount</div>
+                                <div class="setting-sub">20% off on total</div>
+                            </div>
+                            <label class="toggle-wrap"><input type="checkbox" id="pwdDiscount" checked><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="util-divider"></div>
+                        <div>
+                            <div class="setting-label" style="margin-bottom:0.45rem">Staff Discount</div>
+                            <div class="input-group">
+                                <input class="util-input" type="number" id="staffDiscount" value="10" min="0" max="100">
+                                <span class="input-prefix">%</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-sm" id="saveDiscounts">💾 Save</button>
+                    </div>
+                </div>
+
+                <!-- Printer & Hardware -->
+                <div class="util-card">
+                    <div class="util-card-header">
+                        <div class="util-card-icon">🖨️</div>
+                        <div>
+                            <div class="util-card-title">Printer & Hardware</div>
+                            <div class="util-card-desc">Connected devices</div>
+                        </div>
+                    </div>
+                    <div class="util-card-body">
+                        <div class="setting-row" style="background:var(--light-gray);padding:0.65rem 0.85rem;border-radius:8px">
+                            <div>
+                                <div class="setting-label">Receipt Printer</div>
+                                <div class="setting-sub">Epson TM-T82 · USB</div>
+                            </div>
+                            <span style="font-size:0.72rem;font-weight:700;background:#e8f5e9;color:#388e3c;padding:0.2rem 0.6rem;border-radius:12px">Online</span>
+                        </div>
+                        <div class="setting-row" style="background:var(--light-gray);padding:0.65rem 0.85rem;border-radius:8px">
+                            <div>
+                                <div class="setting-label">Barcode Scanner</div>
+                                <div class="setting-sub">Honeywell 1900 · USB-HID</div>
+                            </div>
+                            <span style="font-size:0.72rem;font-weight:700;background:#e8f5e9;color:#388e3c;padding:0.2rem 0.6rem;border-radius:12px">Online</span>
+                        </div>
+                        <div class="setting-row" style="background:var(--light-gray);padding:0.65rem 0.85rem;border-radius:8px">
+                            <div>
+                                <div class="setting-label">Cash Drawer</div>
+                                <div class="setting-sub">APG Series 100</div>
+                            </div>
+                            <span style="font-size:0.72rem;font-weight:700;background:#e8f5e9;color:#388e3c;padding:0.2rem 0.6rem;border-radius:12px">Online</span>
+                        </div>
+                        <button class="btn btn-outline btn-sm" id="testPrint">🖨️ Test Print</button>
+                    </div>
+                </div>
+
+                <!-- Session Info -->
+                <div class="util-card">
+                    <div class="util-card-header">
+                        <div class="util-card-icon">🔐</div>
+                        <div>
+                            <div class="util-card-title">Current Session</div>
+                            <div class="util-card-desc">Shift & session details</div>
+                        </div>
+                    </div>
+                    <div class="util-card-body">
+                        <div class="setting-row" style="background:var(--light-gray);padding:0.65rem 0.85rem;border-radius:8px">
+                            <div class="setting-label">Session Started</div>
+                            <div style="font-weight:700;font-size:0.88rem" id="sessionStart">—</div>
+                        </div>
+                        <div class="setting-row" style="background:var(--light-gray);padding:0.65rem 0.85rem;border-radius:8px">
+                            <div class="setting-label">Terminal ID</div>
+                            <div style="font-weight:700;font-size:0.88rem;font-family:monospace">POS-CASHIER-01</div>
+                        </div>
+                        <div class="setting-row" style="background:var(--light-gray);padding:0.65rem 0.85rem;border-radius:8px">
+                            <div class="setting-label">Transactions Today</div>
+                            <div style="font-weight:800;color:var(--dark-gold)">5 txns</div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                            <button class="btn btn-outline btn-sm" id="lockBtn">🔒 Lock</button>
+                            <button class="btn btn-danger btn-sm" id="endSessionBtn">⏹ End Session</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Log -->
+                <div class="util-card">
+                    <div class="util-card-header">
+                        <div class="util-card-icon">📋</div>
+                        <div>
+                            <div class="util-card-title">Activity Log</div>
+                            <div class="util-card-desc">Recent session events</div>
+                        </div>
+                    </div>
+                    <div class="util-card-body" style="max-height:240px;overflow-y:auto">
+                        <div class="log-item"><div class="log-dot green"></div><div class="log-text">Session opened. Opening balance ₱5,000.00 set.</div><div class="log-time">08:00</div></div>
+                        <div class="log-item"><div class="log-dot"></div><div class="log-text">Transaction TXN-0287 completed. ₱2,400.00</div><div class="log-time">09:05</div></div>
+                        <div class="log-item"><div class="log-dot"></div><div class="log-text">Transaction TXN-0288 completed. ₱468.00</div><div class="log-time">09:20</div></div>
+                        <div class="log-item"><div class="log-dot"></div><div class="log-text">Transaction TXN-0289 completed. ₱504.00</div><div class="log-time">09:50</div></div>
+                        <div class="log-item"><div class="log-dot"></div><div class="log-text">Transaction TXN-0290 completed. ₱390.00</div><div class="log-time">10:15</div></div>
+                        <div class="log-item"><div class="log-dot"></div><div class="log-text">Transaction TXN-0291 completed. ₱1,130.00</div><div class="log-time">10:42</div></div>
+                        <div class="log-item"><div class="log-dot red"></div><div class="log-text">Failed login attempt detected on terminal.</div><div class="log-time">11:03</div></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+    function updateClock() {
+        const now = new Date();
+        const d = document.getElementById('currentDate'), t = document.getElementById('currentTime');
+        if (d) d.textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        if (t) t.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    updateClock(); setInterval(updateClock, 1000);
+
+    // Set session start time
+    document.getElementById('sessionStart').textContent = new Date(new Date().setHours(8,0,0)).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) + ' — ' + new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+
+    function showToast(msg, type='info') {
+        const c = document.getElementById('toastContainer');
+        const el = document.createElement('div'); el.className=`toast ${type}`; el.textContent=msg;
+        c.appendChild(el); setTimeout(()=>el.remove(), 3500);
+    }
+
+    document.getElementById('savePOS').addEventListener('click', () => showToast('POS settings saved.', 'success'));
+    document.getElementById('saveDiscounts').addEventListener('click', () => showToast('Discount settings saved.', 'success'));
+    document.getElementById('openDrawer').addEventListener('click', () => showToast('Cash drawer opened.', 'success'));
+    document.getElementById('reconcile').addEventListener('click', () => showToast('Opening cash reconciliation module…', 'info'));
+    document.getElementById('testPrint').addEventListener('click', () => showToast('Test receipt sent to printer.', 'success'));
+    document.getElementById('lockBtn').addEventListener('click', () => showToast('Terminal locked. Please verify identity.', 'info'));
+    document.getElementById('endSessionBtn').addEventListener('click', () => {
+        if (confirm('End current session? You will need to open a new session to continue.')) {
+            showToast('Session ended. Redirecting…', 'success');
+        }
+    });
+
+    // Toggle save feedback
+    document.querySelectorAll('.toggle-wrap input').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            showToast(`${this.id} ${this.checked ? 'enabled' : 'disabled'}.`, 'success');
+        });
+    });
+</script>
+</body>
+</html>
