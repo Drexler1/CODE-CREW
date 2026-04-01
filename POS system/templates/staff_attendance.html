@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Books & Blooms Café — Staff Attendance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gold: #c9a961; --dark-gold: #a88850; --black: #1a1a1a;
+            --dark-gray: #2d2d2d; --light-gray: #f5f5f5; --white: #ffffff;
+            --shadow: rgba(0,0,0,0.1); --success: #4caf50;
+            --warning: #ff9800; --danger: #dc3545; --info: #2196f3;
+            --header-h: 72px;
+            --nav-h: 50px;
+            --chrome-h: calc(var(--header-h) + var(--nav-h));
+        }
+
+        /* ── Full-viewport shell ── */
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;          /* no outer scroll – inner regions scroll */
+            font-family: 'DM Sans', sans-serif;
+            background: #f0f0f0;
+            color: var(--black);
+        }
+
+        /* ── App layout: header + nav fixed at top, content fills rest ── */
+        .app-shell {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ── Header ── */
+        header {
+            flex: 0 0 var(--header-h);
+            background: var(--black);
+            border-bottom: 3px solid var(--gold);
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+
+        .logo { display: flex; align-items: center; gap: 1.25rem; }
+        .logo-icon { width: 48px; height: 48px; border: 2px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 24px; flex-shrink: 0; }
+        .logo-text h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 400; color: var(--white); letter-spacing: 1px; line-height: 1.2; }
+        .logo-text h1 span { color: var(--gold); }
+        .logo-subtitle { font-size: 0.65rem; color: var(--gold); text-transform: uppercase; letter-spacing: 4px; font-weight: 400; margin-top: 1px; }
+
+        .header-actions { display: flex; align-items: center; gap: 1.5rem; }
+        .date-time { text-align: right; }
+        .date-time .date { color: var(--gold); font-size: 0.85rem; font-weight: 600; }
+        .date-time .time { color: #999; font-size: 0.8rem; margin-top: 1px; }
+        .user-info { display: flex; align-items: center; gap: 0.85rem; background: var(--dark-gray); padding: 0.6rem 1.1rem; border-radius: 8px; border: 1px solid rgba(201,169,97,0.3); }
+        .user-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; color: var(--black); font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+        .user-details h3 { font-size: 0.88rem; font-weight: 600; color: var(--white); margin-bottom: 1px; }
+        .user-details p { font-size: 0.75rem; color: var(--gold); }
+        .logout-btn { background: var(--danger); color: white; border: none; padding: 0.45rem 0.95rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.82rem; transition: all 0.3s; text-decoration: none; display: inline-block; white-space: nowrap; }
+        .logout-btn:hover { background: #c82333; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(220,53,69,0.4); }
+
+        /* ── Nav ── */
+        nav {
+            flex: 0 0 var(--nav-h);
+            background: var(--dark-gray);
+            border-bottom: 1px solid rgba(201,169,97,0.2);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 99;
+            overflow: hidden;
+        }
+        nav ul { list-style: none; display: flex; height: 100%; margin: 0; padding: 0; overflow-x: auto; }
+        nav ul::-webkit-scrollbar { height: 3px; }
+        nav ul::-webkit-scrollbar-track { background: var(--black); }
+        nav ul::-webkit-scrollbar-thumb { background: var(--gold); }
+        nav li { flex-shrink: 0; display: flex; }
+        nav a { display: flex; align-items: center; padding: 0 1.6rem; text-decoration: none; color: #aaa; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; border-bottom: 3px solid transparent; white-space: nowrap; }
+        nav a:hover { background: rgba(201,169,97,0.1); color: var(--gold); }
+        nav a.active { color: var(--gold); background: rgba(201,169,97,0.15); border-bottom-color: var(--gold); }
+
+        /* ── Scrollable content area ── */
+        .page-content {
+            flex: 1 1 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .page-content::-webkit-scrollbar { width: 6px; }
+        .page-content::-webkit-scrollbar-track { background: #e8e8e8; }
+        .page-content::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+
+        /* ── Inner container: full width with padding ── */
+        .container {
+            width: 100%;
+            padding: 1.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem; }
+        .page-title { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 600; color: var(--black); margin-bottom: 0.3rem; }
+        .page-subtitle { color: #666; font-size: 0.98rem; }
+        .page-actions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.25s; border: 2px solid transparent; text-decoration: none; }
+        .btn-primary { background: var(--black); color: var(--gold); border-color: var(--black); }
+        .btn-primary:hover { background: var(--gold); color: var(--black); border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(201,169,97,0.4); }
+        .btn-outline { background: white; color: var(--black); border-color: #ddd; }
+        .btn-outline:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
+        .btn-success { background: var(--success); color: white; border-color: var(--success); }
+        .btn-success:hover { background: #388e3c; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(76,175,80,0.4); }
+        .btn-danger { background: var(--danger); color: white; border-color: var(--danger); }
+        .btn-danger:hover { background: #c82333; transform: translateY(-2px); }
+        .btn-sm { padding: 0.38rem 0.8rem; font-size: 0.78rem; }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+        /* Summary Cards */
+        .summary-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
+        .stat-card { background: white; border-radius: 10px; padding: 1.1rem 1.25rem; border: 1px solid #e0e0e0; box-shadow: 0 2px 10px var(--shadow); display: flex; align-items: center; gap: 1rem; transition: all 0.3s; animation: fadeInUp 0.5s ease-out backwards; position: relative; overflow: hidden; }
+        .stat-card::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--gold); }
+        .stat-card:nth-child(1){animation-delay:.05s} .stat-card:nth-child(2){animation-delay:.1s} .stat-card:nth-child(3){animation-delay:.15s} .stat-card:nth-child(4){animation-delay:.2s} .stat-card:nth-child(5){animation-delay:.25s}
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(201,169,97,0.22); }
+        .stat-icon { width: 46px; height: 46px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+        .stat-icon.gold   { background: linear-gradient(135deg, var(--gold), var(--dark-gold)); }
+        .stat-icon.green  { background: linear-gradient(135deg, #4caf50, #388e3c); }
+        .stat-icon.orange { background: linear-gradient(135deg, #ff9800, #f57c00); }
+        .stat-icon.red    { background: linear-gradient(135deg, #dc3545, #c82333); }
+        .stat-icon.blue   { background: linear-gradient(135deg, #2196f3, #1565c0); }
+        .stat-label { font-size: 0.72rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: var(--black); line-height: 1; }
+        .stat-sub   { font-size: 0.72rem; color: #999; margin-top: 0.15rem; }
+
+        /* Controls */
+        .controls-bar { background: white; border-radius: 10px; padding: 1rem 1.25rem; border: 1px solid #e0e0e0; box-shadow: 0 2px 10px var(--shadow); display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+        .search-box { position: relative; flex: 1; min-width: 200px; }
+        .search-box input { width: 100%; padding: 0.6rem 1rem 0.6rem 2.6rem; border: 2px solid #e0e0e0; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--black); transition: border-color 0.2s; outline: none; }
+        .search-box input:focus { border-color: var(--gold); }
+        .search-box .search-icon { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: #aaa; pointer-events: none; font-size: 0.9rem; }
+        .filter-group { display: flex; gap: 0.65rem; flex-wrap: wrap; }
+        .filter-select, .date-input { padding: 0.6rem 0.95rem; border: 2px solid #e0e0e0; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--black); background: white; cursor: pointer; transition: border-color 0.2s; outline: none; min-width: 130px; }
+        .filter-select:focus, .date-input:focus { border-color: var(--gold); }
+        .divider-v { width: 1px; height: 34px; background: #e0e0e0; flex-shrink: 0; }
+
+        /* Main grid — fills available width */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 1.25rem;
+            align-items: start;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Table card stretches full column */
+        .table-card { background: white; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 2px 10px var(--shadow); overflow: hidden; display: flex; flex-direction: column; }
+        .table-card-header { display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 1.5rem; border-bottom: 2px solid var(--gold); flex-shrink: 0; }
+        .table-card-header h3 { font-size: 1.2rem; font-weight: 700; }
+        .record-count { font-size: 0.8rem; color: #888; margin-top: 0.2rem; }
+        .table-wrapper { overflow-x: auto; overflow-y: auto; flex: 1; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: var(--black); color: var(--gold); position: sticky; top: 0; z-index: 1; }
+        th { padding: 0.85rem 1.1rem; text-align: left; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+        td { padding: 0.85rem 1.1rem; border-bottom: 1px solid #f0f0f0; font-size: 0.88rem; vertical-align: middle; }
+        tbody tr { transition: background 0.15s; }
+        tbody tr:hover { background: var(--light-gray); }
+        tbody tr:last-child td { border-bottom: none; }
+        .staff-cell { display: flex; align-items: center; gap: 0.75rem; }
+        .staff-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; background: linear-gradient(135deg, var(--gold), var(--dark-gold)); color: var(--black); flex-shrink: 0; }
+        .staff-name { font-weight: 600; font-size: 0.9rem; }
+        .staff-role { font-size: 0.74rem; color: #888; margin-top: 1px; }
+        .badge { display: inline-block; padding: 0.25rem 0.7rem; border-radius: 20px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+        .badge-present { background: #e8f5e9; color: #388e3c; }
+        .badge-absent  { background: #ffebee; color: #c62828; }
+        .badge-late    { background: #fff3e0; color: #e65100; }
+        .badge-leave   { background: #e3f2fd; color: #1565c0; }
+        .badge-holiday { background: #f3e5f5; color: #6a1b9a; }
+        .time-cell { font-weight: 600; }
+        .time-cell.missing { color: #bbb; font-weight: 400; font-style: italic; }
+        .hours-chip { display: inline-block; background: #f5f5f5; color: var(--black); padding: 0.22rem 0.65rem; border-radius: 6px; font-weight: 700; font-size: 0.82rem; }
+        .hours-chip.over  { background: #e8f5e9; color: #388e3c; }
+        .hours-chip.short { background: #fff3e0; color: #e65100; }
+        .action-cell { display: flex; gap: 0.45rem; }
+        .table-footer { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; border-top: 1px solid #f0f0f0; flex-wrap: wrap; gap: 0.65rem; flex-shrink: 0; }
+        .pagination-info { font-size: 0.82rem; color: #888; }
+        .pagination { display: flex; gap: 0.35rem; }
+        .page-btn { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 2px solid #e0e0e0; background: white; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s; color: var(--black); }
+        .page-btn:hover { border-color: var(--gold); color: var(--gold); }
+        .page-btn.active { background: var(--black); color: var(--gold); border-color: var(--black); }
+        .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* Side panel */
+        .side-panel { display: flex; flex-direction: column; gap: 1.1rem; }
+        .panel-card { background: white; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 2px 10px var(--shadow); overflow: hidden; }
+        .panel-header { padding: 1rem 1.25rem; border-bottom: 2px solid var(--gold); display: flex; justify-content: space-between; align-items: center; }
+        .panel-header h3 { font-size: 1rem; font-weight: 700; }
+        .panel-body { padding: 1.1rem 1.25rem; }
+
+        /* Calendar */
+        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; }
+        .cal-month { font-weight: 700; font-size: 0.95rem; }
+        .cal-nav { width: 26px; height: 26px; border-radius: 6px; border: 2px solid #e0e0e0; background: white; cursor: pointer; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .cal-nav:hover { border-color: var(--gold); color: var(--gold); }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .cal-day-name { text-align: center; font-size: 0.66rem; color: #aaa; font-weight: 700; text-transform: uppercase; padding: 0.25rem; }
+        .cal-day { aspect-ratio: 1; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 0.74rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .cal-day:hover { background: rgba(201,169,97,0.15); color: var(--gold); }
+        .cal-day.today { background: var(--black); color: var(--gold); font-weight: 800; }
+        .cal-day.has-records { position: relative; }
+        .cal-day.has-records::after { content:''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 3px; height: 3px; border-radius: 50%; background: var(--gold); }
+        .cal-day.other-month { color: #ccc; cursor: default; }
+        .cal-day.other-month:hover { background: transparent; color: #ccc; }
+        .cal-day.selected { background: var(--gold); color: var(--black); }
+
+        /* Shifts */
+        .shift-list { display: flex; flex-direction: column; gap: 0.65rem; }
+        .shift-item { display: flex; align-items: center; gap: 0.65rem; padding: 0.75rem 0.9rem; background: var(--light-gray); border-radius: 8px; border-left: 4px solid var(--gold); transition: all 0.2s; }
+        .shift-item:hover { background: #ece8e0; }
+        .shift-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+        .shift-info { flex: 1; }
+        .shift-name { font-weight: 600; font-size: 0.85rem; }
+        .shift-time { font-size: 0.74rem; color: #888; margin-top: 1px; }
+        .shift-count { background: var(--black); color: var(--gold); padding: 0.18rem 0.55rem; border-radius: 12px; font-size: 0.72rem; font-weight: 700; }
+
+        /* Leave */
+        .leave-list { display: flex; flex-direction: column; gap: 0.65rem; }
+        .leave-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; background: var(--light-gray); border-radius: 8px; transition: all 0.2s; }
+        .leave-item:hover { background: #ece8e0; }
+        .leave-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--dark-gold)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; color: var(--black); flex-shrink: 0; }
+        .leave-info { flex: 1; }
+        .leave-name { font-weight: 600; font-size: 0.84rem; }
+        .leave-date { font-size: 0.72rem; color: #888; margin-top: 1px; }
+        .leave-actions { display: flex; gap: 0.35rem; }
+        .icon-btn { width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
+        .icon-btn-approve { background: #e8f5e9; color: #388e3c; }
+        .icon-btn-approve:hover { background: #388e3c; color: white; }
+        .icon-btn-deny { background: #ffebee; color: #c62828; }
+        .icon-btn-deny:hover { background: #c62828; color: white; }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 1rem;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal {
+            background: white; border-radius: 16px; width: 100%; max-width: 560px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+            transform: translateY(24px) scale(0.98); transition: transform 0.3s ease, opacity 0.3s ease;
+            overflow: hidden; display: flex; flex-direction: column;
+            max-height: 90vh;
+        }
+        .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+        .modal-wide { max-width: 680px; }
+
+        /* Modal Header */
+        .modal-header {
+            background: var(--black); padding: 1.4rem 1.75rem;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 3px solid var(--gold); flex-shrink: 0;
+        }
+        .modal-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 600; color: white; letter-spacing: 0.5px; }
+        .modal-header h2 span { color: var(--gold); }
+        .modal-close {
+            width: 36px; height: 36px; border-radius: 8px;
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+            color: white; cursor: pointer; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .modal-close:hover { background: rgba(201,169,97,0.25); border-color: var(--gold); color: var(--gold); }
+
+        /* Modal Body */
+        .modal-body { padding: 1.75rem; overflow-y: auto; flex: 1; }
+        .modal-body::-webkit-scrollbar { width: 5px; }
+        .modal-body::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+
+        /* Modal Footer */
+        .modal-footer {
+            padding: 1rem 1.75rem 1.4rem;
+            display: flex; justify-content: space-between; align-items: center; gap: 0.65rem;
+            border-top: 1px solid #f0f0f0; flex-shrink: 0; background: #fafafa;
+        }
+        .modal-footer-right { display: flex; gap: 0.65rem; }
+
+        /* Form elements */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 600; font-size: 0.8rem; color: #555; margin-bottom: 0.45rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem 1rem; border: 2px solid #e0e0e0; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--black); transition: border-color 0.2s; outline: none; background: white; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--gold); }
+        .form-group input:disabled { background: #f9f9f9; color: #888; cursor: not-allowed; }
+        .form-group textarea { resize: vertical; min-height: 70px; }
+
+        /* Employee selector styled */
+        .employee-selector { margin-bottom: 1.5rem; }
+        .employee-selector label { display: block; font-weight: 700; font-size: 0.8rem; color: #555; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .employee-selector select { width: 100%; padding: 0.75rem 1rem; border: 2px solid #e0e0e0; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; color: var(--black); outline: none; cursor: pointer; background: white; transition: border-color 0.2s; }
+        .employee-selector select:focus { border-color: var(--gold); }
+
+        /* Steps indicator */
+        .steps {
+            display: flex; align-items: center;
+            margin-bottom: 1.75rem; padding-bottom: 1.25rem;
+            border-bottom: 2px solid #f0f0f0; gap: 0;
+        }
+        .step { display: flex; align-items: center; gap: 0.55rem; flex: 1; position: relative; }
+        .step:not(:last-child)::after {
+            content: ''; position: absolute; left: calc(30px + 0.55rem); top: 50%;
+            transform: translateY(-50%);
+            width: calc(100% - 30px - 0.55rem - 0.55rem);
+            height: 2px; background: #e0e0e0; z-index: 0; transition: background 0.4s;
+        }
+        .step.done:not(:last-child)::after { background: var(--gold); }
+        .step-num {
+            width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ddd;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.82rem; color: #bbb; background: white;
+            flex-shrink: 0; z-index: 1; transition: all 0.3s;
+        }
+        .step.active .step-num { border-color: var(--gold); color: var(--gold); background: rgba(201,169,97,0.08); }
+        .step.done .step-num { background: var(--gold); border-color: var(--gold); color: var(--black); }
+        .step-label { font-size: 0.72rem; font-weight: 600; color: #bbb; text-transform: uppercase; letter-spacing: 0.4px; transition: color 0.3s; white-space: nowrap; }
+        .step.active .step-label { color: var(--black); }
+        .step.done .step-label { color: var(--dark-gold); }
+        .step-panel { display: none; }
+        .step-panel.active { display: block; animation: fadeInUp 0.3s ease; }
+
+        /* Shift / action grid */
+        .shift-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 0.5rem; }
+        .shift-option {
+            border: 2px solid #e8e8e8; border-radius: 12px; padding: 1.4rem 1rem;
+            text-align: center; cursor: pointer; transition: all 0.25s;
+            background: #fafafa; position: relative; overflow: hidden;
+        }
+        .shift-option::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(201,169,97,0.07), transparent); opacity: 0; transition: opacity 0.25s; }
+        .shift-option:hover { border-color: var(--gold); background: white; transform: translateY(-3px); box-shadow: 0 6px 20px rgba(201,169,97,0.18); }
+        .shift-option:hover::before { opacity: 1; }
+        .shift-option.selected { border-color: var(--gold); background: white; box-shadow: 0 4px 16px rgba(201,169,97,0.22); }
+        .shift-option.selected::before { opacity: 1; }
+        .shift-option .s-icon { font-size: 2rem; margin-bottom: 0.5rem; display: block; }
+        .shift-option .s-name { font-weight: 700; font-size: 0.95rem; color: var(--black); margin-bottom: 0.3rem; }
+        .shift-option.selected .s-name { color: var(--dark-gold); }
+        .shift-option .s-time { font-size: 0.76rem; color: #999; font-weight: 500; }
+
+        /* Step section label */
+        .step-section-label {
+            font-size: 0.8rem; font-weight: 700; color: #888; text-transform: uppercase;
+            letter-spacing: 0.6px; margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .step-section-label::after { content: ''; flex: 1; height: 1px; background: #ebebeb; }
+
+        /* Camera / face */
+        .face-panel { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
+        .camera-wrap { position: relative; width: 100%; max-width: 400px; }
+        .camera-viewport {
+            width: 100%; aspect-ratio: 4/3; background: var(--black); border-radius: 14px;
+            overflow: hidden; border: 3px solid var(--dark-gray); position: relative;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .camera-viewport video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+        .verify-overlay {
+            position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.75); color: #fff; padding: 7px 18px;
+            border-radius: 20px; font-size: 13px; font-weight: 600;
+            white-space: nowrap; pointer-events: none; transition: background 0.3s;
+            max-width: 90%; text-align: center;
+        }
+        .camera-overlay-corners {
+            position: absolute; inset: 0; pointer-events: none;
+            border-radius: 12px; overflow: hidden;
+        }
+        .camera-overlay-corners::before,
+        .camera-overlay-corners::after {
+            content: ''; position: absolute; width: 28px; height: 28px;
+            border-color: var(--gold); border-style: solid;
+        }
+        .camera-overlay-corners::before { top: 12px; left: 12px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+        .camera-overlay-corners::after  { bottom: 12px; right: 12px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+        .face-actions { display: flex; gap: 0.65rem; flex-wrap: wrap; justify-content: center; }
+        .face-tip {
+            font-size: 0.82rem; color: #999; text-align: center; max-width: 360px;
+            line-height: 1.7; background: #f9f9f9; border-radius: 8px; padding: 0.65rem 1rem;
+            border: 1px solid #ebebeb;
+        }
+
+        /* Confirm step */
+        .confirm-card {
+            background: linear-gradient(135deg, var(--black) 0%, #2a2a2a 100%);
+            border-radius: 16px; padding: 2rem 1.75rem; text-align: center; color: white;
+            border: 1px solid rgba(201,169,97,0.4); position: relative; overflow: hidden;
+        }
+        .confirm-card::before {
+            content: ''; position: absolute; top: -60px; right: -60px;
+            width: 180px; height: 180px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(201,169,97,0.12), transparent 70%);
+            pointer-events: none;
+        }
+        .confirm-card::after {
+            content: ''; position: absolute; bottom: -40px; left: -40px;
+            width: 130px; height: 130px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(201,169,97,0.07), transparent 70%);
+            pointer-events: none;
+        }
+        .confirm-avatar {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), var(--dark-gold));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; font-weight: 800; color: var(--black);
+            margin: 0 auto 1rem; border: 3px solid rgba(201,169,97,0.4);
+            box-shadow: 0 0 0 6px rgba(201,169,97,0.1);
+        }
+        .confirm-success-icon { font-size: 2.5rem; margin-bottom: 0.5rem; display: block; }
+        .confirm-name { font-family: 'Cormorant Garamond', serif; font-size: 1.65rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .confirm-role { color: var(--gold); font-size: 0.8rem; font-weight: 600; margin-bottom: 1.1rem; text-transform: uppercase; letter-spacing: 0.8px; }
+        .confirm-type-badge {
+            display: inline-flex; align-items: center; gap: 0.45rem;
+            padding: 0.4rem 1.1rem; border-radius: 20px; font-size: 0.8rem;
+            font-weight: 700; margin-bottom: 1.1rem; letter-spacing: 0.3px;
+        }
+        .confirm-type-badge.clock-in  { background: rgba(76,175,80,0.2);  color: #7ed483; border: 1px solid rgba(76,175,80,0.3); }
+        .confirm-type-badge.clock-out { background: rgba(220,53,69,0.2);   color: #ef8080; border: 1px solid rgba(220,53,69,0.3); }
+        .confirm-details {
+            display: flex; justify-content: center; gap: 0; margin-bottom: 1.5rem;
+            background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .confirm-detail-item { flex: 1; padding: 0.85rem 1rem; position: relative; }
+        .confirm-detail-item:not(:last-child) { border-right: 1px solid rgba(255,255,255,0.08); }
+        .cd-label { font-size: 0.68rem; color: #777; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 0.3rem; }
+        .cd-val   { font-size: 1.05rem; font-weight: 700; color: var(--gold); }
+        .confirm-timestamp {
+            background: rgba(201,169,97,0.1); border-radius: 10px;
+            padding: 0.75rem 1.5rem; display: inline-block;
+            border: 1px solid rgba(201,169,97,0.2);
+        }
+        .ts-label { font-size: 0.68rem; color: #888; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 0.2rem; }
+        .ts-time  { font-size: 1.5rem; font-weight: 800; color: var(--gold); letter-spacing: 1px; }
+
+        /* Empty state */
+        .empty-state { text-align: center; padding: 3rem 2rem; color: #aaa; }
+        .empty-icon { font-size: 3rem; margin-bottom: 0.85rem; opacity: 0.3; }
+        .empty-state p { font-size: 0.95rem; }
+
+        /* Toast */
+        .toast-container { position: fixed; bottom: 1.75rem; right: 1.75rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.65rem; }
+        .toast { background: var(--black); color: var(--gold); padding: 0.9rem 1.25rem; border-radius: 10px; border-left: 4px solid var(--gold); box-shadow: 0 8px 24px rgba(0,0,0,0.3); font-weight: 600; font-size: 0.88rem; display: flex; align-items: center; gap: 0.65rem; animation: slideInRight 0.3s ease; min-width: 230px; }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ── Responsive ── */
+        @media (max-width: 1400px) {
+            .summary-cards { grid-template-columns: repeat(5, 1fr); }
+        }
+        @media (max-width: 1100px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .side-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+        }
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .page-title { font-size: 1.7rem; }
+            header { padding: 0 1rem; }
+            .logo-text h1 { font-size: 1.35rem; }
+            .header-actions { gap: 0.85rem; }
+            .date-time { display: none; }
+            nav a { padding: 0 1rem; }
+            .form-row { grid-template-columns: 1fr; }
+            .summary-cards { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 480px) {
+            .summary-cards { grid-template-columns: 1fr; }
+        }
+
+        /* ── Shift Manager Modal ── */
+        .sm-shift-block {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.1rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid #e8e8e8;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .sm-shift-block:hover {
+            border-color: var(--gold);
+            box-shadow: 0 2px 12px rgba(201,169,97,0.12);
+        }
+        .sm-shift-block:last-of-type { margin-bottom: 0; }
+        .sm-shift-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.9rem;
+        }
+        .sm-shift-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .sm-shift-title {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            flex: 1;
+        }
+        .sm-shift-icon { font-size: 1.3rem; }
+        .sm-shift-name { font-weight: 700; font-size: 0.9rem; color: var(--black); }
+        .sm-shift-current { font-size: 0.74rem; color: #888; margin-top: 2px; }
+        .sm-duration-badge {
+            background: var(--black);
+            color: var(--gold);
+            padding: 0.22rem 0.65rem;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .sm-shift-inputs {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: end;
+            gap: 0.75rem;
+        }
+        .sm-input-group label {
+            display: block;
+            font-size: 0.72rem;
+            color: #888;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.35rem;
+        }
+        .sm-time-input {
+            width: 100%;
+            padding: 0.6rem 0.85rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--black);
+            background: white;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .sm-time-input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(201,169,97,0.15);
+        }
+        .sm-arrow {
+            font-size: 1.2rem;
+            color: #aaa;
+            padding-bottom: 0.5rem;
+            text-align: center;
+        }
+        .sm-info-note {
+            background: #fffbf0;
+            border: 1px solid rgba(201,169,97,0.4);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.8rem;
+            color: #7a6030;
+            margin-top: 1rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-shell">
+
+    <!-- HEADER -->
+    <header>
+        <div class="logo">
+            <div class="logo-icon">📚</div>
+            <div class="logo-text">
+                <h1>Books <span>&</span> Blooms</h1>
+                <div class="logo-subtitle">CAFÉ</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="date-time">
+                <div class="date" id="currentDate"></div>
+                <div class="time" id="currentTime"></div>
+            </div>
+            <div class="user-info">
+                <div class="user-details">
+                    <h3>{{ full_name or 'Admin User' }}</h3>
+                    <p>{{ session.get('role')|capitalize }}</p>
+                </div>
+                <div class="user-avatar">{{ full_name[0] if full_name else 'A' }}</div>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-btn">➜] Logout</a>
+        </div>
+    </header>
+
+    <!-- NAV -->
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_sales') }}">Sales</a></li>
+            <li><a href="{{ url_for('inventory')}}">Inventory</a></li>
+            <li><a href="{{ url_for('staff_attendance') }}" class="active">Staff Attendance</a></li>
+            <li><a href="{{ url_for('product_management') }}">Product Management</a></li>
+            <li><a href="{{ url_for('admin_settings') }}">Settings</a></li>
+            <li><a href="{{ url_for('employee_management') }}">Employee Management</a></li>
+            <li><a href="{{ url_for('payroll') }}">Payroll</a></li>
+        </ul>
+    </nav>
+
+    <!-- SCROLLABLE CONTENT -->
+    <div class="page-content">
+        <div class="container">
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Staff Attendance</h1>
+                    <p class="page-subtitle">Track clock-ins, clock-outs, and shift coverage in real time.</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-primary" id="openClockModal">📋 Attendance Taking</button>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="stat-card">
+                    <div class="stat-icon gold">👥</div>
+                    <div>
+                        <div class="stat-label">Total Employees</div>
+                        <div class="stat-value" id="statTotal">—</div>
+                        <div class="stat-sub">active staff</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">✅</div>
+                    <div>
+                        <div class="stat-label">Present Today</div>
+                        <div class="stat-value" id="statPresent">—</div>
+                        <div class="stat-sub">clocked in</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue">🏁</div>
+                    <div>
+                        <div class="stat-label">Completed</div>
+                        <div class="stat-value" id="statCompleted">—</div>
+                        <div class="stat-sub">clocked out</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">⏳</div>
+                    <div>
+                        <div class="stat-label">Still In</div>
+                        <div class="stat-value" id="statInProgress">—</div>
+                        <div class="stat-sub">on shift</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red">⭐</div>
+                    <div>
+                        <div class="stat-label">Full Shift</div>
+                        <div class="stat-value" id="statFulfilled">—</div>
+                        <div class="stat-sub">≥ 8 hrs worked</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Bar -->
+            <div class="controls-bar">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Search by employee name or ID…">
+                </div>
+                <div class="filter-group">
+                    <input type="date" class="date-input" id="filterDate">
+                    <select class="filter-select" id="filterShift">
+                        <option value="">All Shifts</option>
+                        <option value="morning">Morning</option>
+                        <option value="afternoon">Afternoon</option>
+                        <option value="evening">Evening</option>
+                    </select>
+                </div>
+                <div class="divider-v"></div>
+                <button class="btn btn-outline btn-sm" id="resetFilters">✕ Clear</button>
+            </div>
+
+            <!-- Main Grid -->
+            <div class="main-grid">
+
+                <!-- Table -->
+                <div class="table-card">
+                    <div class="table-card-header">
+                        <div>
+                            <h3>Attendance Records</h3>
+                            <div class="record-count" id="recordCount">Loading records…</div>
+                        </div>
+                        <button class="btn btn-outline btn-sm" id="refreshBtn">↺ Refresh</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Employee</th><th>Dept.</th><th>Shift</th><th>Status</th>
+                                    <th>Clock-In</th><th>Clock-Out</th><th>Hours</th><th>Fulfill Working Hours</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceTableBody">
+                                <tr>
+                                    <td colspan="9">
+                                        <div class="empty-state">
+                                            <div class="empty-icon">📋</div>
+                                            <p>No attendance records found for the selected filters.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-footer">
+                        <div class="pagination-info" id="paginationInfo">Showing 0 – 0 of 0 records</div>
+                        <div class="pagination">
+                            <button class="page-btn" id="prevPage" disabled>‹</button>
+                            <button class="page-btn active">1</button>
+                            <button class="page-btn" id="nextPage" disabled>›</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Side Panel -->
+                <div class="side-panel">
+
+                    <!-- Calendar -->
+                    <div class="panel-card">
+                        <div class="panel-header"><h3>📅 Calendar</h3></div>
+                        <div class="panel-body">
+                            <div class="cal-header">
+                                <button class="cal-nav" id="calPrev">‹</button>
+                                <div class="cal-month" id="calMonthLabel"></div>
+                                <button class="cal-nav" id="calNext">›</button>
+                            </div>
+                            <div class="cal-grid" id="calGrid">
+                                <div class="cal-day-name">Su</div><div class="cal-day-name">Mo</div>
+                                <div class="cal-day-name">Tu</div><div class="cal-day-name">We</div>
+                                <div class="cal-day-name">Th</div><div class="cal-day-name">Fr</div>
+                                <div class="cal-day-name">Sa</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shifts -->
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h3>🕐 Today's Shifts</h3>
+                            <button class="btn btn-outline btn-sm" id="openShiftManager">⚙️ Manage</button>
+                        </div>
+                        <div class="panel-body">
+                            <div class="shift-list" id="shiftListDisplay">
+                                <div class="shift-item"><div class="shift-dot" style="background:#4caf50;"></div><div class="shift-info"><div class="shift-name">Morning Shift</div><div class="shift-time" id="displayMorningTime">—</div></div><div class="shift-count" id="shiftMorningCount">—</div></div>
+                                <div class="shift-item"><div class="shift-dot" style="background:var(--gold);"></div><div class="shift-info"><div class="shift-name">Afternoon Shift</div><div class="shift-time" id="displayAfternoonTime">—</div></div><div class="shift-count" id="shiftAfternoonCount">—</div></div>
+                                <div class="shift-item"><div class="shift-dot" style="background:#2196f3;"></div><div class="shift-info"><div class="shift-name">Evening Shift</div><div class="shift-time" id="displayEveningTime">—</div></div><div class="shift-count" id="shiftEveningCount">—</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div><!-- /main-grid -->
+        </div><!-- /container -->
+    </div><!-- /page-content -->
+
+</div><!-- /app-shell -->
+
+<!-- ═══ ATTENDANCE TAKING MODAL ═══ -->
+<div class="modal-overlay" id="attendanceModal">
+    <div class="modal modal-wide">
+
+        <!-- Header -->
+        <div class="modal-header">
+            <h2>Attendance <span>Taking</span></h2>
+            <button class="modal-close" id="closeAttendanceModal">✕</button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body">
+
+            <!-- Step Indicator -->
+            <div class="steps">
+                <div class="step active" id="step1">
+                    <div class="step-num">1</div>
+                    <div class="step-label">Select Action</div>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-num">2</div>
+                    <div class="step-label">Select Shift</div>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-num">3</div>
+                    <div class="step-label">Face Verify</div>
+                </div>
+                <div class="step" id="step4">
+                    <div class="step-num">4</div>
+                    <div class="step-label">Confirm</div>
+                </div>
+            </div>
+
+            <!-- Employee Selector (always visible) -->
+            <div class="employee-selector">
+                <label>👤 Select Employee</label>
+                <select id="employeeSelect">
+                    <option value="">— Choose an employee —</option>
+                </select>
+            </div>
+
+            <!-- Step 1: Clock In / Out -->
+            <div class="step-panel active" id="panelStep1">
+                <div class="step-section-label">Choose action</div>
+                <div class="shift-grid">
+                    <div class="shift-option" onclick="selectAction('clock_in', this)">
+                        <span class="s-icon">🟢</span>
+                        <div class="s-name">Clock In</div>
+                        <div class="s-time">Start Work Shift</div>
+                    </div>
+                    <div class="shift-option" onclick="selectAction('clock_out', this)">
+                        <span class="s-icon">🔴</span>
+                        <div class="s-name">Clock Out</div>
+                        <div class="s-time">End Work Shift</div>
+                    </div>
+                </div>
+                <input type="hidden" id="attendanceAction">
+            </div>
+
+            <!-- Step 2: Shift Selection -->
+            <div class="step-panel" id="panelStep2">
+                <div class="step-section-label">Choose shift</div>
+                <div class="shift-grid">
+                    <div class="shift-option" id="shiftCardMorning">
+                        <span class="s-icon">🌅</span>
+                        <div class="s-name">Morning Shift</div>
+                        <div class="s-time">8:00 AM – 5:00 PM</div>
+                    </div>
+                    <div class="shift-option" id="shiftCardAfternoon">
+                        <span class="s-icon">☀️</span>
+                        <div class="s-name">Afternoon Shift</div>
+                        <div class="s-time">2:00 PM – 10:00 PM</div>
+                    </div>
+                    <div class="shift-option" id="shiftCardEvening">
+                        <span class="s-icon">🌙</span>
+                        <div class="s-name">Evening Shift</div>
+                        <div class="s-time">10:00 PM – 6:00 AM</div>
+                    </div>
+                </div>
+                <input type="hidden" id="shiftName">
+                <input type="hidden" id="shiftStart">
+                <input type="hidden" id="shiftEnd">
+            </div>
+
+            <!-- Step 3: Face Scan -->
+            <div class="step-panel" id="panelStep3">
+                <div class="step-section-label">Face verification</div>
+                <div class="face-panel">
+                    <div class="camera-wrap">
+                        <div class="camera-viewport">
+                            <video id="cameraFeed" autoplay playsinline muted></video>
+                            <!-- Live liveness / match feedback -->
+                            <div class="verify-overlay" id="verifyOverlay">Position your face in frame</div>
+                        </div>
+                        <div class="camera-overlay-corners"></div>
+                    </div>
+                    <div class="face-actions">
+                        <button class="btn btn-primary" id="verifyBtn" onclick="verifyIdentity()">
+                            🔍 Verify Identity
+                        </button>
+                    </div>
+                    <p class="face-tip">
+                        💡 <strong>Liveness check:</strong> When prompted, slowly nod your head <strong>UP</strong> then <strong>DOWN</strong> to confirm you are present. The system will then match your face automatically.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Step 4: Confirmation -->
+            <div class="step-panel" id="panelStep4">
+                <div class="confirm-card">
+                    <span class="confirm-success-icon">✅</span>
+                    <div class="confirm-avatar" id="confirmInitial">A</div>
+                    <div class="confirm-type-badge" id="confirmBadge"></div>
+                    <div class="confirm-name" id="confirmEmployeeName">—</div>
+                    <div class="confirm-role" id="confirmRole">—</div>
+                    <div class="confirm-details">
+                        <div class="confirm-detail-item">
+                            <div class="cd-label">Shift</div>
+                            <div class="cd-val" id="confirmShift">—</div>
+                        </div>
+                        <div class="confirm-detail-item">
+                            <div class="cd-label">Status</div>
+                            <div class="cd-val" id="confirmStatus">—</div>
+                        </div>
+                    </div>
+                    <div class="confirm-timestamp">
+                        <div class="ts-label">Recorded at</div>
+                        <div class="ts-time" id="confirmTime">—</div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /modal-body -->
+
+        <!-- Footer -->
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+            <div class="modal-footer-right">
+                <button class="btn btn-outline" onclick="closeAttendance()">Cancel</button>
+                <button class="btn btn-primary" onclick="nextStep()">Next →</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ═══ SHIFT MANAGER MODAL ═══ -->
+<div class="modal-overlay" id="shiftManagerModal">
+    <div class="modal" style="max-width:520px;">
+        <div class="modal-header">
+            <div>
+                <h2>⚙️ Shift <span>Manager</span></h2>
+                <p style="font-size:0.78rem;color:#aaa;margin-top:3px;">Define custom working hours for each shift</p>
+            </div>
+            <button class="modal-close" id="closeShiftManager">✕</button>
+        </div>
+        <div class="modal-body" style="overflow-y:auto;">
+
+            <!-- Morning Shift -->
+            <div class="sm-shift-block" id="smBlockMorning">
+                <div class="sm-shift-header">
+                    <div class="sm-shift-dot" style="background:#4caf50;"></div>
+                    <div class="sm-shift-title">
+                        <span class="sm-shift-icon">🌅</span>
+                        <div>
+                            <div class="sm-shift-name">Morning Shift</div>
+                            <div class="sm-shift-current" id="smCurrentMorning">—</div>
+                        </div>
+                    </div>
+                    <div class="sm-duration-badge" id="smDurMorning">—</div>
+                </div>
+                <div class="sm-shift-inputs">
+                    <div class="sm-input-group">
+                        <label>Start Time</label>
+                        <input type="time" class="sm-time-input" id="smMorningStart" value="08:00">
+                    </div>
+                    <div class="sm-arrow">→</div>
+                    <div class="sm-input-group">
+                        <label>End Time</label>
+                        <input type="time" class="sm-time-input" id="smMorningEnd" value="17:00">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Afternoon Shift -->
+            <div class="sm-shift-block" id="smBlockAfternoon">
+                <div class="sm-shift-header">
+                    <div class="sm-shift-dot" style="background:var(--gold);"></div>
+                    <div class="sm-shift-title">
+                        <span class="sm-shift-icon">☀️</span>
+                        <div>
+                            <div class="sm-shift-name">Afternoon Shift</div>
+                            <div class="sm-shift-current" id="smCurrentAfternoon">—</div>
+                        </div>
+                    </div>
+                    <div class="sm-duration-badge" id="smDurAfternoon">—</div>
+                </div>
+                <div class="sm-shift-inputs">
+                    <div class="sm-input-group">
+                        <label>Start Time</label>
+                        <input type="time" class="sm-time-input" id="smAfternoonStart" value="14:00">
+                    </div>
+                    <div class="sm-arrow">→</div>
+                    <div class="sm-input-group">
+                        <label>End Time</label>
+                        <input type="time" class="sm-time-input" id="smAfternoonEnd" value="22:00">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evening Shift -->
+            <div class="sm-shift-block" id="smBlockEvening">
+                <div class="sm-shift-header">
+                    <div class="sm-shift-dot" style="background:#2196f3;"></div>
+                    <div class="sm-shift-title">
+                        <span class="sm-shift-icon">🌙</span>
+                        <div>
+                            <div class="sm-shift-name">Evening Shift</div>
+                            <div class="sm-shift-current" id="smCurrentEvening">—</div>
+                        </div>
+                    </div>
+                    <div class="sm-duration-badge" id="smDurEvening">—</div>
+                </div>
+                <div class="sm-shift-inputs">
+                    <div class="sm-input-group">
+                        <label>Start Time</label>
+                        <input type="time" class="sm-time-input" id="smEveningStart" value="22:00">
+                    </div>
+                    <div class="sm-arrow">→</div>
+                    <div class="sm-input-group">
+                        <label>End Time</label>
+                        <input type="time" class="sm-time-input" id="smEveningEnd" value="06:00">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info note -->
+            <div class="sm-info-note">
+                💡 Changes apply immediately to the Attendance Taking modal and Shift panel. Duration is auto-calculated — overnight shifts (end &lt; start) are supported.
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" id="smResetDefaults">↺ Reset Defaults</button>
+            <div class="modal-footer-right">
+                <button class="btn btn-outline" id="smCancel">Cancel</button>
+                <button class="btn btn-success" id="smSave">✓ Save Shifts</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    /* ── Clock ── */
+    function updateClock() {
+        const now = new Date();
+        const dateEl = document.getElementById('currentDate');
+        const timeEl = document.getElementById('currentTime');
+        if (dateEl) dateEl.textContent = now.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+        if (timeEl) timeEl.textContent = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    /* ── Calendar ── */
+    let calDate = new Date();
+    function renderCalendar(d) {
+        const label = document.getElementById('calMonthLabel');
+        const grid  = document.getElementById('calGrid');
+        if (!label || !grid) return;
+        label.textContent = d.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+
+        const dayNames = grid.querySelectorAll('.cal-day-name');
+        grid.innerHTML = '';
+        dayNames.forEach(n => grid.appendChild(n));
+
+        const first = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
+        const days  = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+        const today = new Date();
+
+        for (let i = 0; i < first; i++) {
+            const el = document.createElement('div');
+            el.className = 'cal-day other-month';
+            grid.appendChild(el);
+        }
+
+        for (let day = 1; day <= days; day++) {
+            const el = document.createElement('div');
+            el.className = 'cal-day';
+            el.textContent = day;
+            if (day === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear())
+                el.classList.add('today');
+            el.addEventListener('click', () => {
+                grid.querySelectorAll('.cal-day.selected').forEach(s => s.classList.remove('selected'));
+                el.classList.add('selected');
+                const fi = document.getElementById('filterDate');
+                if (fi) {
+                    fi.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                    loadAttendance();
+                }
+            });
+            grid.appendChild(el);
+        }
+    }
+    renderCalendar(calDate);
+    document.getElementById('calPrev')?.addEventListener('click', () => { calDate.setMonth(calDate.getMonth()-1); renderCalendar(calDate); });
+    document.getElementById('calNext')?.addEventListener('click', () => { calDate.setMonth(calDate.getMonth()+1); renderCalendar(calDate); });
+
+    /* ══════════════════════════════════════════════════════
+       STATE  –  expose on window so verifyIdentity() can read it
+       ══════════════════════════════════════════════════════ */
+    window.state = { currentStep: 1, isSubmitting: false, stream: null, cameraReady: false };
+
+    /* ── DOM refs ── */
+    const modal          = document.getElementById("attendanceModal");
+    const openBtn        = document.getElementById("openClockModal");
+    const closeBtn       = document.getElementById("closeAttendanceModal");
+    const backBtn        = document.querySelector(".modal-footer .btn-outline");
+    const nextBtn        = document.querySelector(".modal-footer .btn-primary");
+    // Expose globally so the outside verifyIdentity() function can access it
+    window.cameraFeed    = document.getElementById("cameraFeed");
+    const employeeSelect = document.getElementById("employeeSelect");
+
+    const hf = {
+        action:     document.getElementById("attendanceAction"),
+        shiftName:  document.getElementById("shiftName"),
+        shiftStart: document.getElementById("shiftStart"),
+        shiftEnd:   document.getElementById("shiftEnd")
+    };
+
+    /* ── Load employees into dropdown ── */
+    async function loadEmployees() {
+        if (!employeeSelect) return;
+        employeeSelect.innerHTML = `<option value="">— Choose an employee —</option>`;
+        try {
+            const res  = await fetch("/api/employees");
+            const data = await res.json();
+            if (!data.success) { showToast(data.message || "Failed to load employees", "error"); return; }
+            data.employees.forEach(emp => {
+                const opt = document.createElement("option");
+                opt.value       = emp.employee_id;
+                opt.textContent = `${emp.full_name} — ${emp.role}`;
+                employeeSelect.appendChild(opt);
+            });
+        } catch { showToast("Error loading employees", "error"); }
+    }
+
+    /* ── Modal open/close ── */
+    openBtn?.addEventListener("click", () => {
+        modal.classList.add("open");
+        resetModal();
+        loadEmployees();
+    });
+    closeBtn?.addEventListener("click", closeModalFn);
+    function closeModalFn() { stopCamera(); modal.classList.remove("open"); resetModal(); loadAttendance(); }
+    window.closeAttendance = closeModalFn;
+
+    function resetModal() {
+        state.currentStep  = 1;
+        state.isSubmitting = false;
+        state.cameraReady  = false;
+        Object.values(hf).forEach(f => { if (f) f.value = ""; });
+        if (employeeSelect) employeeSelect.value = "";
+        showStep(1);
+    }
+
+    /* ── Step navigation ── */
+    function showStep(step) {
+        document.querySelectorAll(".step-panel").forEach(p => p.classList.remove("active"));
+        document.getElementById(`panelStep${step}`)?.classList.add("active");
+
+        document.querySelectorAll(".step").forEach((el, i) => {
+            el.classList.remove("active", "done");
+            if (i + 1 < step)      el.classList.add("done");
+            else if (i + 1 === step) el.classList.add("active");
+        });
+
+        if (backBtn) backBtn.style.display    = step === 1 ? "none" : "inline-flex";
+        if (nextBtn) nextBtn.style.display    = (step === 3 || step === 4) ? "none" : "inline-flex";
+
+        state.currentStep = step;
+
+        if (step === 3) {
+            // Reset overlay message and liveness state when entering Face Verify step
+            const overlay = document.getElementById("verifyOverlay");
+            if (overlay) overlay.textContent = "⬆️ Move your head UP";
+            lastCaptureTime = 0;   // allow immediate first send
+
+            // Tell backend to clear any stale liveness session for this employee
+            const empId = document.getElementById("employeeSelect")?.value;
+            if (empId) {
+                fetch("/reset_liveness", {
+                    method:  "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body:    JSON.stringify({ employee_id: empId })
+                }).catch(() => {});
+            }
+
+            setTimeout(() => { startCamera(); }, 300);
+        } else {
+            stopCamera();
+        }
+    }
+    window.showStep  = showStep;
+    window.nextStep  = () => { if (state.currentStep < 4) showStep(state.currentStep + 1); };
+    window.prevStep  = () => { if (state.currentStep > 1) showStep(state.currentStep - 1); };
+
+    // el = the clicked .shift-option element (passed explicitly from onclick)
+    window.selectAction = (action, el) => {
+        if (!employeeSelect?.value) { showToast("Please select an employee first.", "error"); return; }
+        hf.action.value = action;
+        // Highlight selected card using the explicitly passed element
+        document.querySelectorAll('#panelStep1 .shift-option').forEach(e => e.classList.remove('selected'));
+        el?.classList.add('selected');
+        setTimeout(() => showStep(2), 250);
+    };
+
+    window.selectShift = (name, start, end) => {
+        hf.shiftName.value  = name;
+        hf.shiftStart.value = start;
+        hf.shiftEnd.value   = end;
+        document.querySelectorAll('#panelStep2 .shift-option').forEach(el => el.classList.remove('selected'));
+        event?.currentTarget?.classList.add('selected');
+        setTimeout(() => showStep(3), 250);
+    };
+
+    /* ── Camera ── */
+    async function startCamera() {
+        if (state.stream) return;
+        if (!navigator.mediaDevices?.getUserMedia) { showToast("Camera not supported.", "error"); return; }
+        try {
+            state.stream = await navigator.mediaDevices.getUserMedia({
+                video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }
+            });
+            window.cameraFeed.srcObject = state.stream;
+            await window.cameraFeed.play();
+
+            // ── Camera warm-up: wait 2 s for auto-exposure to stabilise ──────
+            // The first 1–2 seconds of a cold webcam stream are always dark /
+            // underexposed.  Sending those frames to /verify_face causes the
+            // blur-score check to fire even though the camera is fine.
+            // We simply hold off autoVerifyLoop for 2 s after the stream starts.
+            state.cameraReady = false;
+            setTimeout(() => { state.cameraReady = true; }, 2000);
+
+        } catch (e) {
+            if (e.name === "NotAllowedError") showToast("Camera permission denied.", "error");
+            else if (e.name === "NotFoundError") showToast("No camera found.", "error");
+            else showToast("Unable to access camera.", "error");
+        }
+    }
+
+    function stopCamera() {
+        if (state.stream) {
+            state.stream.getTracks().forEach(t => t.stop());
+            state.stream = null;
+            window.cameraFeed.srcObject = null;
+        }
+    }
+
+    /* ══════════════════════════════════════════════════════
+       ATTENDANCE TABLE + STAT CARDS
+       ══════════════════════════════════════════════════════ */
+    window.loadAttendance = async function loadAttendance() {
+        const body     = document.getElementById("attendanceTableBody");
+        const count    = document.getElementById("recordCount");
+        const dateVal  = document.getElementById("filterDate")?.value   || "";
+        const searchVal= document.getElementById("searchInput")?.value  || "";
+        const shiftFil = document.getElementById("filterShift")?.value  || "";
+
+        const qs = new URLSearchParams();
+        if (dateVal)   qs.set("date",   dateVal);
+        if (searchVal) qs.set("search", searchVal);
+
+        try {
+            const res = await fetch("/api/attendance?" + qs.toString());
+            if (!res.ok) {
+                const txt = await res.text();
+                console.error("API /api/attendance error:", res.status, txt);
+                if (count) count.textContent = `Failed to load (${res.status})`;
+                showToast("Attendance table failed to load.", "error");
+                return;
+            }
+            const data = await res.json();
+            if (!data.success) {
+                if (count) count.textContent = data.message || "Failed to load";
+                showToast(data.message || "Failed to load", "error");
+                return;
+            }
+
+            let records = data.records || [];
+
+            // ── Apply client-side shift filter ──────────────────────────────
+            if (shiftFil) records = records.filter(r => (r.shift_type || "").toLowerCase() === shiftFil.toLowerCase());
+
+            if (count) count.textContent = `${records.length} record(s) for ${data.date}`;
+
+            // ── Update summary stat cards ────────────────────────────────────
+            updateStatCards(records);
+            // ── Update shift counts in side panel ───────────────────────────
+            updateShiftCounts(records);
+
+            if (!body) return;
+
+            if (records.length === 0) {
+                body.innerHTML = `
+                    <tr><td colspan="9">
+                        <div class="empty-state">
+                            <div class="empty-icon">📋</div>
+                            <p>No attendance records found for the selected filters.</p>
+                        </div>
+                    </td></tr>`;
+                return;
+            }
+
+            body.innerHTML = "";
+            records.forEach(r => {
+                const isComplete    = !!r.clock_out;
+                const statusText    = isComplete ? "Completed" : "In Progress";
+                const statusBadge   = isComplete
+                    ? `<span class="badge badge-present">Completed</span>`
+                    : `<span class="badge badge-late">In Progress</span>`;
+                const hours = (() => {
+                    if (r.hours_worked === null || r.hours_worked === undefined) return "—";
+                    const totalMins = Math.round(parseFloat(r.hours_worked) * 60);
+                    const h = Math.floor(totalMins / 60);
+                    const m = totalMins % 60;
+                    return `${h}h ${String(m).padStart(2, '0')}m`;
+                })();
+                const fulfill       = r.fulfill_working_hours === "YES";
+                const fulfillBadge  = fulfill
+                    ? `<span class="badge badge-present">✅ Yes</span>`
+                    : `<span class="badge badge-absent">No</span>`;
+                const initials      = (r.full_name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+
+
+                body.insertAdjacentHTML("beforeend", `
+                    <tr>
+                        <td>
+                            <div class="staff-cell">
+                                <div class="staff-avatar">${initials}</div>
+                                <div>
+                                    <div class="staff-name">${r.full_name}</div>
+                                    <div class="staff-role">${r.role || ""}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${r.role || "—"}</td>
+                        <td>${r.shift_type || "—"}</td>
+                        <td>${statusBadge}</td>
+                        <td class="time-cell">${r.clock_in  || '<span class="time-cell missing">—</span>'}</td>
+                        <td class="time-cell">${r.clock_out || '<span class="time-cell missing">—</span>'}</td>
+                        <td><span class="hours-chip ${fulfill ? 'over' : (r.hours_worked ? 'short' : '')}">${hours}</span></td>
+                        <td>${fulfillBadge}</td>
+                    </tr>`);
+            });
+
+        } catch (e) {
+            console.error("loadAttendance() error:", e);
+            if (count) count.textContent = "Error loading records";
+            showToast("Error loading attendance records.", "error");
+        }
+    };
+
+    /* ── Stat card updater ── */
+    function updateStatCards(records) {
+        const completed   = records.filter(r => r.clock_out).length;
+        const inProgress  = records.filter(r => r.clock_in && !r.clock_out).length;
+        const fulfilled   = records.filter(r => r.fulfill_working_hours === "YES").length;
+
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        setVal("statPresent",    records.length);
+        setVal("statCompleted",  completed);
+        setVal("statInProgress", inProgress);
+        setVal("statFulfilled",  fulfilled);
+
+        // Total active employees (fetch separately if stat card is 0)
+        if (document.getElementById("statTotal")?.textContent === "—") {
+            fetch("/api/employees").then(r => r.json()).then(d => {
+                if (d.success) setVal("statTotal", d.employees.length);
+            }).catch(() => {});
+        }
+    }
+
+    /* ── Shift count updater ── */
+    function updateShiftCounts(records) {
+        const count = (shift) => records.filter(r => (r.shift_type || "").toLowerCase() === shift).length;
+        const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+        el("shiftMorningCount",   count("morning"));
+        el("shiftAfternoonCount", count("afternoon"));
+        el("shiftEveningCount",   count("evening") + count("night"));
+    }
+
+    /* ── Save attendance after face verification succeeds ── */
+    window.saveAttendance = async function saveAttendance(imageData, verifyToken) {
+        const employee_id = employeeSelect?.value;
+        const action      = hf.action?.value;
+        const shift       = hf.shiftName?.value;
+
+        if (!employee_id || !action || !shift) {
+            showToast("Missing attendance data.", "error");
+            return;
+        }
+
+        if (!verifyToken) {
+            showToast("Face verification token missing — please verify again.", "error");
+            return;
+        }
+
+        try {
+            const res  = await fetch("/log_attendance", {
+                method:  "POST",
+                headers: { "Content-Type": "application/json" },
+                body:    JSON.stringify({ employee_id, shift_type: shift, action, verify_token: verifyToken })
+            });
+            const data = await res.json();
+
+            if (!data.success) {
+                showToast(data.message || "Attendance failed.", "error");
+                return;
+            }
+
+            // ── Populate Step 4 confirmation card ───────────────────────────
+            // Always use server-returned employee — after the token fix the
+            // backend clocks in whoever's FACE was verified, not the dropdown.
+            const now        = new Date();
+            const verifiedEmp = data.employee || {};
+            const empName    = verifiedEmp.full_name
+                               || employeeSelect.selectedOptions[0]?.text?.split(" — ")[0]
+                               || "Employee";
+            const empRole    = verifiedEmp.role || "";
+            const initials   = empName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+            const isClockIn  = action === "clock_in";
+
+            const setEl = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+            setEl("confirmEmployeeName", empName);
+            setEl("confirmRole",         empRole ? empRole.charAt(0).toUpperCase() + empRole.slice(1) : "");
+            setEl("confirmShift",        shift + " Shift");
+            setEl("confirmStatus",       isClockIn ? "Clock In Success" : "Clock Out Success");
+            setEl("confirmTime",         now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }));
+            setEl("confirmInitial",      initials);
+
+            const badge = document.getElementById("confirmBadge");
+            if (badge) {
+                badge.className = `confirm-type-badge ${isClockIn ? 'clock-in' : 'clock-out'}`;
+                badge.textContent = isClockIn ? "🟢 Clock In" : "🔴 Clock Out";
+            }
+
+            showStep(4);
+            showToast("✅ Face verified & attendance recorded!", "success");
+            loadAttendance();
+            setTimeout(closeAttendance, 3000);
+
+        } catch { showToast("System error recording attendance.", "error"); }
+    };
+
+    /* ── Toast ── */
+    window.showToast = function showToast(msg, type = "success") {
+        const c = document.getElementById("toastContainer");
+        const t = document.createElement("div");
+        t.className  = `toast ${type}`;
+        t.textContent = msg;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 3500);
+    };
+
+    /* ── Filter wiring ── */
+    document.getElementById("resetFilters")?.addEventListener("click", () => {
+        ["searchInput","filterDate","filterStatus","filterDepartment","filterShift"].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+        });
+        loadAttendance();
+    });
+    document.getElementById("searchInput")?.addEventListener("input", () => {
+        clearTimeout(window.__t);
+        window.__t = setTimeout(loadAttendance, 350);
+    });
+    document.getElementById("filterDate")?.addEventListener("change", loadAttendance);
+    document.getElementById("filterShift")?.addEventListener("change", loadAttendance);
+    document.getElementById("refreshBtn")?.addEventListener("click", loadAttendance);
+
+    // ── Reset mismatch lock when a different employee is selected ────────────
+    document.getElementById("employeeSelect")?.addEventListener("change", () => {
+        isMismatchLocked = false;
+        const overlayEl = document.getElementById("verifyOverlay");
+        const btn       = document.getElementById("verifyBtn");
+        if (overlayEl) { overlayEl.textContent = ""; overlayEl.style.color = ""; }
+        if (btn) {
+            btn.disabled    = false;
+            btn.textContent = "🔍 Verify Identity";
+            btn.style.background = "";
+        }
+    });
+
+    /* ── Initial load ── */
+    loadAttendance();
+    // Auto-refresh every 60 s
+    setInterval(loadAttendance, 60000);
+
+    /* ══════════════════════════════════════════════════════
+       SHIFT MANAGER
+       ══════════════════════════════════════════════════════ */
+
+    // Default shift configuration (stored in localStorage for persistence)
+    const SHIFT_DEFAULTS = {
+        morning:   { start: "08:00", end: "17:00" },
+        afternoon: { start: "14:00", end: "22:00" },
+        evening:   { start: "22:00", end: "06:00" }
+    };
+
+    // Load saved shifts from localStorage or fall back to defaults
+    function loadShiftConfig() {
+        try {
+            const saved = localStorage.getItem("bbcafe_shift_config");
+            return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(SHIFT_DEFAULTS));
+        } catch { return JSON.parse(JSON.stringify(SHIFT_DEFAULTS)); }
+    }
+
+    function saveShiftConfig(cfg) {
+        localStorage.setItem("bbcafe_shift_config", JSON.stringify(cfg));
+    }
+
+    // Convert "HH:MM" to 12-hr display e.g. "8:00 AM"
+    function fmt12(t) {
+        if (!t) return "—";
+        const [hRaw, m] = t.split(":").map(Number);
+        const suffix = hRaw >= 12 ? "PM" : "AM";
+        const h = hRaw % 12 || 12;
+        return `${h}:${String(m).padStart(2,'0')} ${suffix}`;
+    }
+
+    // Calculate duration in hours between two HH:MM strings (supports overnight)
+    function calcDuration(start, end) {
+        const [sh, sm] = start.split(":").map(Number);
+        const [eh, em] = end.split(":").map(Number);
+        let startMins = sh * 60 + sm;
+        let endMins   = eh * 60 + em;
+        if (endMins <= startMins) endMins += 24 * 60; // overnight
+        const diff = (endMins - startMins) / 60;
+        const hrs  = Math.floor(diff);
+        const mins = Math.round((diff - hrs) * 60);
+        return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
+    }
+
+    // Apply current shift config to the sidebar display
+    function applyShiftConfigToDisplay(cfg) {
+        const setTime = (id, start, end) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = `${fmt12(start)} – ${fmt12(end)}`;
+        };
+        setTime("displayMorningTime",   cfg.morning.start,   cfg.morning.end);
+        setTime("displayAfternoonTime", cfg.afternoon.start, cfg.afternoon.end);
+        setTime("displayEveningTime",   cfg.evening.start,   cfg.evening.end);
+    }
+
+    // Apply current shift config to the Attendance Taking modal (Step 2)
+    function applyShiftConfigToModal(cfg) {
+        // Update onclick handlers for Step 2 shift cards
+        const cards = document.querySelectorAll('#panelStep2 .shift-option');
+        const shifts = [
+            { name: "Morning",   ...cfg.morning },
+            { name: "Afternoon", ...cfg.afternoon },
+            { name: "Evening",   ...cfg.evening }
+        ];
+        cards.forEach((card, i) => {
+            if (!shifts[i]) return;
+            const s = shifts[i];
+            // Update time label inside card
+            const timeEl = card.querySelector('.s-time');
+            if (timeEl) timeEl.textContent = `${fmt12(s.start)} – ${fmt12(s.end)}`;
+            // Replace onclick
+            card.onclick = null;
+            card.addEventListener('click', function() {
+                window.selectShift(s.name, s.start, s.end);
+            });
+        });
+    }
+
+    // Populate the shift manager modal inputs with current config
+    function populateShiftManagerInputs(cfg) {
+        document.getElementById("smMorningStart").value   = cfg.morning.start;
+        document.getElementById("smMorningEnd").value     = cfg.morning.end;
+        document.getElementById("smAfternoonStart").value = cfg.afternoon.start;
+        document.getElementById("smAfternoonEnd").value   = cfg.afternoon.end;
+        document.getElementById("smEveningStart").value   = cfg.evening.start;
+        document.getElementById("smEveningEnd").value     = cfg.evening.end;
+        refreshShiftManagerPreviews(cfg);
+    }
+
+    // Refresh the live previews inside the shift manager modal
+    function refreshShiftManagerPreviews(cfg) {
+        const update = (currentId, durId, start, end) => {
+            const cur = document.getElementById(currentId);
+            const dur = document.getElementById(durId);
+            if (cur) cur.textContent = `${fmt12(start)} – ${fmt12(end)}`;
+            if (dur) dur.textContent = calcDuration(start, end);
+        };
+        update("smCurrentMorning",   "smDurMorning",   cfg.morning.start,   cfg.morning.end);
+        update("smCurrentAfternoon", "smDurAfternoon", cfg.afternoon.start, cfg.afternoon.end);
+        update("smCurrentEvening",   "smDurEvening",   cfg.evening.start,   cfg.evening.end);
+    }
+
+    // Live-update previews as admin types in the time inputs
+    function attachShiftManagerLiveUpdates() {
+        const inputs = document.querySelectorAll('.sm-time-input');
+        inputs.forEach(inp => {
+            inp.addEventListener('input', () => {
+                const live = {
+                    morning:   { start: document.getElementById("smMorningStart").value,   end: document.getElementById("smMorningEnd").value },
+                    afternoon: { start: document.getElementById("smAfternoonStart").value, end: document.getElementById("smAfternoonEnd").value },
+                    evening:   { start: document.getElementById("smEveningStart").value,   end: document.getElementById("smEveningEnd").value }
+                };
+                refreshShiftManagerPreviews(live);
+            });
+        });
+    }
+
+    // ── Open / Close Shift Manager ──
+    const shiftManagerModal = document.getElementById("shiftManagerModal");
+
+    document.getElementById("openShiftManager")?.addEventListener("click", () => {
+        const cfg = loadShiftConfig();
+        populateShiftManagerInputs(cfg);
+        shiftManagerModal.classList.add("open");
+    });
+
+    const closeShiftManagerFn = () => shiftManagerModal.classList.remove("open");
+    document.getElementById("closeShiftManager")?.addEventListener("click", closeShiftManagerFn);
+    document.getElementById("smCancel")?.addEventListener("click", closeShiftManagerFn);
+
+    // Reset to defaults
+    document.getElementById("smResetDefaults")?.addEventListener("click", () => {
+        populateShiftManagerInputs(JSON.parse(JSON.stringify(SHIFT_DEFAULTS)));
+        showToast("ℹ️ Defaults loaded — click Save to apply.", "info");
+    });
+
+    // Save shifts
+    document.getElementById("smSave")?.addEventListener("click", () => {
+        const newCfg = {
+            morning:   { start: document.getElementById("smMorningStart").value,   end: document.getElementById("smMorningEnd").value },
+            afternoon: { start: document.getElementById("smAfternoonStart").value, end: document.getElementById("smAfternoonEnd").value },
+            evening:   { start: document.getElementById("smEveningStart").value,   end: document.getElementById("smEveningEnd").value }
+        };
+
+        // Validate all fields are filled
+        const allFilled = Object.values(newCfg).every(s => s.start && s.end);
+        if (!allFilled) { showToast("Please fill in all shift times.", "error"); return; }
+
+        saveShiftConfig(newCfg);
+        applyShiftConfigToDisplay(newCfg);
+        applyShiftConfigToModal(newCfg);
+        closeShiftManagerFn();
+        showToast("✅ Shift times saved successfully!", "success");
+    });
+
+    // Attach live updates inside modal
+    attachShiftManagerLiveUpdates();
+
+    // ── Initialize on page load ──
+    (function initShifts() {
+        const cfg = loadShiftConfig();
+        applyShiftConfigToDisplay(cfg);
+        applyShiftConfigToModal(cfg);
+    })();
+
+}); // end DOMContentLoaded
+
+// ── Start the auto-verify polling loop once the page is ready ──────────────
+// autoVerifyLoop() checks state.currentStep internally; safe to call globally.
+window.addEventListener("load", () => { autoVerifyLoop(); });
+let isVerifying      = false;
+let lastCaptureTime  = 0;
+let isMismatchLocked = false;   // true after a confirmed face mismatch — halts auto-loop
+
+/**
+ * verifyIdentity()
+ * ─────────────────
+ * Captures one frame from the live camera, sends it to /verify_face,
+ * and on success calls saveAttendance() to record clock-in/out.
+ * 
+ * The backend implements liveness detection (head-nod challenge) and
+ * cosine-distance face matching via Facenet-512.  Feedback messages
+ * like "Move head UP / DOWN" are shown in the camera overlay until
+ * the liveness check passes and the face is confirmed.
+ */
+async function verifyIdentity() {
+
+    if (isVerifying) return;
+
+    const employee_id = document.getElementById("employeeSelect").value;
+    if (!employee_id) { showToast("Select an employee first.", "error"); return; }
+
+    isVerifying = true;
+    const btn      = document.getElementById("verifyBtn");
+    const overlayEl = document.getElementById("verifyOverlay");
+    if (btn) { btn.disabled = true; btn.textContent = "⏳ Verifying…"; }
+
+    try {
+        // ── Capture frame ────────────────────────────────────────────────
+        const canvas = document.createElement("canvas");
+        canvas.width  = cameraFeed.videoWidth  || 640;
+        canvas.height = cameraFeed.videoHeight || 480;
+        const ctx = canvas.getContext("2d");
+
+        // ── DO NOT mirror the canvas ──────────────────────────────────────
+        // CSS `transform: scaleX(-1)` on the <video> makes it look mirrored
+        // to the user. But pixels sent to the backend must be in natural
+        // (unmirrored) orientation — the backend flips them back itself.
+        // Previously this flip was being applied here AND the backend was
+        // also flipping, causing double-flip = wrong orientation for Haar
+        // detection → "No face detected" → liveness challenge never started.
+        ctx.drawImage(cameraFeed, 0, 0);
+
+        const imageData = canvas.toDataURL("image/jpeg", 0.92);  // higher quality = higher blur score
+
+        // ── Send to backend ──────────────────────────────────────────────
+        const res  = await fetch("/verify_face", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({ employee_id, image: imageData })
+        });
+        const data = await res.json();
+
+        // ── Always show backend message in overlay ────────────────────────
+        if (overlayEl) {
+            overlayEl.textContent = data.message || "";
+            overlayEl.style.color = data.mismatch ? "#ff4444" : "";
+        }
+
+        if (!data.success) {
+            if (data.locked) {
+                // ── 🔒 Server-side lockout — hard stop, no auto-retry ────
+                isMismatchLocked = true;
+                showToast(data.message, "error");
+                if (overlayEl) { overlayEl.textContent = data.message; overlayEl.style.color = "#ff4444"; }
+                if (btn) {
+                    btn.disabled    = true;
+                    btn.textContent = "🔒 Locked";
+                    btn.style.background = "#7f1d1d";
+                }
+                // Parse lockout duration from message if present (e.g. "30s")
+                const lockMatch = data.message.match(/(\d+)s/);
+                const lockMs    = lockMatch ? parseInt(lockMatch[1]) * 1000 : 30000;
+                setTimeout(async () => {
+                    isMismatchLocked = false;
+                    // Tell the backend to clear the liveness session too
+                    const empId = document.getElementById("employeeSelect").value;
+                    if (empId) {
+                        await fetch("/reset_liveness", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ employee_id: empId })
+                        }).catch(() => {});
+                    }
+                    if (overlayEl) { overlayEl.textContent = ""; overlayEl.style.color = ""; }
+                    if (btn) {
+                        btn.disabled    = false;
+                        btn.textContent = "🔍 Verify Identity";
+                        btn.style.background = "";
+                    }
+                }, lockMs);
+            } else if (data.mismatch) {
+                // ── ❌ Confirmed face mismatch — temporary UI lock ────────
+                isMismatchLocked = true;
+                showToast("🚫 Face does not match. Attendance denied.", "error");
+                if (btn) {
+                    btn.disabled    = true;
+                    btn.textContent = "🚫 Face Mismatch";
+                    btn.style.background = "#c0392b";
+                }
+                // Auto-unlock after 5 s and reset liveness on backend too
+                setTimeout(async () => {
+                    isMismatchLocked = false;
+                    const empId = document.getElementById("employeeSelect").value;
+                    if (empId) {
+                        await fetch("/reset_liveness", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ employee_id: empId })
+                        }).catch(() => {});
+                    }
+                    if (overlayEl) { overlayEl.textContent = ""; overlayEl.style.color = ""; }
+                    if (btn) {
+                        btn.disabled    = false;
+                        btn.textContent = "🔍 Verify Identity";
+                        btn.style.background = "";
+                    }
+                }, 5000);
+            }
+            // Keep loop running for liveness instructions (non-mismatch failures)
+            return;
+        }
+
+        // ── ✅ Face verified → save attendance ───────────────────────────
+        isMismatchLocked = false;
+        showToast("🔓 " + data.message, "success");
+        await saveAttendance(imageData, data.verify_token);
+
+    } catch (err) {
+        console.error("verifyIdentity error:", err);
+        if (overlayEl) overlayEl.textContent = "Connection error – retrying…";
+    } finally {
+        isVerifying = false;
+        if (btn) { btn.disabled = false; btn.textContent = "🔍 Verify Identity"; }
+    }
+}
+
+/**
+ * autoVerifyLoop()
+ * ─────────────────
+ * Runs while the user is on Step 3 (Face Verify).
+ * Sends a frame every 2.5 seconds; the backend's liveness challenge
+ * guides the user (UP → DOWN nod) until liveness passes and the face
+ * is matched, then attendance is recorded automatically.
+ *
+ * Interval is intentionally generous (2.5 s) so the server has time to
+ * finish the DeepFace embedding call before the next frame arrives —
+ * stacking simultaneous DeepFace calls is what causes the server crash.
+ */
+function autoVerifyLoop() {
+    setInterval(() => {
+        if (state.currentStep !== 3) return;
+        if (isVerifying) return;            // don't stack – wait for current call
+        if (isMismatchLocked) return;       // halted after face mismatch — wait for cooldown
+        if (!state.cameraReady) return;     // wait for auto-exposure to settle
+        const now = Date.now();
+        if (now - lastCaptureTime < 2500) return;
+        lastCaptureTime = now;
+        verifyIdentity();
+    }, 500);
+}
+
+
+</script>
+
+</body>
+</html>
