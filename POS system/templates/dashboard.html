@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Books & Blooms Café - Admin Dashboard</title>
+        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            :root {
+                --gold: #c9a961;
+                --dark-gold: #a88850;
+                --black: #1a1a1a;
+                --dark-gray: #2d2d2d;
+                --light-gray: #f5f5f5;
+                --cream: #faf8f4;
+                --white: #ffffff;
+                --shadow: rgba(0, 0, 0, 0.1);
+                --success: #4caf50;
+                --warning: #ff9800;
+                --danger: #dc3545;
+                --info: #2196f3;
+            }
+
+            body {
+                font-family: 'DM Sans', sans-serif;
+                background: #f0f0f0;
+                color: var(--black);
+                overflow-x: hidden;
+            }
+
+            /* Header */
+            header {
+                background: var(--black);
+                border-bottom: 3px solid var(--gold);
+                padding: 1.25rem 2rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                position: sticky;
+                top: 0;
+                z-index: 100;
+            }
+
+            .logo {
+                display: flex;
+                align-items: center;
+                gap: 1.25rem;
+            }
+
+            .logo-icon {
+                width: 55px;
+                height: 55px;
+                background: transparent;
+                border: 2px solid var(--gold);
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--gold);
+                font-size: 28px;
+            }
+
+            .logo-text h1 {
+                font-family: 'Cormorant Garamond', serif;
+                font-size: 1.75rem;
+                font-weight: 400;
+                color: var(--white);
+                letter-spacing: 1px;
+                line-height: 1.2;
+            }
+
+            .logo-text h1 span {
+                color: var(--gold);
+            }
+
+            .logo-subtitle {
+                font-size: 0.7rem;
+                color: var(--gold);
+                text-transform: uppercase;
+                letter-spacing: 4px;
+                font-weight: 400;
+                margin-top: 2px;
+            }
+
+            .header-actions {
+                display: flex;
+                align-items: center;
+                gap: 2rem;
+            }
+
+            .date-time {
+                text-align: right;
+            }
+
+            .date-time .date {
+                color: var(--gold);
+                font-size: 0.9rem;
+                font-weight: 600;
+            }
+
+            .date-time .time {
+                color: #999;
+                font-size: 0.85rem;
+                margin-top: 2px;
+            }
+
+            .user-info {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                background: var(--dark-gray);
+                padding: 0.75rem 1.25rem;
+                border-radius: 8px;
+                border: 1px solid rgba(201, 169, 97, 0.3);
+            }
+
+            .user-avatar {
+                width: 45px;
+                height: 45px;
+                border-radius: 50%;
+                background: var(--gold);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--black);
+                font-weight: 700;
+                font-size: 1rem;
+            }
+
+            .user-details h3 {
+                font-size: 0.95rem;
+                font-weight: 600;
+                color: var(--white);
+                margin-bottom: 2px;
+            }
+
+            .user-details p {
+                font-size: 0.8rem;
+                color: var(--gold);
+            }
+
+            .logout-btn {
+                background: var(--danger);
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 6px;
+                font-weight: 600;
+                cursor: pointer;
+                font-size: 0.85rem;
+                transition: all 0.3s ease;
+                text-decoration: none;
+                display: inline-block;
+            }
+
+            .logout-btn:hover {
+                background: #c82333;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+            }
+
+            /* Navigation */
+            nav {
+                background: var(--dark-gray);
+                border-bottom: 1px solid rgba(201, 169, 97, 0.2);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                position: sticky;
+                top: 87px;
+                z-index: 99;
+            }
+
+            nav ul {
+                list-style: none;
+                display: flex;
+                gap: 0;
+                margin: 0;
+                padding: 0;
+                overflow-x: auto;
+            }
+
+            nav ul::-webkit-scrollbar {
+                height: 3px;
+            }
+
+            nav ul::-webkit-scrollbar-track {
+                background: var(--black);
+            }
+
+            nav ul::-webkit-scrollbar-thumb {
+                background: var(--gold);
+            }
+
+            nav li {
+                flex-shrink: 0;
+            }
+
+            nav a {
+                display: block;
+                padding: 1rem 1.75rem;
+                text-decoration: none;
+                color: #aaa;
+                font-weight: 600;
+                font-size: 0.9rem;
+                transition: all 0.2s ease;
+                border-bottom: 3px solid transparent;
+                white-space: nowrap;
+            }
+
+            nav a:hover {
+                background: rgba(201, 169, 97, 0.1);
+                color: var(--gold);
+            }
+
+            nav a.active {
+                color: var(--gold);
+                background: rgba(201, 169, 97, 0.15);
+                border-bottom-color: var(--gold);
+            }
+
+            /* Main Content */
+            .container {
+                max-width: 1600px;
+                margin: 0 auto;
+                padding: 2rem;
+            }
+
+            .page-header {
+                margin-bottom: 2rem;
+            }
+
+            .page-title {
+                font-family: 'Cormorant Garamond', serif;
+                font-size: 2.5rem;
+                font-weight: 600;
+                color: var(--black);
+                margin-bottom: 0.5rem;
+            }
+
+            .page-subtitle {
+                color: #666;
+                font-size: 1.05rem;
+            }
+
+            /* Summary Cards */
+            .summary-cards {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .card {
+                background: white;
+                border-radius: 10px;
+                padding: 1.75rem;
+                box-shadow: 0 2px 10px var(--shadow);
+                border: 1px solid #e0e0e0;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 4px;
+                background: var(--gold);
+                transform: scaleX(0);
+                transition: transform 0.3s ease;
+            }
+
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 6px 20px rgba(201, 169, 97, 0.25);
+            }
+
+            .card:hover::before {
+                transform: scaleX(1);
+            }
+
+            .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 1.25rem;
+            }
+
+            .card-icon {
+                width: 55px;
+                height: 55px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.8rem;
+                margin-bottom: 1rem;
+            }
+
+            .card-icon.gold {
+                background: linear-gradient(135deg, var(--gold), var(--dark-gold));
+                color: var(--black);
+            }
+
+            .card-icon.success {
+                background: linear-gradient(135deg, #4caf50, #388e3c);
+                color: white;
+            }
+
+            .card-icon.warning {
+                background: linear-gradient(135deg, #ff9800, #f57c00);
+                color: white;
+            }
+
+            .card-icon.danger {
+                background: linear-gradient(135deg, #dc3545, #c82333);
+                color: white;
+            }
+
+            .card-title {
+                font-size: 0.9rem;
+                color: #666;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 0.75rem;
+            }
+
+            .card-value {
+                font-size: 2.5rem;
+                font-weight: 800;
+                color: var(--black);
+                line-height: 1;
+                margin-bottom: 0.75rem;
+            }
+
+            .card-change {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.4rem 0.8rem;
+                border-radius: 6px;
+                font-size: 0.85rem;
+                font-weight: 600;
+            }
+
+            .card-change.positive {
+                background: #e8f5e9;
+                color: var(--success);
+            }
+
+            .card-change.negative {
+                background: #ffebee;
+                color: var(--danger);
+            }
+
+            /* Analytics Section */
+            .analytics-grid {
+                display: grid;
+                grid-template-columns: 2fr 1fr;
+                gap: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .chart-card {
+                background: white;
+                border-radius: 10px;
+                padding: 2rem;
+                box-shadow: 0 2px 10px var(--shadow);
+                border: 1px solid #e0e0e0;
+            }
+
+            .chart-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 2rem;
+                padding-bottom: 1rem;
+                border-bottom: 2px solid var(--gold);
+            }
+
+            .chart-title {
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: var(--black);
+            }
+
+            .chart-filter {
+                display: flex;
+                gap: 0.5rem;
+            }
+
+            .filter-btn {
+                padding: 0.5rem 1rem;
+                border: 2px solid #ddd;
+                background: white;
+                border-radius: 6px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                color: var(--black);
+            }
+
+            .filter-btn:hover,
+            .filter-btn.active {
+                border-color: var(--gold);
+                background: var(--black);
+                color: var(--gold);
+            }
+
+            .chart-placeholder {
+                height: 350px;
+                background: linear-gradient(to top, rgba(201, 169, 97, 0.05), transparent);
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .chart-bars {
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-around;
+                height: 100%;
+                width: 100%;
+                padding: 2rem;
+            }
+
+            .bar {
+                width: 50px;
+                background: linear-gradient(to top, var(--gold), var(--dark-gold));
+                border-radius: 6px 6px 0 0;
+                position: relative;
+                transition: all 0.3s ease;
+                opacity: 0.8;
+            }
+
+            .bar:hover {
+                opacity: 1;
+                transform: translateY(-5px);
+            }
+
+            .bar-label {
+                position: absolute;
+                bottom: -30px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 0.75rem;
+                color: #666;
+                font-weight: 600;
+            }
+
+            .bar-value {
+                position: absolute;
+                top: -25px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 0.8rem;
+                font-weight: 700;
+                color: var(--black);
+            }
+
+            /* Recent Transactions */
+            .transactions-list {
+                max-height: 430px;
+                overflow-y: auto;
+            }
+
+            .transactions-list::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .transactions-list::-webkit-scrollbar-track {
+                background: #f0f0f0;
+                border-radius: 10px;
+            }
+
+            .transactions-list::-webkit-scrollbar-thumb {
+                background: var(--gold);
+                border-radius: 10px;
+            }
+
+            .transaction-item {
+                padding: 1rem;
+                border-bottom: 1px solid #f0f0f0;
+                transition: all 0.2s ease;
+            }
+
+            .transaction-item:hover {
+                background: var(--light-gray);
+            }
+
+            .transaction-item:last-child {
+                border-bottom: none;
+            }
+
+            .transaction-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: start;
+                margin-bottom: 0.5rem;
+            }
+
+            .transaction-id {
+                font-weight: 700;
+                color: var(--black);
+                font-size: 0.95rem;
+            }
+
+            .transaction-amount {
+                font-weight: 800;
+                color: var(--gold);
+                font-size: 1.1rem;
+            }
+
+            .transaction-details {
+                display: flex;
+                justify-content: space-between;
+                font-size: 0.85rem;
+                color: #666;
+            }
+
+            .transaction-time {
+                color: #999;
+                font-size: 0.8rem;
+            }
+
+            /* Bottom Grid */
+            .bottom-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+                gap: 1.5rem;
+            }
+
+            /* Table Styles */
+            .table-container {
+                overflow-x: auto;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            thead {
+                background: var(--black);
+                color: var(--gold);
+            }
+
+            th {
+                padding: 1rem;
+                text-align: left;
+                font-weight: 700;
+                font-size: 0.85rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            td {
+                padding: 1rem;
+                border-bottom: 1px solid #f0f0f0;
+                font-size: 0.9rem;
+            }
+
+            tbody tr:hover {
+                background: var(--light-gray);
+            }
+
+            .badge {
+                display: inline-block;
+                padding: 0.35rem 0.75rem;
+                border-radius: 12px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                text-transform: uppercase;
+            }
+
+            .badge.low {
+                background: #ffebee;
+                color: var(--danger);
+            }
+
+            .badge.medium {
+                background: #fff3e0;
+                color: var(--warning);
+            }
+
+            .badge.high {
+                background: #e8f5e9;
+                color: var(--success);
+            }
+
+            /* Empty State */
+            .empty-state {
+                text-align: center;
+                padding: 3rem;
+                color: #999;
+            }
+
+            .empty-state-icon {
+                font-size: 4rem;
+                margin-bottom: 1rem;
+                opacity: 0.3;
+            }
+
+            /* Responsive */
+            @media (max-width: 1200px) {
+                .analytics-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .container {
+                    padding: 1rem;
+                }
+
+                .summary-cards {
+                    grid-template-columns: 1fr;
+                }
+
+                .page-title {
+                    font-size: 2rem;
+                }
+
+                header {
+                    padding: 1rem;
+                }
+
+                .logo-text h1 {
+                    font-size: 1.4rem;
+                }
+
+                .header-actions {
+                    gap: 1rem;
+                }
+
+                .date-time {
+                    display: none;
+                }
+
+                nav a {
+                    padding: 1rem;
+                    font-size: 0.85rem;
+                }
+
+                .bottom-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            /* Animations */
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .card {
+                animation: fadeInUp 0.5s ease-out backwards;
+            }
+
+            .card:nth-child(1) { animation-delay: 0.1s; }
+            .card:nth-child(2) { animation-delay: 0.2s; }
+            .card:nth-child(3) { animation-delay: 0.3s; }
+            .card:nth-child(4) { animation-delay: 0.4s; }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+            <div class="logo-icon">📚</div>
+                <div class="logo-text">
+                    <h1>Books <span>&</span> Blooms</h1>
+                    <div class="logo-subtitle">CAFÉ</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="date-time">
+                    <div class="date" id="currentDate"></div>
+                    <div class="time" id="currentTime"></div>
+                </div>
+                <div class="user-info">
+                    <div class="user-details">
+                        <h3>{{ full_name or 'Admin User' }}</h3>
+                        <p>{{ session.get('role')|capitalize }}</p>
+                    </div>
+                    <div class="user-avatar">{{ full_name[0] if full_name else 'A' }}</div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn">➜] Logout</a>
+            </div>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}" class="active">Dashboard</a></li>
+                <li><a href="{{ url_for('admin_sales') }}">Sales</a></li>
+                <li><a href="{{ url_for('inventory') }}">Inventory</a></li>
+                <li><a href="{{ url_for('staff_attendance') }}">Staff Attendance</a></li>
+                <li><a href="{{ url_for('product_management') }}">Product Management</a></li>
+                <li><a href="{{ url_for('admin_settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('employee_management') }}">Employee Management</a></li>
+                <li><a href="{{ url_for('payroll') }}">Payroll</a></li>
+            </ul>
+        </nav>
+
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Dashboard Overview</h1>
+                <p class="page-subtitle">Welcome back! Here's what's happening with your café today.</p>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="card">
+                    <div class="card-icon gold">💰</div>
+                    <div class="card-title">Today's Sales</div>
+                    <div class="card-value">₱{{ today_sales | default('—') }}</div>
+                    <div class="card-change {{ 'positive' if sales_change >= 0 else 'negative' }}">
+                        <span>{{ '↑' if sales_change >= 0 else '↓' }} {{ sales_change | abs }}%</span>
+                        <span style="color: #666; font-weight: 500;">vs yesterday</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon success">📊</div>
+                    <div class="card-title">Transactions</div>
+                    <div class="card-value">{{ transaction_count | default('—') }}</div>
+                    <div class="card-change {{ 'positive' if transaction_change >= 0 else 'negative' }}">
+                        <span>{{ '↑' if transaction_change >= 0 else '↓' }} {{ transaction_change | abs }}%</span>
+                        <span style="color: #666; font-weight: 500;">vs yesterday</span>
+                    </div>
+                </div>
+
+                <div class="card" id="dashLowStockCard" style="cursor:pointer" onclick="window.location='/inventory?stock=low'" title="Click to manage low-stock items">
+                    <div class="card-icon warning" id="dashLowStockIcon">📦</div>
+                    <div class="card-title">Low Stock Items</div>
+                    <div class="card-value" id="dashLowStockCount">{{ low_stock_count | default('—') }}</div>
+                    <div class="card-change negative" id="dashLowStockChange">
+                        <span id="dashLowStockBadge">↑ {{ new_low_stock_count | default(0) }} items</span>
+                        <span style="color: #666; font-weight: 500;">need restock</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon danger">🔥</div>
+                    <div class="card-title">Top Selling</div>
+                    <div class="card-value">{{ top_product_name | default('—') }}</div>
+                    <div class="card-change positive">
+                        <span>{{ top_product_units | default(0) }} sold</span>
+                        <span style="color: #666; font-weight: 500;">today</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Grid -->
+            <div class="analytics-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Sales Analytics</h3>
+                        <div class="chart-filter">
+                            <button class="filter-btn active">Week</button>
+                            <button class="filter-btn">Month</button>
+                            <button class="filter-btn">Year</button>
+                        </div>
+                    </div>
+                    <div class="chart-placeholder">
+                        {% if sales_chart_data %}
+                        <div class="chart-bars">
+                            {% for point in sales_chart_data %}
+                            <div class="bar" style="height: {{ point.height_pct }}%;">
+                                <div class="bar-value">₱{{ point.label }}</div>
+                                <div class="bar-label">{{ point.day }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📈</div>
+                            <p>No sales data available</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Recent Transactions</h3>
+                    </div>
+                    <div class="transactions-list">
+                        {% if recent_transactions %}
+                        {% for txn in recent_transactions %}
+                        <div class="transaction-item">
+                            <div class="transaction-header">
+                                <div class="transaction-id">#{{ txn.id }}</div>
+                                <div class="transaction-amount">₱{{ txn.amount }}</div>
+                            </div>
+                            <div class="transaction-details">
+                                <span>{{ txn.item_count }} item{{ 's' if txn.item_count != 1 }} • {{ txn.category }}</span>
+                            </div>
+                            <div class="transaction-time">{{ txn.time_ago }}</div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🧾</div>
+                            <p>No recent transactions</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Grid -->
+            <div class="bottom-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Low Stock Alert</h3>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Category</th>
+                                    <th>Stock</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashLowStockBody">
+                                {% if low_stock_items %}
+                                {% for item in low_stock_items %}
+                                <tr>
+                                    <td><strong>{{ item.name }}</strong></td>
+                                    <td>{{ item.category }}</td>
+                                    <td>{{ item.stock }} {{ item.unit }}</td>
+                                    <td><span class="badge {{ item.status_class }}">{{ item.status_label }}</span></td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">✅</div>
+                                            <p>All stock levels are healthy</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Top Selling Products</h3>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Category</th>
+                                    <th>Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if top_products %}
+                                {% for product in top_products %}
+                                <tr>
+                                    <td><strong>{{ product.name }}</strong></td>
+                                    <td>{{ product.category }}</td>
+                                    <td>{{ product.units_sold }}</td>
+                                    <td>₱{{ product.revenue }}</td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">📊</div>
+                                            <p>No sales data available yet</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Update date and time
+            function updateDateTime() {
+                const now = new Date();
+                
+                const dateOptions = { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                };
+                const dateStr = now.toLocaleDateString('en-US', dateOptions);
+                document.getElementById('currentDate').textContent = dateStr;
+                
+                const timeStr = now.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                document.getElementById('currentTime').textContent = timeStr;
+            }
+
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+
+            // Chart filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // ── Live low-stock polling ─────────────────────────────────────────
+            // Fetches /api/inventory/low-stock every 90 s and updates the card
+            // and the alert table without a full page reload.
+            const BADGE_MAP = { low: 'medium', out: 'low' };
+            const LABEL_MAP = { low: 'Low',    out: 'Critical' };
+
+            async function refreshLowStock() {
+                try {
+                    const res  = await fetch('/api/inventory/low-stock?limit=20');
+                    const data = await res.json();
+                    if (!data.success) return;
+
+                    const count   = data.count;
+                    const items   = data.items;
+                    const hasCrit = items.some(i => i.status === 'out');
+
+                    // ── Summary card ──────────────────────────────────────────
+                    const countEl  = document.getElementById('dashLowStockCount');
+                    const badgeEl  = document.getElementById('dashLowStockBadge');
+                    const iconEl   = document.getElementById('dashLowStockIcon');
+                    const cardEl   = document.getElementById('dashLowStockCard');
+
+                    if (countEl) countEl.textContent = count || '0';
+                    if (badgeEl) badgeEl.textContent = `↑ ${count} item${count !== 1 ? 's' : ''}`;
+                    if (iconEl)  iconEl.textContent   = hasCrit ? '🚨' : '📦';
+                    if (cardEl) {
+                        cardEl.style.borderColor = hasCrit ? 'var(--danger)' : '';
+                    }
+
+                    // ── Alert table ───────────────────────────────────────────
+                    const tbody = document.getElementById('dashLowStockBody');
+                    if (!tbody) return;
+
+                    if (items.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="4">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">✅</div>
+                                <p>All stock levels are healthy</p>
+                            </div></td></tr>`;
+                        return;
+                    }
+
+                    tbody.innerHTML = items.map(item => `
+                        <tr>
+                            <td><strong>${item.name}</strong></td>
+                            <td>${item.category}</td>
+                            <td>${item.stock} ${item.unit}</td>
+                            <td><span class="badge ${BADGE_MAP[item.status] || 'medium'}">${LABEL_MAP[item.status] || item.status}</span></td>
+                        </tr>`).join('');
+                } catch (e) { /* silent — non-critical */ }
+            }
+
+            // Run once on load then every 90 seconds
+            refreshLowStock();
+            setInterval(refreshLowStock, 90_000);
+        </script>
+    </body>
+    </html>
