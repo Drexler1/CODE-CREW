@@ -1,0 +1,3161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Books & Blooms Café — Inventory Management</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gold: #c9a961;
+            --dark-gold: #a88850;
+            --black: #1a1a1a;
+            --dark-gray: #2d2d2d;
+            --light-gray: #f5f5f5;
+            --white: #fff;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --success: #4caf50;
+            --danger: #dc3545;
+            --warning: #ff9800;
+            --info: #2196f3;
+            --header-h: 87px;
+            --nav-h: 50px;
+        }
+
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: 'DM Sans', sans-serif;
+            background: #f0f0f0;
+            color: var(--black);
+        }
+
+        .app-shell {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Header */
+        header {
+            flex: 0 0 var(--header-h);
+            background: var(--black);
+            border-bottom: 3px solid var(--gold);
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .logo-icon {
+            width: 55px;
+            height: 55px;
+            background: transparent;
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold);
+            font-size: 28px;
+        }
+
+        .logo-text h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.75rem;
+            font-weight: 400;
+            color: var(--white);
+            letter-spacing: 1px;
+            line-height: 1.2;
+        }
+
+        .logo-text h1 span {
+            color: var(--gold);
+        }
+
+        .logo-subtitle {
+            font-size: 0.7rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .date-time {
+            text-align: right;
+        }
+
+        .date-time .date {
+            color: var(--gold);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .date-time .time {
+            color: #999;
+            font-size: 0.85rem;
+            margin-top: 2px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--dark-gray);
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            border: 1px solid rgba(201, 169, 97, 0.3);
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--black);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .user-details h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 2px;
+        }
+
+        .user-details p {
+            font-size: 0.8rem;
+            color: var(--gold);
+        }
+
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+
+        /* Nav */
+        nav {
+            flex: 0 0 var(--nav-h);
+            background: var(--dark-gray);
+            border-bottom: 1px solid rgba(201, 169, 97, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 87px;
+            z-index: 99;
+            overflow: hidden;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: auto;
+        }
+
+        nav ul::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        nav ul::-webkit-scrollbar-track {
+            background: var(--black);
+        }
+
+        nav ul::-webkit-scrollbar-thumb {
+            background: var(--gold);
+        }
+
+        nav li {
+            flex-shrink: 0;
+            display: flex;
+        }
+
+        nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 1rem 1.75rem;
+            text-decoration: none;
+            color: #aaa;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        nav a:hover {
+            background: rgba(201, 169, 97, 0.1);
+            color: var(--gold);
+        }
+
+        nav a.active {
+            color: var(--gold);
+            background: rgba(201, 169, 97, 0.15);
+            border-bottom-color: var(--gold);
+        }
+
+        /* Content */
+        .page-content {
+            flex: 1 1 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .page-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .page-content::-webkit-scrollbar-thumb {
+            background: var(--gold);
+            border-radius: 3px;
+        }
+
+        .container {
+            padding: 1.5rem 2rem;
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: var(--black);
+            margin-bottom: 0.3rem;
+        }
+
+        .page-subtitle {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .header-btns {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            border: 2px solid transparent;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--black);
+            color: var(--gold);
+            border-color: var(--black);
+        }
+
+        .btn-primary:hover {
+            background: var(--gold);
+            color: var(--black);
+            border-color: var(--gold);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(201, 169, 97, 0.4);
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--black);
+            border-color: #ddd;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .btn-success:hover {
+            background: #388e3c;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 0.38rem 0.8rem;
+            font-size: 0.78rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Info Banner */
+        .info-banner {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.08), rgba(76, 175, 80, 0.03));
+            border: 1px solid rgba(76, 175, 80, 0.25);
+            border-left: 4px solid var(--success);
+            border-radius: 8px;
+            padding: 0.9rem 1.2rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.88rem;
+            color: #444;
+            line-height: 1.5;
+        }
+
+        .info-banner strong {
+            color: #388e3c;
+        }
+
+        /* Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.1rem 1.25rem;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 10px var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            animation: fadeIn 0.4s ease-out backwards;
+            cursor: default;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--gold);
+        }
+
+        .stat-card.clickable {
+            cursor: pointer;
+        }
+
+        .stat-card.clickable:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(201, 169, 97, 0.22);
+        }
+
+        .stat-card:nth-child(1) {
+            animation-delay: .05s
+        }
+
+        .stat-card:nth-child(2) {
+            animation-delay: .1s
+        }
+
+        .stat-card:nth-child(3) {
+            animation-delay: .15s
+        }
+
+        .stat-card:nth-child(4) {
+            animation-delay: .2s
+        }
+
+        .stat-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.gold {
+            background: linear-gradient(135deg, #c9a961, #a88850);
+        }
+
+        .stat-icon.green {
+            background: linear-gradient(135deg, #4caf50, #388e3c);
+        }
+
+        .stat-icon.orange {
+            background: linear-gradient(135deg, #ff9800, #e65100);
+        }
+
+        .stat-icon.red {
+            background: linear-gradient(135deg, #f44336, #c62828);
+        }
+
+        .stat-label {
+            font-size: 0.72rem;
+            color: #888;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--black);
+            line-height: 1;
+        }
+
+        .stat-sub {
+            font-size: 0.72rem;
+            color: #999;
+            margin-top: 0.15rem;
+        }
+
+        /* Two-column layout */
+        .inv-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Section Card */
+        .section-card {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 10px var(--shadow);
+            overflow: hidden;
+        }
+
+        .section-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-bottom: 2px solid var(--gold);
+            background: var(--black);
+        }
+
+        .section-card-header h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.15rem;
+            font-weight: 400;
+            color: var(--white);
+        }
+
+        .section-card-header h3 span {
+            color: var(--gold);
+        }
+
+        .section-card-body {
+            padding: 1.25rem;
+        }
+
+        /* Cup inventory cards */
+        .cups-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.85rem;
+        }
+
+        .cup-card {
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            padding: 1.1rem;
+            text-align: center;
+            transition: all 0.2s;
+            position: relative;
+            background: white;
+        }
+
+        .cup-card:hover {
+            border-color: var(--gold);
+            box-shadow: 0 4px 16px rgba(201, 169, 97, 0.18);
+        }
+
+        .cup-card.low {
+            border-color: var(--warning);
+            background: rgba(255, 152, 0, 0.04);
+        }
+
+        .cup-card.out {
+            border-color: var(--danger);
+            background: rgba(220, 53, 69, 0.04);
+        }
+
+        .cup-icon {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .cup-label {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .cup-count {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--black);
+            line-height: 1;
+            margin-bottom: 0.2rem;
+        }
+
+        .cup-count.warning {
+            color: var(--warning);
+        }
+
+        .cup-count.danger {
+            color: var(--danger);
+        }
+
+        .cup-unit {
+            font-size: 0.75rem;
+            color: #999;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .cup-status {
+            display: inline-block;
+            padding: 0.2rem 0.65rem;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.75rem;
+        }
+
+        .cup-status.ok {
+            background: rgba(76, 175, 80, 0.12);
+            color: #388e3c;
+        }
+
+        .cup-status.low {
+            background: rgba(255, 152, 0, 0.12);
+            color: #e65100;
+        }
+
+        .cup-status.out {
+            background: rgba(220, 53, 69, 0.12);
+            color: var(--danger);
+        }
+
+        .cup-adj-row {
+            display: flex;
+            gap: 0.4rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .adj-btn {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .adj-btn:hover {
+            border-color: var(--gold);
+            background: rgba(201, 169, 97, 0.1);
+        }
+
+        .adj-input {
+            width: 56px;
+            padding: 0.3rem 0.4rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            text-align: center;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            outline: none;
+        }
+
+        .adj-input:focus {
+            border-color: var(--gold);
+        }
+
+        .cup-restock-btn {
+            width: 100%;
+            margin-top: 0.6rem;
+            padding: 0.45rem;
+            background: var(--black);
+            color: var(--gold);
+            border: none;
+            border-radius: 6px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cup-restock-btn:hover {
+            background: var(--gold);
+            color: var(--black);
+        }
+
+        .cup-reorder-note {
+            font-size: 0.7rem;
+            color: #bbb;
+            margin-top: 0.3rem;
+        }
+
+        /* Auto-deduction log */
+        .deduction-log {
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .deduction-log::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .deduction-log::-webkit-scrollbar-thumb {
+            background: var(--gold);
+            border-radius: 3px;
+        }
+
+        .log-item {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            padding: 0.65rem 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .log-item:last-child {
+            border-bottom: none;
+        }
+
+        .log-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        .log-icon.sale {
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .log-icon.manual {
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .log-meta {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .log-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--black);
+        }
+
+        .log-detail {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 0.1rem;
+        }
+
+        .log-change {
+            font-size: 0.85rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .log-change.neg {
+            color: var(--danger);
+        }
+
+        .log-change.pos {
+            color: var(--success);
+        }
+
+        .empty-log {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #ccc;
+            font-size: 0.88rem;
+        }
+
+        /* Ingredients Table */
+        .ingredient-section {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 10px var(--shadow);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .ingredient-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-bottom: 2px solid var(--gold);
+            background: var(--black);
+        }
+
+        .ingredient-section-header h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.15rem;
+            font-weight: 400;
+            color: var(--white);
+        }
+
+        .ingredient-section-header h3 span {
+            color: var(--gold);
+        }
+
+        .ing-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1px solid #f0f0f0;
+            flex-wrap: wrap;
+        }
+
+        .ing-search {
+            position: relative;
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .ing-search input {
+            width: 100%;
+            padding: 0.5rem 0.85rem 0.5rem 2.2rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .ing-search input:focus {
+            border-color: var(--gold);
+        }
+
+        .ing-search::before {
+            content: '🔍';
+            position: absolute;
+            left: 0.6rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+        }
+
+        .filter-select {
+            padding: 0.5rem 0.85rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+            background: white;
+            transition: border-color 0.2s;
+        }
+
+        .filter-select:focus {
+            border-color: var(--gold);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--dark-gray);
+            color: #ccc;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        th {
+            padding: 0.8rem 1.1rem;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 0.85rem 1.1rem;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.88rem;
+            vertical-align: middle;
+        }
+
+        tbody tr:hover {
+            background: #fafafa;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .ing-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .ing-type {
+            display: inline-block;
+            padding: 0.15rem 0.55rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .ing-type.ingredient {
+            background: rgba(33, 150, 243, 0.1);
+            color: #1565c0;
+        }
+
+        .ing-type.packaging {
+            background: rgba(201, 169, 97, 0.12);
+            color: var(--dark-gold);
+        }
+
+        .stock-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .stock-bar {
+            flex: 1;
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+            min-width: 60px;
+        }
+
+        .stock-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        .stock-bar-fill.ok {
+            background: var(--success);
+        }
+
+        .stock-bar-fill.low {
+            background: var(--warning);
+        }
+
+        .stock-bar-fill.out {
+            background: var(--danger);
+        }
+
+        .stock-num {
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status-chip {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-chip.ok {
+            background: rgba(76, 175, 80, 0.12);
+            color: #388e3c;
+        }
+
+        .status-chip.low {
+            background: rgba(255, 152, 0, 0.12);
+            color: #e65100;
+        }
+
+        .status-chip.out {
+            background: rgba(220, 53, 69, 0.12);
+            color: var(--danger);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 0.4rem;
+            justify-content: flex-end;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 520px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalIn 0.25s ease;
+            overflow: hidden;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.96) translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.1rem 1.4rem;
+            border-bottom: 2px solid var(--gold);
+            background: var(--black);
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .modal-header h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.35rem;
+            font-weight: 400;
+        }
+
+        .modal-header h2 span {
+            color: var(--gold);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.3rem;
+            cursor: pointer;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--gold);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .form-group.full {
+            grid-column: 1/-1;
+        }
+
+        .form-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .form-label span {
+            color: var(--danger);
+        }
+
+        .form-control {
+            padding: 0.65rem 0.9rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+            width: 100%;
+        }
+
+        .form-control:focus {
+            border-color: var(--gold);
+        }
+
+        .form-control.error {
+            border-color: var(--danger);
+        }
+
+        .form-hint {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .form-error {
+            font-size: 0.75rem;
+            color: var(--danger);
+            display: none;
+        }
+
+        .form-control.error+.form-error {
+            display: block;
+        }
+
+        /* Adj modal big number */
+        .adj-modal-current {
+            text-align: center;
+            padding: 1.25rem 0 0.5rem;
+        }
+
+        .adj-modal-name {
+            font-size: 0.8rem;
+            color: #999;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.3rem;
+        }
+
+        .adj-modal-count {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--black);
+            line-height: 1;
+        }
+
+        .adj-modal-unit {
+            font-size: 0.9rem;
+            color: #aaa;
+            font-weight: 600;
+            margin-top: 0.2rem;
+        }
+
+        .adj-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            margin-top: 1.25rem;
+        }
+
+        .adj-row label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #555;
+            white-space: nowrap;
+        }
+
+        .adj-type-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .adj-type-btn {
+            flex: 1;
+            padding: 0.6rem 0.5rem;
+            border: 2px solid #ddd;
+            border-radius: 7px;
+            background: white;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .adj-type-btn:hover {
+            border-color: var(--gold);
+        }
+
+        .adj-type-btn.active.add {
+            background: #e8f5e9;
+            border-color: var(--success);
+            color: #2e7d32;
+        }
+
+        .adj-type-btn.active.sub {
+            background: #fce4ec;
+            border-color: var(--danger);
+            color: #c62828;
+        }
+
+        .delete-modal-w {
+            max-width: 420px;
+        }
+
+        .delete-body {
+            text-align: center;
+            padding: 2rem 1.5rem;
+        }
+
+        .delete-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(198,40,40,0.1);
+            color: #c62828;
+            margin: 0 auto 0.75rem;
+        }
+
+        .delete-body h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+        }
+
+        .delete-body p {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .delete-name {
+            font-weight: 700;
+            color: var(--black);
+        }
+
+        /* Toast */
+        #toastContainer {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .toast {
+            background: var(--dark-gray);
+            color: white;
+            padding: 0.85rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            animation: slideIn 0.3s ease;
+            min-width: 260px;
+            border-left: 4px solid var(--gold);
+        }
+
+        .toast.success {
+            border-color: var(--success);
+        }
+
+        .toast.error {
+            border-color: var(--danger);
+        }
+
+        .toast.warning {
+            border-color: var(--warning);
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 0.75rem;
+            opacity: 0.25;
+        }
+
+        .empty-state h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #999;
+        }
+
+        .empty-state p {
+            font-size: 0.85rem;
+            color: #bbb;
+            margin-top: 0.25rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Stock Alert Button ── */
+        .btn-alert {
+            background: #fff3e0;
+            color: #e65100;
+            border-color: #ffcc80;
+        }
+
+        .btn-alert:hover {
+            background: #ff9800;
+            color: white;
+            border-color: #ff9800;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(255, 152, 0, 0.35);
+        }
+
+        .btn-alert .alert-badge {
+            display: none;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .btn-alert .alert-badge.visible {
+            display: flex;
+        }
+
+        /* ── Stock Alert Modal ── */
+        .alert-modal-w {
+            max-width: 560px;
+        }
+
+        .alert-summary-banner {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: #fff3e0;
+            border: 1px solid #ffcc80;
+            border-radius: 10px;
+            margin-bottom: 1.25rem;
+            align-items: center;
+        }
+
+        .alert-summary-banner.critical {
+            background: #fce4ec;
+            border-color: #ef9a9a;
+        }
+
+        .alert-summary-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .alert-summary-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--black);
+        }
+
+        .alert-summary-sub {
+            font-size: 0.82rem;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .alert-counts {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .alert-count-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .alert-count-chip.out {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .alert-count-chip.low {
+            background: rgba(255, 152, 0, 0.1);
+            color: #e65100;
+        }
+
+        .alert-count-chip.ok {
+            background: rgba(76, 175, 80, 0.1);
+            color: #388e3c;
+        }
+
+        .alert-items-list {
+            max-height: 220px;
+            overflow-y: auto;
+            border: 1px solid #f0f0f0;
+            border-radius: 8px;
+            margin-bottom: 1.25rem;
+        }
+
+        .alert-items-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .alert-items-list::-webkit-scrollbar-thumb {
+            background: var(--gold);
+            border-radius: 3px;
+        }
+
+        .alert-item-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid #f5f5f5;
+            font-size: 0.85rem;
+        }
+
+        .alert-item-row:last-child {
+            border-bottom: none;
+        }
+
+        .alert-item-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .alert-item-dot.out {
+            background: var(--danger);
+        }
+
+        .alert-item-dot.low {
+            background: var(--warning);
+        }
+
+        .alert-item-name {
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .alert-item-stock {
+            font-size: 0.78rem;
+            color: #888;
+            white-space: nowrap;
+        }
+
+        .alert-item-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.15rem 0.55rem;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .alert-item-badge.out {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+        }
+
+        .alert-item-badge.low {
+            background: rgba(255, 152, 0, 0.12);
+            color: #e65100;
+        }
+
+        .alert-recipient-box {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.83rem;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-recipient-box strong {
+            color: var(--black);
+        }
+
+        .alert-no-issues {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #bbb;
+        }
+
+        .alert-no-issues-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-no-issues p {
+            font-size: 0.88rem;
+        }
+
+        @media (max-width: 1100px) {
+            .inv-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 1rem;
+            }
+
+            .logo-text h1 {
+                font-size: 1.4rem;
+            }
+
+            .header-actions {
+                gap: 1rem;
+            }
+
+            .date-time {
+                display: none;
+            }
+
+            nav a {
+                padding: 1rem;
+                font-size: 0.85rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+
+            .cups-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── OFFLINE / SYNC UI ── */
+        .offline-bar {
+            flex: 0 0 auto;
+            background: #1a1a2e;
+            border-bottom: 2px solid #ff9800;
+            padding: 0.55rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.82rem;
+            color: #ffcc80;
+            font-weight: 600;
+            z-index: 110;
+            animation: slideDown 0.3s ease;
+        }
+        .offline-bar-icon { font-size: 1rem; flex-shrink: 0; }
+        .offline-pending-badge {
+            background: #ff9800; color: #1a1a1a; border-radius: 12px;
+            padding: 0.1rem 0.55rem; font-size: 0.72rem; font-weight: 800; flex-shrink: 0;
+        }
+        .offline-sync-btn {
+            margin-left: auto; background: #ff9800; color: #1a1a1a; border: none;
+            border-radius: 6px; padding: 0.28rem 0.85rem; font-size: 0.78rem;
+            font-weight: 700; cursor: pointer; transition: background 0.2s;
+        }
+        .offline-sync-btn:hover { background: #e65100; color: white; }
+        .sync-bar {
+            flex: 0 0 auto; background: #e8f5e9; border-bottom: 2px solid #4caf50;
+            padding: 0.45rem 2rem; display: flex; align-items: center; gap: 0.65rem;
+            font-size: 0.82rem; color: #2e7d32; font-weight: 600; z-index: 110;
+        }
+        .sync-spinner {
+            width: 14px; height: 14px; border: 2px solid #a5d6a7;
+            border-top-color: #2e7d32; border-radius: 50%;
+            animation: spin 0.8s linear infinite; flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: none; opacity: 1; } }
+        .conn-indicator {
+            display: flex; align-items: center; gap: 0.4rem; padding: 0.42rem 0.85rem;
+            border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1.5px solid;
+            transition: all 0.3s; user-select: none; flex-shrink: 0;
+        }
+        .conn-indicator.online { background: rgba(76,175,80,0.1); color: #2e7d32; border-color: rgba(76,175,80,0.4); }
+        .conn-indicator.offline { background: rgba(255,152,0,0.12); color: #e65100; border-color: rgba(255,152,0,0.4); }
+        .conn-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .conn-indicator.online .conn-dot { background: #4caf50; animation: pulse-green 2s infinite; }
+        .conn-indicator.offline .conn-dot { background: #ff9800; }
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(76,175,80,0.4); }
+            50% { box-shadow: 0 0 0 4px rgba(76,175,80,0); }
+        }
+        tr.offline-pending td { background: rgba(255,152,0,0.04); }
+        tr.offline-pending td:first-child { border-left: 3px solid #ff9800; }
+        .pending-dot {
+            display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+            background: #ff9800; margin-left: 0.4rem; vertical-align: middle;
+        }
+        .offline-queue-panel {
+            background: white; border-radius: 10px; border: 1.5px solid #ffe0b2;
+            box-shadow: 0 2px 10px rgba(255,152,0,0.1); overflow: hidden;
+            margin-bottom: 1.5rem; display: none;
+        }
+        .offline-queue-panel.visible { display: block; }
+        .offline-queue-header {
+            background: #fff3e0; padding: 0.75rem 1.25rem; display: flex;
+            justify-content: space-between; align-items: center; border-bottom: 1px solid #ffe0b2;
+        }
+        .offline-queue-header h3 { font-size: 0.88rem; font-weight: 700; color: #e65100; }
+        .queue-count-chip { background: #ff9800; color: white; border-radius: 12px; padding: 0.12rem 0.6rem; font-size: 0.72rem; font-weight: 800; }
+        .offline-queue-list { max-height: 180px; overflow-y: auto; padding: 0 1.25rem; }
+        .queue-entry { display: flex; align-items: center; gap: 0.65rem; padding: 0.55rem 0; border-bottom: 1px solid #fafafa; font-size: 0.82rem; }
+        .queue-entry:last-child { border-bottom: none; }
+        .queue-op-chip { font-size: 0.68rem; font-weight: 700; padding: 0.12rem 0.45rem; border-radius: 4px; text-transform: uppercase; flex-shrink: 0; }
+        .queue-op-chip.adjust { background: rgba(33,150,243,0.12); color: #1565c0; }
+        .queue-op-chip.save   { background: rgba(76,175,80,0.12);  color: #2e7d32; }
+        .queue-op-chip.delete { background: rgba(220,53,69,0.12);  color: #c62828; }
+        .queue-entry-name { flex: 1; font-weight: 600; color: #333; }
+        .queue-entry-detail { color: #888; font-size: 0.78rem; }
+        .queue-entry-time { color: #bbb; font-size: 0.72rem; white-space: nowrap; }
+
+        /* ── Missing: ghost danger button ── */
+        .btn-ghost-danger {
+            background: white;
+            color: var(--danger);
+            border-color: rgba(220,53,69,0.25);
+        }
+        .btn-ghost-danger:hover {
+            background: rgba(220,53,69,0.08);
+            border-color: var(--danger);
+        }
+
+        /* ── Missing: stock bar in ingredient table ── */
+        .stock-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .stock-bar {
+            flex: 1;
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            min-width: 60px;
+        }
+        .stock-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+        .stock-bar-fill.ok  { background: var(--success); }
+        .stock-bar-fill.low { background: var(--warning); }
+        .stock-bar-fill.out { background: var(--danger); }
+        .stock-num {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--black);
+            white-space: nowrap;
+            min-width: 28px;
+            text-align: right;
+        }
+
+        /* ── Missing: toast info variant ── */
+        .toast.info { border-color: var(--info); }
+        .toast.warning { border-color: var(--warning); }
+
+        /* ── Missing: alert modal inner elements ── */
+        .alert-no-issues {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #aaa;
+        }
+        .alert-no-issues-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .alert-item-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 12px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .alert-item-badge.out {
+            background: rgba(220,53,69,0.12);
+            color: var(--danger);
+        }
+        .alert-item-badge.low {
+            background: rgba(255,152,0,0.12);
+            color: #e65100;
+        }
+        .alert-recipient-box {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0.65rem 1rem;
+            font-size: 0.82rem;
+            color: #666;
+        }
+
+        /* ── Missing: ing-type chip colors ── */
+        .ing-type.ingredient {
+            background: rgba(33,150,243,0.1);
+            color: #1565c0;
+        }
+        .ing-type.packaging {
+            background: rgba(201,169,97,0.15);
+            color: var(--dark-gold);
+        }
+
+        /* ── Offline pending row indicator ── */
+        tr.offline-pending td { background: rgba(255,152,0,0.04); }
+        tr.offline-pending td:first-child { border-left: 3px solid var(--warning); }
+        .pending-dot {
+            display: inline-block;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--warning);
+            margin-left: 0.4rem;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-shell">
+
+        <!-- ── OFFLINE STATUS BAR ── -->
+        <div id="offlineBar" class="offline-bar" style="display:none;">
+            <span class="offline-bar-icon">📡</span>
+            <span id="offlineBarMsg">You are offline — changes are saved locally and will sync when reconnected.</span>
+            <span id="offlinePendingBadge" class="offline-pending-badge" style="display:none;">0 pending</span>
+            <button id="syncNowBtn" class="offline-sync-btn" style="display:none;" onclick="manualSync()">↑ Sync Now</button>
+        </div>
+        <div id="syncBar" class="sync-bar" style="display:none;">
+            <span class="sync-spinner"></span>
+            <span id="syncBarMsg">Syncing offline changes…</span>
+        </div>
+
+        <!-- HEADER -->
+        <header>
+            <div class="logo">
+                <div class="logo-icon">📚</div>
+                <div class="logo-text">
+                    <h1>Books <span>&</span> Blooms</h1>
+                    <div class="logo-subtitle">CAFÉ</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="date-time">
+                    <div class="date" id="currentDate"></div>
+                    <div class="time" id="currentTime"></div>
+                </div>
+                <div class="user-info">
+                    <div class="user-details">
+                        <h3>{{ full_name or 'Admin User' }}</h3>
+                        <p>{{ session.get('role')|capitalize }}</p>
+                    </div>
+                    <div class="user-avatar">{{ full_name[0] if full_name else 'A' }}</div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn">➜] Logout</a>
+            </div>
+        </header>
+
+        <!-- NAV -->
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin_sales') }}">Sales</a></li>
+                <li><a href="{{ url_for('inventory') }}" class="active">Inventory</a></li>
+                <li><a href="{{ url_for('staff_attendance') }}">Staff Attendance</a></li>
+                <li><a href="{{ url_for('product_management') }}">Product Management</a></li>
+                <li><a href="{{ url_for('admin_settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('employee_management') }}">Employee Management</a></li>
+                <li><a href="{{ url_for('payroll') }}">Payroll</a></li>
+            </ul>
+        </nav>
+
+        <!-- CONTENT -->
+        <div class="page-content">
+            <div class="container">
+
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Inventory Management</h1>
+                        <p class="page-subtitle">Track cups (auto-deducted on sales) and ingredients (updated manually).
+                        </p>
+                    </div>
+                    <div class="header-btns">
+                        <button class="btn btn-outline" id="refreshBtn">↺ Refresh</button>
+                        <button class="btn btn-alert" id="stockAlertBtn">
+                            🔔 Stock Alert
+                            <span class="alert-badge" id="alertBadge">0</span>
+                        </button>
+                        <div id="connIndicator" class="conn-indicator online" title="Connection status">
+                            <span class="conn-dot"></span><span id="connLabel">Online</span>
+                        </div>
+                        <button class="btn btn-outline" id="addIngredientBtn">Add Ingredient</button>
+                        <button class="btn btn-primary" id="addPackagingBtn">Add Packaging</button>
+                    </div>
+                </div>
+
+                <!-- Info Banner -->
+                <div class="info-banner">
+                    <span style="font-size:1.2rem;flex-shrink:0;">✅</span>
+                    <div>
+                        <strong>Auto-deduction enabled:</strong> Cup stock is automatically reduced each time a matching
+                        product is sold on the cashier dashboard.
+                        <strong>Ingredient levels</strong> are tracked manually — use the adjust button to update them
+                        after each restocking or usage.
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-icon gold">📦</div>
+                        <div>
+                            <div class="stat-label">Total Inventory Items</div>
+                            <div class="stat-value" id="statTotal">—</div>
+                            <div class="stat-sub">ingredients + packaging</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">✅</div>
+                        <div>
+                            <div class="stat-label">Stocked</div>
+                            <div class="stat-value" id="statOk">—</div>
+                            <div class="stat-sub">above reorder point</div>
+                        </div>
+                    </div>
+                    <div class="stat-card clickable" id="lowStockCard" onclick="filterToLow()">
+                        <div class="stat-icon orange">⚠️</div>
+                        <div>
+                            <div class="stat-label">Low Stock</div>
+                            <div class="stat-value" id="statLow">—</div>
+                            <div class="stat-sub" id="lowStockSub">click to filter</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red">🚨</div>
+                        <div>
+                            <div class="stat-label">Out of Stock</div>
+                            <div class="stat-value" id="statOut">—</div>
+                            <div class="stat-sub">needs immediate restock</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cup Packaging + Deduction Log -->
+                <div class="inv-layout">
+
+                    <!-- CUP PACKAGING -->
+                    <div class="section-card">
+                        <div class="section-card-header">
+                            <h3>☕ Cup <span>Packaging</span></h3>
+                            <span style="font-size:0.75rem;color:#888;font-family:'DM Sans',sans-serif;">Auto-deducted
+                                on each sale</span>
+                        </div>
+                        <div class="section-card-body">
+                            <div class="cups-grid" id="cupsGrid">
+                                <div style="grid-column:1/-1;text-align:center;color:#ccc;padding:2rem;">Loading…</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AUTO-DEDUCTION LOG -->
+                    <div class="section-card">
+                        <div class="section-card-header">
+                            <h3>📋 Deduction <span>Log</span></h3>
+                            <span style="font-size:0.75rem;color:#888;font-family:'DM Sans',sans-serif;">Recent
+                                activity</span>
+                        </div>
+                        <div class="section-card-body" style="padding: 0.5rem 1.25rem;">
+                            <div class="deduction-log" id="deductionLog">
+                                <div class="empty-log">Loading log…</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- OFFLINE PENDING QUEUE PANEL -->
+                <div class="offline-queue-panel" id="offlineQueuePanel">
+                    <div class="offline-queue-header">
+                        <h3>📡 Pending Offline Changes</h3>
+                        <span class="queue-count-chip" id="queueCountChip">0</span>
+                    </div>
+                    <div class="offline-queue-list" id="offlineQueueList"></div>
+                </div>
+
+                <!-- INGREDIENTS TABLE -->
+                <div class="ingredient-section">
+                    <div class="ingredient-section-header">
+                        <h3> Ingredients & <span>Supplies</span></h3>
+                        <span style="font-size:0.75rem;color:#888;font-family:'DM Sans',sans-serif;">Updated
+                            manually</span>
+                    </div>
+                    <div class="ing-toolbar">
+                        <div class="ing-search">
+                            <input type="text" id="ingSearchInput" placeholder="Search ingredients…">
+                        </div>
+                        <select class="filter-select" id="ingTypeFilter">
+                            <option value="">All Types</option>
+                            <option value="ingredient">Ingredients</option>
+                            <option value="packaging">Packaging (Non-cup)</option>
+                        </select>
+                        <select class="filter-select" id="ingStockFilter">
+                            <option value="">All Stock</option>
+                            <option value="ok">In Stock</option>
+                            <option value="low">Low Stock</option>
+                            <option value="out">Out of Stock</option>
+                        </select>
+                        <span id="ingResultCount"
+                            style="font-size:0.82rem;color:#888;font-weight:600;white-space:nowrap;">—</span>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Stock</th>
+                                    <th>Unit</th>
+                                    <th>Reorder At</th>
+                                    <th>Status</th>
+                                    <th style="text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ingredientsTbody">
+                                <tr>
+                                    <td colspan="7">
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">⏳</div>
+                                            <h3>Loading…</h3>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div><!-- /container -->
+        </div><!-- /page-content -->
+    </div><!-- /app-shell -->
+
+    <!-- STOCK ALERT MODAL -->
+    <div class="modal-overlay" id="stockAlertModal">
+        <div class="modal alert-modal-w">
+            <div class="modal-header">
+                <h2>🔔 Stock <span>Alert Notification</span></h2>
+                <button class="modal-close" id="closeAlertModal">✕</button>
+            </div>
+            <div class="modal-body" id="alertModalBody">
+                <div class="alert-no-issues">
+                    <div class="alert-no-issues-icon">⏳</div>
+                    <p>Checking stock levels…</p>
+                </div>
+            </div>
+            <div class="modal-footer" id="alertModalFooter">
+                <button class="btn btn-outline" id="cancelAlertBtn">Cancel</button>
+                <button class="btn btn-danger" id="sendAlertBtn" style="display:none;">
+                    📧 Send Alert Email
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <!-- ADD/EDIT INGREDIENT MODAL -->
+    <div class="modal-overlay" id="ingredientModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="ingModalTitle">Add <span>Ingredient</span></h2>
+                <button class="modal-close" id="closeIngModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editIngId">
+                <input type="hidden" id="editIngType" value="ingredient">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label class="form-label">Name <span>*</span></label>
+                        <input type="text" class="form-control" id="ingName"
+                            placeholder="e.g. Brown Sugar Syrup, Tapioca Pearls">
+                        <span class="form-error">Name is required.</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Current Stock <span>*</span></label>
+                        <input type="number" class="form-control" id="ingStock" min="0" step="0.01" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Unit</label>
+                        <select class="form-control" id="ingUnit">
+                            <option value="pcs">pcs</option>
+                            <option value="kg">kg</option>
+                            <option value="g">g</option>
+                            <option value="L">L</option>
+                            <option value="ml">ml</option>
+                            <option value="bottle">bottle</option>
+                            <option value="pack">pack</option>
+                            <option value="box">box</option>
+                            <option value="sachet">sachet</option>
+                            <option value="cup">cup</option>
+                            <option value="8oz">8oz cups</option>
+                            <option value="12oz">12oz cups</option>
+                            <option value="16oz">16oz cups</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Reorder Point</label>
+                        <input type="number" class="form-control" id="ingReorder" min="0" step="1" value="10">
+                        <span class="form-hint">Alert when stock falls below this</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Note / Supplier</label>
+                        <input type="text" class="form-control" id="ingNote" placeholder="Optional note">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelIngModal">Cancel</button>
+                <button class="btn btn-primary" id="saveIngBtn">💾 Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADJUST STOCK MODAL -->
+    <div class="modal-overlay" id="adjustModal">
+        <div class="modal" style="max-width:400px;">
+            <div class="modal-header">
+                <h2>Adjust <span>Stock</span></h2>
+                <button class="modal-close" id="closeAdjModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="adjItemId">
+                <div class="adj-modal-current">
+                    <div class="adj-modal-name" id="adjItemName">—</div>
+                    <div class="adj-modal-count" id="adjCurrentCount">0</div>
+                    <div class="adj-modal-unit" id="adjItemUnit">units</div>
+                </div>
+                <div class="adj-type-row">
+                    <button class="adj-type-btn add active" data-adj="add">+ Add Stock</button>
+                    <button class="adj-type-btn sub" data-adj="sub">− Remove Stock</button>
+                </div>
+                <div style="margin-top:1rem;">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" class="form-control" id="adjQty" min="1" step="1" value="1"
+                        style="margin-top:0.4rem;font-size:1.2rem;text-align:center;font-weight:700;">
+                </div>
+                <div style="margin-top:0.75rem;">
+                    <label class="form-label">Note (optional)</label>
+                    <input type="text" class="form-control" id="adjNote" placeholder="e.g. Restocked from supplier"
+                        style="margin-top:0.4rem;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelAdjModal">Cancel</button>
+                <button class="btn btn-primary" id="saveAdjBtn">✅ Apply Adjustment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DELETE INGREDIENT MODAL -->
+    <div class="modal-overlay" id="deleteIngModal">
+        <div class="modal delete-modal-w">
+            <div class="modal-header">
+                <h2>Delete <span>Item</span></h2>
+                <button class="modal-close" id="closeDeleteIngModal">✕</button>
+            </div>
+            <div class="modal-body delete-body">
+                <div class="delete-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></div>
+                <h3>Delete this inventory item?</h3>
+                <p>You are about to permanently remove <span class="delete-name" id="deleteIngName">"…"</span>.<br>This
+                    cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelDeleteIngModal">Cancel</button>
+                <button class="btn btn-danger" id="confirmDeleteIngBtn"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ═══════════════════════════════════════════════════════════════════
+           CLOCK
+        ═══════════════════════════════════════════════════════════════════ */
+        function updateClock() {
+            const now = new Date();
+            const d = document.getElementById('currentDate');
+            const t = document.getElementById('currentTime');
+            if (d) d.textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            if (t) t.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        updateClock(); setInterval(updateClock, 1000);
+
+        /* ═══════════════════════════════════════════════════════════════════
+           INDEXEDDB — offline storage layer
+           Stores:
+             • inv_cache   : mirror of server inventory (keyPath: id)
+             • sync_queue  : pending operations to replay (keyPath: qid, autoIncrement)
+        ═══════════════════════════════════════════════════════════════════ */
+        const DB_NAME    = 'bbc_inventory_v1';
+        const DB_VERSION = 1;
+        let _db = null;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                if (_db) return resolve(_db);
+                const req = indexedDB.open(DB_NAME, DB_VERSION);
+                req.onupgradeneeded = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('inv_cache')) {
+                        db.createObjectStore('inv_cache', { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains('sync_queue')) {
+                        db.createObjectStore('sync_queue', { keyPath: 'qid', autoIncrement: true });
+                    }
+                };
+                req.onsuccess  = e => { _db = e.target.result; resolve(_db); };
+                req.onerror    = e => reject(e.target.error);
+            });
+        }
+
+        /* Generic IDB helpers */
+        async function idbGetAll(store) {
+            const db = await openDB();
+            return new Promise((res, rej) => {
+                const tx  = db.transaction(store, 'readonly');
+                const req = tx.objectStore(store).getAll();
+                req.onsuccess = () => res(req.result);
+                req.onerror   = () => rej(req.error);
+            });
+        }
+
+        async function idbPut(store, obj) {
+            const db = await openDB();
+            return new Promise((res, rej) => {
+                const tx  = db.transaction(store, 'readwrite');
+                const req = tx.objectStore(store).put(obj);
+                req.onsuccess = () => res(req.result);
+                req.onerror   = () => rej(req.error);
+            });
+        }
+
+        async function idbDelete(store, key) {
+            const db = await openDB();
+            return new Promise((res, rej) => {
+                const tx  = db.transaction(store, 'readwrite');
+                const req = tx.objectStore(store).delete(key);
+                req.onsuccess = () => res();
+                req.onerror   = () => rej(req.error);
+            });
+        }
+
+        async function idbClear(store) {
+            const db = await openDB();
+            return new Promise((res, rej) => {
+                const tx  = db.transaction(store, 'readwrite');
+                const req = tx.objectStore(store).clear();
+                req.onsuccess = () => res();
+                req.onerror   = () => rej(req.error);
+            });
+        }
+
+        /* ── Cache helpers ── */
+        async function cacheItems(items) {
+            await idbClear('inv_cache');
+            for (const item of items) await idbPut('inv_cache', item);
+        }
+
+        async function getCachedItems() {
+            return await idbGetAll('inv_cache');
+        }
+
+        /* Apply a delta to the local cache (optimistic update) */
+        async function cacheApplyDelta(id, delta) {
+            const db   = await openDB();
+            const tx   = db.transaction('inv_cache', 'readwrite');
+            const store = tx.objectStore('inv_cache');
+            return new Promise((res, rej) => {
+                const req = store.get(id);
+                req.onsuccess = () => {
+                    const item = req.result;
+                    if (!item) return res(null);
+                    item.stock = Math.max(0, parseFloat(item.stock) + delta);
+                    item._pending = true;
+                    store.put(item);
+                    tx.oncomplete = () => res(item.stock);
+                };
+                req.onerror = () => rej(req.error);
+            });
+        }
+
+        async function cacheApplyEdit(id, payload) {
+            const db    = await openDB();
+            const tx    = db.transaction('inv_cache', 'readwrite');
+            const store = tx.objectStore('inv_cache');
+            return new Promise((res, rej) => {
+                const existing = id ? store.get(parseInt(id)) : null;
+                if (existing) {
+                    existing.onsuccess = () => {
+                        const item = { ...(existing.result || {}), ...payload, id: parseInt(id), _pending: true };
+                        store.put(item);
+                        tx.oncomplete = () => res(item);
+                    };
+                    existing.onerror = () => rej(existing.error);
+                } else {
+                    // New item — give it a temporary negative id
+                    const tempId = -(Date.now());
+                    const item   = { ...payload, id: tempId, _pending: true, _tempId: tempId };
+                    store.put(item);
+                    tx.oncomplete = () => res(item);
+                }
+            });
+        }
+
+        async function cacheDeleteItem(id) {
+            const db    = await openDB();
+            const tx    = db.transaction('inv_cache', 'readwrite');
+            const store = tx.objectStore('inv_cache');
+            return new Promise((res, rej) => {
+                const req = store.get(id);
+                req.onsuccess = () => {
+                    const item = req.result;
+                    if (!item) return res();
+                    item._deleted = true;
+                    item._pending = true;
+                    store.put(item);
+                    tx.oncomplete = () => res();
+                };
+                req.onerror = () => rej(req.error);
+            });
+        }
+
+        /* ── Sync queue helpers ── */
+        async function enqueue(op) {
+            /* op = { type: 'adjust'|'save'|'delete', payload, label, detail, queuedAt } */
+            op.queuedAt = op.queuedAt || new Date().toISOString();
+            await idbPut('sync_queue', op);
+            renderQueuePanel();
+        }
+
+        async function getQueue() {
+            return await idbGetAll('sync_queue');
+        }
+
+        async function dequeue(qid) {
+            await idbDelete('sync_queue', qid);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           NETWORK MONITOR
+           • Checks navigator.onLine as quick signal
+           • Confirms with a lightweight fetch every 8 s
+           • Fires onOnline / onOffline callbacks
+        ═══════════════════════════════════════════════════════════════════ */
+        let _isOnline = navigator.onLine;
+        let _pingInterval = null;
+
+        async function pingServer() {
+            try {
+                const res = await fetch('/api/inv_items?limit=1', { cache: 'no-store', signal: AbortSignal.timeout(4000) });
+                return res.ok;
+            } catch { return false; }
+        }
+
+        let _networkReady = false; // suppress toast on the very first check
+
+        async function checkConnectivity() {
+            const wasOnline = _isOnline;
+            _isOnline = navigator.onLine ? await pingServer() : false;
+            if (_networkReady && _isOnline !== wasOnline) {
+                _isOnline ? onOnline() : onOffline();
+            }
+            updateConnUI();
+            _networkReady = true;
+        }
+
+        async function startNetworkMonitor() {
+            window.addEventListener('online',  () => checkConnectivity());
+            window.addEventListener('offline', () => { _isOnline = false; onOffline(); updateConnUI(); });
+            _pingInterval = setInterval(checkConnectivity, 8000);
+            await checkConnectivity(); // initial check — must await so _isOnline is set before loadAll
+        }
+
+        function onOffline() {
+            _isOnline = false;
+            updateConnUI();
+            showToast('📡 You are offline. Changes saved locally.', 'warning');
+        }
+
+        async function onOnline() {
+            _isOnline = true;
+            updateConnUI();
+            const queue = await getQueue();
+            if (queue.length > 0) {
+                showToast(`🔄 Back online — syncing ${queue.length} pending change${queue.length > 1 ? 's' : ''}…`, 'info');
+                await syncQueue();
+            } else {
+                showToast('✅ Back online.', 'success');
+                await loadAll(); // refresh from server
+            }
+        }
+
+        /* ── UI: connection indicator + offline bar ── */
+        function updateConnUI() {
+            const ind   = document.getElementById('connIndicator');
+            const label = document.getElementById('connLabel');
+            const bar   = document.getElementById('offlineBar');
+            const badge = document.getElementById('offlinePendingBadge');
+            const syncBtn = document.getElementById('syncNowBtn');
+
+            if (_isOnline) {
+                if (ind) { ind.classList.remove('offline'); ind.classList.add('online'); }
+                if (label) label.textContent = 'Online';
+                if (bar)   bar.style.display = 'none';
+            } else {
+                if (ind) { ind.classList.remove('online'); ind.classList.add('offline'); }
+                if (label) label.textContent = 'Offline';
+                if (bar)   bar.style.display  = 'flex';
+                // Update pending badge
+                getQueue().then(q => {
+                    if (q.length > 0) {
+                        if (badge)  { badge.textContent = `${q.length} pending`; badge.style.display = ''; }
+                        if (syncBtn) syncBtn.style.display = '';
+                    } else {
+                        if (badge)  badge.style.display = 'none';
+                        if (syncBtn) syncBtn.style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        /* ── Sync queue panel renderer ── */
+        async function renderQueuePanel() {
+            const queue  = await getQueue();
+            const panel  = document.getElementById('offlineQueuePanel');
+            const list   = document.getElementById('offlineQueueList');
+            const chip   = document.getElementById('queueCountChip');
+            const badge  = document.getElementById('offlinePendingBadge');
+            const syncBtn = document.getElementById('syncNowBtn');
+
+            if (!queue.length) {
+                panel?.classList.remove('visible');
+                if (badge)   badge.style.display  = 'none';
+                if (syncBtn) syncBtn.style.display = 'none';
+                return;
+            }
+
+            panel?.classList.add('visible');
+            if (chip)  chip.textContent  = queue.length;
+            if (badge) { badge.textContent = `${queue.length} pending`; badge.style.display = ''; }
+            if (syncBtn && !_isOnline) syncBtn.style.display = '';
+
+            if (list) {
+                list.innerHTML = queue.map(op => {
+                    const t = new Date(op.queuedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    return `<div class="queue-entry">
+                        <span class="queue-op-chip ${op.type}">${op.type}</span>
+                        <span class="queue-entry-name">${op.label || '—'}</span>
+                        <span class="queue-entry-detail">${op.detail || ''}</span>
+                        <span class="queue-entry-time">${t}</span>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           SYNC ENGINE — replays the queue against the server
+        ═══════════════════════════════════════════════════════════════════ */
+        let _syncing = false;
+
+        async function syncQueue() {
+            if (_syncing) return;
+            _syncing = true;
+
+            const syncBar = document.getElementById('syncBar');
+            const syncMsg = document.getElementById('syncBarMsg');
+            if (syncBar) syncBar.style.display = 'flex';
+
+            const queue = await getQueue();
+            let succeeded = 0, failed = 0;
+
+            for (const op of queue) {
+                if (syncMsg) syncMsg.textContent = `Syncing "${op.label}"…`;
+                try {
+                    let ok = false;
+                    if (op.type === 'adjust') {
+                        const res  = await fetch('/api/inv_items/adjust', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(op.payload) });
+                        const data = await res.json();
+                        ok = data.success;
+                        if (!ok) {
+                            // Fallback
+                            const r2 = await fetch('/api/inventory/restock', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ product_id: op.payload.id, adjustment: op.payload.delta, note: op.payload.note }) });
+                            ok = (await r2.json()).success;
+                        }
+                    } else if (op.type === 'save') {
+                        const { id, payload } = op;
+                        const url    = id && id > 0 ? `/api/inv_items/${id}` : '/api/inv_items';
+                        const method = id && id > 0 ? 'PUT' : 'POST';
+                        const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                        const data   = await res.json();
+                        ok = data.success;
+                        if (!ok) {
+                            const url2 = id && id > 0 ? `/api/inventory/items/${id}` : '/api/inventory/items';
+                            const r2   = await fetch(url2, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: payload.name, description: payload.note, stock: payload.stock, reorder_point: payload.reorder_point, unit: payload.unit, price: 0, cost: 0 }) });
+                            ok = (await r2.json()).success;
+                        }
+                    } else if (op.type === 'delete') {
+                        const res  = await fetch(`/api/inv_items/${op.id}`, { method: 'DELETE' });
+                        const data = await res.json();
+                        ok = data.success;
+                        if (!ok) {
+                            const r2 = await fetch(`/api/inventory/items/${op.id}`, { method: 'DELETE' });
+                            ok = (await r2.json()).success;
+                        }
+                    }
+
+                    if (ok) {
+                        await dequeue(op.qid);
+                        succeeded++;
+                    } else {
+                        failed++;
+                    }
+                } catch (ex) {
+                    console.warn('[sync] op failed:', op, ex);
+                    failed++;
+                }
+            }
+
+            if (syncBar) syncBar.style.display = 'none';
+            _syncing = false;
+
+            if (succeeded > 0 || failed === 0) {
+                // Pull fresh data from server and rebuild cache
+                const fresh = await fetchItemsFromServer();
+                if (fresh) {
+                    await cacheItems(fresh);
+                    allItems = fresh;
+                    renderStats(); renderCups(); renderIngredients();
+                }
+            }
+
+            await renderQueuePanel();
+
+            if (failed === 0 && succeeded > 0) {
+                showToast(`✅ Synced ${succeeded} change${succeeded > 1 ? 's' : ''} successfully.`, 'success');
+                await loadDeductionLog();
+            } else if (failed > 0) {
+                showToast(`⚠️ ${failed} change${failed > 1 ? 's' : ''} failed to sync. Will retry when online.`, 'error');
+            }
+        }
+
+        async function manualSync() {
+            if (!_isOnline) {
+                const reachable = await pingServer();
+                if (!reachable) { showToast('❌ Still no connection.', 'error'); return; }
+                _isOnline = true;
+                updateConnUI();
+            }
+            await syncQueue();
+            // After a manual sync, do a full connectivity recheck to settle state
+            await checkConnectivity();
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           TOAST / MODAL
+        ═══════════════════════════════════════════════════════════════════ */
+        function showToast(msg, type = 'success') {
+            const c = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.textContent = msg;
+            c.appendChild(t);
+            setTimeout(() => t.remove(), type === 'error' ? 5000 : 3500);
+        }
+
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           STATE
+        ═══════════════════════════════════════════════════════════════════ */
+        let allItems = [], adjDirection = 'add', deleteItemId = null;
+        let stockFilter = '';
+
+        const CUP_SIZES = ['8oz', '12oz', '16oz'];
+        const CUP_ICONS = { '8oz': '🥤', '12oz': '🥤', '16oz': '🥤' };
+        const CUP_NAMES = { '8oz': '8oz Cup', '12oz': '12oz Cup', '16oz': '16oz Cup' };
+
+        /* ═══════════════════════════════════════════════════════════════════
+           OFFLINE-AWARE API LAYER
+           Each function checks _isOnline:
+             • Online  → hit server, update cache on success
+             • Offline → apply optimistic update to cache, enqueue for sync
+        ═══════════════════════════════════════════════════════════════════ */
+
+        /* fetchItemsFromServer — pure network call, no offline fallback */
+        async function fetchItemsFromServer() {
+            try {
+                const res = await fetch('/api/inv_items', { cache: 'no-store' });
+                if (res.ok) {
+                    const d = await res.json();
+                    if (d.success) return d.items || [];
+                }
+            } catch (_) {}
+            // Fallback: products endpoint — map product_id → id
+            try {
+                const res = await fetch('/api/inventory/items?limit=500');
+                const d   = await res.json();
+                if (d.success) {
+                    return (d.products || []).map(p => ({
+                        id:            p.product_id,
+                        name:          p.name,
+                        type:          CUP_SIZES.includes(p.unit) ? 'packaging' : 'ingredient',
+                        stock:         parseFloat(p.stock) || 0,
+                        unit:          p.unit || 'pcs',
+                        reorder_point: parseFloat(p.reorder_point) || 10,
+                        note:          p.description || '',
+                        updated_at:    p.updated_at || null,
+                    }));
+                }
+            } catch (_) {}
+            return null; // signal failure — caller falls back to IndexedDB
+        }
+
+        /* fetchItems — tries server first, falls back to IndexedDB cache */
+        async function fetchItems() {
+            if (_isOnline) {
+                const items = await fetchItemsFromServer();
+                if (items !== null) {
+                    await cacheItems(items);
+                    return items;
+                }
+                // Server failed despite being "online" — fall through to cache
+            }
+            const cached = await getCachedItems();
+            return cached.filter(i => !i._deleted); // hide locally-deleted items
+        }
+
+        /* saveItem — online: POST/PUT server; offline: optimistic cache + queue */
+        async function saveItem(payload, id) {
+            if (_isOnline) {
+                try {
+                    const url    = id ? `/api/inv_items/${id}` : '/api/inv_items';
+                    const method = id ? 'PUT' : 'POST';
+                    const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (res.ok) {
+                        const d = await res.json();
+                        if (d.success) {
+                            const fresh = await fetchItemsFromServer();
+                            if (fresh) await cacheItems(fresh);
+                            return d;
+                        }
+                    }
+                } catch (_) {}
+                // Fallback to products endpoint while online
+                try {
+                    const url2    = id ? `/api/inventory/items/${id}` : '/api/inventory/items';
+                    const method2 = id ? 'PUT' : 'POST';
+                    const res2    = await fetch(url2, { method: method2, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: payload.name, description: payload.note, stock: payload.stock, reorder_point: payload.reorder_point, unit: payload.unit, price: 0, cost: 0 }) });
+                    return await res2.json();
+                } catch (_) { return { success: false, message: 'Network error' }; }
+            }
+
+            /* OFFLINE path */
+            const cachedItem = await cacheApplyEdit(id || null, payload);
+            const detail = id ? `Updated "${payload.name}"` : `New: "${payload.name}"`;
+            await enqueue({ type: 'save', id: id ? parseInt(id) : null, payload, label: payload.name, detail });
+            showToast(`📡 Offline — "${payload.name}" saved locally.`, 'warning');
+            return { success: true, offline: true, item: cachedItem };
+        }
+
+        /* deleteItem — online: DELETE server; offline: mark _deleted in cache + queue */
+        async function deleteItem(id) {
+            if (_isOnline) {
+                try {
+                    const res = await fetch(`/api/inv_items/${id}`, { method: 'DELETE' });
+                    if (res.ok) { const d = await res.json(); if (d.success) { const fresh = await fetchItemsFromServer(); if (fresh) await cacheItems(fresh); return d; } }
+                } catch (_) {}
+                try {
+                    const res2 = await fetch(`/api/inventory/items/${id}`, { method: 'DELETE' });
+                    return await res2.json();
+                } catch (_) { return { success: false, message: 'Network error' }; }
+            }
+
+            /* OFFLINE path */
+            await cacheDeleteItem(parseInt(id));
+            const itemName = allItems.find(i => i.id === parseInt(id))?.name || `Item #${id}`;
+            await enqueue({ type: 'delete', id: parseInt(id), label: itemName, detail: 'Marked for deletion' });
+            showToast(`📡 Offline — "${itemName}" will be deleted on sync.`, 'warning');
+            return { success: true, offline: true };
+        }
+
+        /* adjustStock — online: POST /api/inv_items/adjust; offline: delta cache + queue */
+        async function adjustStock(id, delta, note) {
+            if (_isOnline) {
+                try {
+                    const res = await fetch('/api/inv_items/adjust', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, delta, note }) });
+                    if (res.ok) { const d = await res.json(); if (d.success) { const fresh = await fetchItemsFromServer(); if (fresh) await cacheItems(fresh); return d; } }
+                } catch (_) {}
+                try {
+                    const res2 = await fetch('/api/inventory/restock', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ product_id: id, adjustment: delta, note }) });
+                    return await res2.json();
+                } catch (_) { return { success: false, message: 'Network error' }; }
+            }
+
+            /* OFFLINE path */
+            const newStock = await cacheApplyDelta(parseInt(id), delta);
+            const itemName = allItems.find(i => i.id === parseInt(id))?.name || `Item #${id}`;
+            const sign     = delta > 0 ? `+${delta}` : `${delta}`;
+            await enqueue({ type: 'adjust', payload: { id: parseInt(id), delta, note }, label: itemName, detail: `${sign} units${note ? ' — ' + note : ''}` });
+            showToast(`📡 Offline — stock change (${sign}) queued.`, 'warning');
+            return { success: true, offline: true, new_stock: newStock ?? '?' };
+        }
+
+        /* ════════════════════════════════════════════
+           STOCK STATUS
+        ════════════════════════════════════════════ */
+        function getStatus(item) {
+            if (item.stock <= 0) return 'out';
+            if (item.stock <= (item.reorder_point || 10)) return 'low';
+            return 'ok';
+        }
+
+        /* ════════════════════════════════════════════
+           LOAD & RENDER ALL
+        ════════════════════════════════════════════ */
+        async function loadAll() {
+            allItems = await fetchItems();
+            renderStats();
+            renderCups();
+            renderIngredients();
+            loadDeductionLog();
+        }
+
+        function renderStats() {
+            const ok = allItems.filter(i => getStatus(i) === 'ok').length;
+            const low = allItems.filter(i => getStatus(i) === 'low').length;
+            const out = allItems.filter(i => getStatus(i) === 'out').length;
+            document.getElementById('statTotal').textContent = allItems.length;
+            document.getElementById('statOk').textContent = ok;
+            document.getElementById('statLow').textContent = low;
+            document.getElementById('statOut').textContent = out;
+            updateAlertBadge();
+        }
+
+        function renderCups() {
+            const cupsGrid = document.getElementById('cupsGrid');
+            const cups = CUP_SIZES.map(size =>
+                allItems.find(i => i.unit === size) ||
+                { name: CUP_NAMES[size], unit: size, stock: 0, reorder_point: 20, id: null }
+            );
+
+            cupsGrid.innerHTML = cups.map(cup => {
+                const status = getStatus(cup);
+                const countClass = status === 'out' ? 'danger' : status === 'low' ? 'warning' : '';
+                const pendingDot = cup._pending ? '<span class="pending-dot" title="Pending sync"></span>' : '';
+                return `<div class="cup-card ${status !== 'ok' ? status : ''}">
+                <div class="cup-icon">${CUP_ICONS[cup.unit] || '🥤'}</div>
+                <div class="cup-label">${CUP_NAMES[cup.unit] || cup.unit}${pendingDot}</div>
+                <div class="cup-count ${countClass}">${cup.stock}</div>
+                <div class="cup-unit">pcs remaining</div>
+                <div class="cup-status ${status}">${status === 'ok' ? '✓ In Stock' : status === 'low' ? '⚠ Low' : '✕ Out'}</div>
+                ${cup.id ? `
+                <div class="cup-adj-row">
+                    <button class="adj-btn" onclick="quickAdjCup('${cup.unit}', 1)">+</button>
+                    <input class="adj-input" type="number" id="cupAdj_${cup.unit}" value="10" min="1">
+                    <button class="adj-btn" onclick="quickAdjCup('${cup.unit}', -1)">−</button>
+                </div>
+                <button class="cup-restock-btn" onclick="openAdjModal(${cup.id},'${cup.name.replace(/'/g, "\\'")}',${cup.stock},'${cup.unit}')">📊 Adjust Stock</button>
+                <div class="cup-reorder-note">Reorder at ≤${cup.reorder_point || 20}</div>
+                ` : `
+                <button class="cup-restock-btn" onclick="initCup('${cup.unit}')">➕ Initialize</button>
+                `}
+            </div>`;
+            }).join('');
+        }
+
+        function quickAdjCup(unit, dir) {
+            const cup = allItems.find(i => i.unit === unit);
+            if (!cup) return;
+            const qty = parseInt(document.getElementById(`cupAdj_${unit}`)?.value || 10);
+            // Open the adjust modal pre-filled with the qty and direction
+            openAdjModal(cup.id, cup.name, cup.stock, cup.unit, dir > 0 ? qty : -qty);
+        }
+
+        async function initCup(unit) {
+            const payload = { name: CUP_NAMES[unit], type: 'packaging', stock: 0, unit, reorder_point: 20, note: 'Cup packaging — auto-deducted on sales' };
+            const data = await saveItem(payload, null);
+            if (data.success) {
+                showToast(`✅ ${CUP_NAMES[unit]} initialized`, 'success');
+                await loadAll();
+            } else {
+                showToast('❌ ' + (data.message || 'Error'), 'error');
+            }
+        }
+
+        function renderIngredients() {
+            const q = document.getElementById('ingSearchInput').value.toLowerCase();
+            const typeF = document.getElementById('ingTypeFilter').value;
+
+            // Exclude cup sizes from ingredients table (they have their own section)
+            let items = allItems.filter(i => !CUP_SIZES.includes(i.unit));
+            if (q) items = items.filter(i => i.name.toLowerCase().includes(q));
+            if (typeF) items = items.filter(i => i.type === typeF);
+            if (stockFilter) items = items.filter(i => getStatus(i) === stockFilter);
+
+            document.getElementById('ingResultCount').textContent = `${items.length} item${items.length !== 1 ? 's' : ''}`;
+
+            const tbody = document.getElementById('ingredientsTbody');
+            if (!items.length) {
+                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon"></div><h3>No ingredients found</h3><p>Add ingredients or packaging above.</p></div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(item => {
+                const status = getStatus(item);
+                const maxStock = Math.max(item.stock, (item.reorder_point || 10) * 2, 1);
+                const pct = Math.min(100, Math.round((item.stock / maxStock) * 100));
+                const isPending = !!item._pending;
+                const pendingDot = isPending ? '<span class="pending-dot" title="Pending sync"></span>' : '';
+                return `<tr${isPending ? ' class="offline-pending"' : ''}>
+                <td><div class="ing-name">${item.name}${pendingDot}</div>${item.note ? `<div style="font-size:0.75rem;color:#aaa;margin-top:0.1rem;">${item.note}</div>` : ''}</td>
+                <td><span class="ing-type ${item.type || 'ingredient'}">${item.type === 'packaging' ? '📦 Packaging' : '🧪 Ingredient'}</span></td>
+                <td>
+                    <div class="stock-bar-wrap">
+                        <div class="stock-bar"><div class="stock-bar-fill ${status}" style="width:${pct}%"></div></div>
+                        <span class="stock-num">${item.stock}</span>
+                    </div>
+                </td>
+                <td style="color:#888;">${item.unit || 'pcs'}</td>
+                <td style="color:#aaa;font-size:0.82rem;">${item.reorder_point || 10}</td>
+                <td><span class="status-chip ${status}">${status === 'ok' ? '✓ OK' : status === 'low' ? '⚠ Low' : '✕ Out'}</span></td>
+                <td>
+                    <div class="action-btns">
+                        <button class="btn btn-outline btn-sm" onclick="openAdjModal(${item.id},'${item.name.replace(/'/g, "\\'")}',${item.stock},'${item.unit}')">📊 Adjust</button>
+                        <button class="btn btn-outline btn-sm" onclick="openEditItem(${item.id})"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                        <button class="btn btn-ghost-danger btn-sm" onclick="openDeleteItem(${item.id},'${item.name.replace(/'/g, "\\\'")}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                    </div>
+                </td>
+            </tr>`;
+            }).join('');
+        }
+
+        function filterToLow() {
+            stockFilter = stockFilter === 'low' ? '' : 'low';
+            const sel = document.getElementById('ingStockFilter');
+            sel.value = stockFilter;
+            renderIngredients();
+        }
+
+        /* ════════════════════════════════════════════
+           DEDUCTION LOG (cups auto-deducted by sales)
+        ════════════════════════════════════════════ */
+        async function loadDeductionLog() {
+            const log = document.getElementById('deductionLog');
+            try {
+                const res = await fetch('/api/inv_items/log?limit=20');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.log && data.log.length) {
+                        log.innerHTML = data.log.map(entry => {
+                            const delta = entry.delta > 0 ? `+${entry.delta}` : entry.delta;
+                            const cls = entry.delta > 0 ? 'pos' : 'neg';
+                            const icon = entry.source === 'sale' ? '🧾' : '✏️';
+                            const iconClass = entry.source === 'sale' ? 'sale' : 'manual';
+                            return `<div class="log-item">
+                            <div class="log-icon ${iconClass}">${icon}</div>
+                            <div class="log-meta">
+                                <div class="log-title">${entry.item_name}</div>
+                                <div class="log-detail">${entry.note || (entry.source === 'sale' ? 'Auto-deducted from sale' : 'Manual adjustment')} · ${entry.created_at}</div>
+                            </div>
+                            <div class="log-change ${cls}">${delta} ${entry.unit}</div>
+                        </div>`;
+                        }).join('');
+                        return;
+                    }
+                }
+            } catch (_) { }
+            // No log endpoint yet — show placeholder
+            log.innerHTML = `<div class="empty-log">
+            <div style="font-size:2rem;opacity:0.3;margin-bottom:0.5rem;">📋</div>
+            <div>Deduction log will appear here</div>
+            <div style="font-size:0.78rem;color:#ddd;margin-top:0.25rem;">Cup deductions are recorded automatically on each sale.</div>
+        </div>`;
+        }
+
+        /* ════════════════════════════════════════════
+           ADD / EDIT MODALS
+        ════════════════════════════════════════════ */
+        function openAddModal(type = 'ingredient') {
+            document.getElementById('ingModalTitle').innerHTML = type === 'packaging'
+                ? 'Add <span>Packaging</span>' : 'Add <span>Ingredient</span>';
+            document.getElementById('editIngId').value = '';
+            document.getElementById('editIngType').value = type;
+            document.getElementById('ingName').value = '';
+            document.getElementById('ingStock').value = '0';
+            document.getElementById('ingUnit').value = type === 'packaging' ? '8oz' : 'kg';
+            document.getElementById('ingReorder').value = '10';
+            document.getElementById('ingNote').value = '';
+            document.getElementById('ingName').classList.remove('error');
+            openModal('ingredientModal');
+        }
+
+        function openEditItem(id) {
+            const item = allItems.find(i => i.id === id);
+            if (!item) return;
+            document.getElementById('ingModalTitle').innerHTML = 'Edit <span>Item</span>';
+            document.getElementById('editIngId').value = id;
+            document.getElementById('editIngType').value = item.type || 'ingredient';
+            document.getElementById('ingName').value = item.name;
+            document.getElementById('ingStock').value = item.stock;
+            document.getElementById('ingUnit').value = item.unit || 'pcs';
+            document.getElementById('ingReorder').value = item.reorder_point || 10;
+            document.getElementById('ingNote').value = item.note || '';
+            document.getElementById('ingName').classList.remove('error');
+            openModal('ingredientModal');
+        }
+
+        document.getElementById('addIngredientBtn').addEventListener('click', () => openAddModal('ingredient'));
+        document.getElementById('addPackagingBtn').addEventListener('click', () => openAddModal('packaging'));
+        ['closeIngModal', 'cancelIngModal'].forEach(id => document.getElementById(id).addEventListener('click', () => closeModal('ingredientModal')));
+        document.getElementById('ingredientModal').addEventListener('click', e => { if (e.target === document.getElementById('ingredientModal')) closeModal('ingredientModal'); });
+
+        document.getElementById('saveIngBtn').addEventListener('click', async () => {
+            const name = document.getElementById('ingName').value.trim();
+            if (!name) { document.getElementById('ingName').classList.add('error'); return; }
+            document.getElementById('ingName').classList.remove('error');
+
+            const btn = document.getElementById('saveIngBtn');
+            btn.disabled = true; btn.innerHTML = '⏳ Saving…';
+
+            const id = document.getElementById('editIngId').value;
+            const payload = {
+                name,
+                type: document.getElementById('editIngType').value,
+                stock: parseFloat(document.getElementById('ingStock').value) || 0,
+                unit: document.getElementById('ingUnit').value,
+                reorder_point: parseInt(document.getElementById('ingReorder').value) || 10,
+                note: document.getElementById('ingNote').value.trim(),
+            };
+
+            const data = await saveItem(payload, id || null);
+            if (data && data.success) {
+                showToast('✅ Saved', 'success');
+                closeModal('ingredientModal');
+                await loadAll();
+            } else {
+                showToast('❌ ' + ((data && data.message) || 'Error saving'), 'error');
+            }
+            btn.disabled = false; btn.innerHTML = '💾 Save';
+        });
+
+        /* ════════════════════════════════════════════
+           ADJUST MODAL
+        ════════════════════════════════════════════ */
+        function openAdjModal(id, name, currentStock, unit, preQty) {
+            document.getElementById('adjItemId').value = id;
+            document.getElementById('adjItemName').textContent = name;
+            document.getElementById('adjCurrentCount').textContent = currentStock;
+            document.getElementById('adjItemUnit').textContent = unit;
+            document.getElementById('adjQty').value = Math.abs(preQty || 1);
+            adjDirection = (preQty && preQty < 0) ? 'sub' : 'add';
+            document.querySelectorAll('.adj-type-btn').forEach(b => b.classList.toggle('active', b.dataset.adj === adjDirection));
+            document.getElementById('adjNote').value = '';
+            openModal('adjustModal');
+        }
+
+        document.querySelectorAll('.adj-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                adjDirection = btn.dataset.adj;
+                document.querySelectorAll('.adj-type-btn').forEach(b => b.classList.toggle('active', b.dataset.adj === adjDirection));
+            });
+        });
+
+        ['closeAdjModal', 'cancelAdjModal'].forEach(id => document.getElementById(id).addEventListener('click', () => closeModal('adjustModal')));
+        document.getElementById('adjustModal').addEventListener('click', e => { if (e.target === document.getElementById('adjustModal')) closeModal('adjustModal'); });
+
+        document.getElementById('saveAdjBtn').addEventListener('click', async () => {
+            const id = document.getElementById('adjItemId').value;
+            const qty = parseFloat(document.getElementById('adjQty').value) || 0;
+            if (qty <= 0) { showToast('❌ Enter a valid quantity', 'error'); return; }
+            const delta = adjDirection === 'sub' ? -qty : qty;
+            const note = document.getElementById('adjNote').value.trim();
+
+            const btn = document.getElementById('saveAdjBtn');
+            btn.disabled = true; btn.innerHTML = '⏳ Applying…';
+
+            const data = await adjustStock(id, delta, note);
+            if (data && data.success) {
+                showToast(`✅ Stock updated to ${data.new_stock ?? '?'}`, 'success');
+                closeModal('adjustModal');
+                await loadAll();
+            } else {
+                showToast('❌ ' + ((data && data.message) || 'Error'), 'error');
+            }
+            btn.disabled = false; btn.innerHTML = '✅ Apply Adjustment';
+        });
+
+        /* ════════════════════════════════════════════
+           DELETE
+        ════════════════════════════════════════════ */
+        function openDeleteItem(id, name) {
+            deleteItemId = id;
+            document.getElementById('deleteIngName').textContent = `"${name}"`;
+            openModal('deleteIngModal');
+        }
+        ['closeDeleteIngModal', 'cancelDeleteIngModal'].forEach(id =>
+            document.getElementById(id).addEventListener('click', () => { closeModal('deleteIngModal'); deleteItemId = null; })
+        );
+        document.getElementById('deleteIngModal').addEventListener('click', e => { if (e.target === document.getElementById('deleteIngModal')) closeModal('deleteIngModal'); });
+
+        document.getElementById('confirmDeleteIngBtn').addEventListener('click', async () => {
+            if (!deleteItemId) return;
+            const btn = document.getElementById('confirmDeleteIngBtn');
+            btn.disabled = true; btn.textContent = '⏳ Deleting…';
+            const data = await deleteItem(deleteItemId);
+            if (data && data.success) {
+                showToast('Item removed', 'success');
+                closeModal('deleteIngModal');
+                await loadAll();
+            } else {
+                showToast('❌ ' + ((data && data.message) || 'Error'), 'error');
+            }
+            btn.disabled = false; btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Delete';
+            deleteItemId = null;
+        });
+
+        /* ════════════════════════════════════════════
+           SEARCH / FILTER EVENTS
+        ════════════════════════════════════════════ */
+        let searchTimer;
+        document.getElementById('ingSearchInput').addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(renderIngredients, 280);
+        });
+        document.getElementById('ingTypeFilter').addEventListener('change', renderIngredients);
+        document.getElementById('ingStockFilter').addEventListener('change', () => {
+            stockFilter = document.getElementById('ingStockFilter').value;
+            renderIngredients();
+        });
+        document.getElementById('refreshBtn').addEventListener('click', async () => {
+            await loadAll();
+            showToast('Inventory refreshed', 'success');
+        });
+
+        /* ════════════════════════════════════════════
+           STOCK ALERT NOTIFICATION
+        ════════════════════════════════════════════ */
+        function updateAlertBadge() {
+            const lowCount = allItems.filter(i => getStatus(i) === 'low').length;
+            const outCount = allItems.filter(i => getStatus(i) === 'out').length;
+            const total = lowCount + outCount;
+            const badge = document.getElementById('alertBadge');
+            const btn = document.getElementById('stockAlertBtn');
+            badge.textContent = total;
+            badge.classList.toggle('visible', total > 0);
+            // Make the button pulse red if there are out-of-stock items
+            if (outCount > 0) {
+                btn.style.background = '#fce4ec';
+                btn.style.color = '#c62828';
+                btn.style.borderColor = '#ef9a9a';
+            } else if (lowCount > 0) {
+                btn.style.background = '#fff3e0';
+                btn.style.color = '#e65100';
+                btn.style.borderColor = '#ffcc80';
+            } else {
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.style.borderColor = '';
+            }
+        }
+
+        async function openAlertModal() {
+            openModal('stockAlertModal');
+            const body = document.getElementById('alertModalBody');
+            const sendBtn = document.getElementById('sendAlertBtn');
+            sendBtn.style.display = 'none';
+            body.innerHTML = `<div class="alert-no-issues"><div class="alert-no-issues-icon">⏳</div><p>Checking stock levels…</p></div>`;
+
+            // Re-use already-loaded data
+            const lowItems = allItems.filter(i => getStatus(i) === 'low');
+            const outItems = allItems.filter(i => getStatus(i) === 'out');
+            const alertItems = [...outItems, ...lowItems];
+
+            if (!alertItems.length) {
+                body.innerHTML = `
+                <div class="alert-no-issues">
+                    <div class="alert-no-issues-icon">✅</div>
+                    <p style="font-weight:700;color:#388e3c;font-size:0.95rem;">All stock levels are healthy!</p>
+                    <p style="margin-top:0.4rem;">No ingredients or supplies are below their reorder point.</p>
+                </div>`;
+                sendBtn.style.display = 'none';
+            } else {
+                const outCount = outItems.length;
+                const lowCount = lowItems.length;
+                const isCritical = outCount > 0;
+
+                // Fetch recipient email from settings
+                let recipientEmail = '—';
+                try {
+                    const r = await fetch('/api/settings/email');
+                    const d = await r.json();
+                    if (d.smtp_user || d.alert_recipient) {
+                        recipientEmail = d.alert_recipient || d.smtp_user || '—';
+                    }
+                } catch (_) { }
+
+                const itemRows = alertItems.map(item => {
+                    const st = getStatus(item);
+                    return `
+                <div class="alert-item-row">
+                    <span class="alert-item-dot ${st}"></span>
+                    <span class="alert-item-name">${item.name}</span>
+                    <span class="alert-item-stock">${item.stock} ${item.unit} / reorder ≤${item.reorder_point || 10}</span>
+                    <span class="alert-item-badge ${st}">${st === 'out' ? 'Out of Stock' : 'Low Stock'}</span>
+                </div>`;
+                }).join('');
+
+                body.innerHTML = `
+                <div class="alert-summary-banner ${isCritical ? 'critical' : ''}">
+                    <div class="alert-summary-icon">${isCritical ? '🚨' : '⚠️'}</div>
+                    <div>
+                        <div class="alert-summary-title">${isCritical ? 'Critical stock alert!' : 'Low stock warning'}</div>
+                        <div class="alert-summary-sub">${alertItems.length} item${alertItems.length !== 1 ? 's' : ''} need${alertItems.length === 1 ? 's' : ''} attention — reviewed as of now</div>
+                    </div>
+                </div>
+                <div class="alert-counts">
+                    ${outCount ? `<span class="alert-count-chip out">🚨 ${outCount} Out of Stock</span>` : ''}
+                    ${lowCount ? `<span class="alert-count-chip low">⚠️ ${lowCount} Low Stock</span>` : ''}
+                </div>
+                <div class="alert-items-list">${itemRows}</div>
+                <div class="alert-recipient-box">
+                    📧 Alert will be sent to: <strong>${recipientEmail}</strong>
+                    &nbsp;·&nbsp; <a href="{{ url_for('admin_settings') }}" style="color:var(--dark-gold);font-size:0.8rem;">Change in Settings</a>
+                </div>`;
+                sendBtn.style.display = 'inline-flex';
+            }
+        }
+
+        document.getElementById('stockAlertBtn').addEventListener('click', openAlertModal);
+        document.getElementById('closeAlertModal').addEventListener('click', () => closeModal('stockAlertModal'));
+        document.getElementById('cancelAlertBtn').addEventListener('click', () => closeModal('stockAlertModal'));
+        document.getElementById('stockAlertModal').addEventListener('click', e => {
+            if (e.target === document.getElementById('stockAlertModal')) closeModal('stockAlertModal');
+        });
+
+        document.getElementById('sendAlertBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('sendAlertBtn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Sending…';
+
+            try {
+                const res = await fetch('/api/settings/email/send-low-stock-alert', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`✅ ${data.message || 'Alert email sent!'}`, 'success');
+                    closeModal('stockAlertModal');
+                } else {
+                    showToast(`❌ ${data.message || 'Failed to send alert'}`, 'error');
+                }
+            } catch (e) {
+                showToast('❌ Network error — could not send alert', 'error');
+            }
+            btn.disabled = false;
+            btn.innerHTML = '📧 Send Alert Email';
+        });
+
+        /* INIT */
+        (async () => {
+            await startNetworkMonitor(); // must run first — validates _isOnline before any fetch
+            await loadAll();
+            await loadDeductionLog(); // show log immediately on page load
+        })();
+
+        // Refresh cup stock counts + deduction log every 15 s so the page
+        // reflects sales that completed since the admin opened the tab.
+        setInterval(async () => {
+            await checkConnectivity(); // keep _isOnline accurate before fetching
+            allItems = await fetchItems();
+            renderStats();
+            renderCups();
+            await loadDeductionLog();
+        }, 15000);
+    </script>
+</body>
+
+</html>
