@@ -2,7 +2,7 @@ CODE-CREW
 
 Welcome to CODE-CREW!
 
-🚀 Features
+Features
 - User Authentication
 - Dashboard
 - Attendance Monitoring
@@ -10,23 +10,23 @@ Welcome to CODE-CREW!
 - Face Recognition
 - Reports and Analytics
 
-🛠️ Technologies Used
+Technologies Used
 - Python Flask
 - HTML
 - CSS
 - JavaScript
 - MySQL
 
-👨‍💻 Developers
+Developers
 CODE-CREW Team
 
-📂 Installation
+Installation
 ```bash
 git clone https://github.com/yourusername/CODE-CREW.git
 ```
-📂 CODE-CREW Installation Guide
+CODE-CREW Installation Guide
 
-✅ Required Software
+Required Software
 
 | Software | Version |
 |----------|----------|
@@ -37,7 +37,7 @@ git clone https://github.com/yourusername/CODE-CREW.git
 
 ---
 
-1️⃣ Clone Project
+Clone Project
 
 ```bash
 git clone https://github.com/yourusername/CODE-CREW.git
@@ -46,7 +46,7 @@ cd CODE-CREW
 
 ---
 
-2️⃣ Create Virtual Environment
+Create Virtual Environment
 
 ```bash
 python -m venv venv
@@ -54,14 +54,14 @@ python -m venv venv
 
 ---
 
-3️⃣ Activate Virtual Environment
+Activate Virtual Environment
 
 Windows
 ```bash
 venv\Scripts\activate
 ```
 
-4️⃣ Install Modules
+Install Modules
 
 ```bash
 pip install -r requirements.txt
@@ -69,7 +69,7 @@ pip install -r requirements.txt
 
 ---
 
-📄 requirements.txt
+requirements.txt
 
 ```txt
 Flask==3.0.3
@@ -93,7 +93,7 @@ bcrypt==4.2.0
 requests==2.32.3
 ```
 
-6️⃣ Run the System
+Run the System
 
 ```bash
 python app.py
@@ -101,7 +101,7 @@ python app.py
 
 ---
 
-🌐 Open in Browser
+Open in Browser
 
 ```bash
 http://127.0.0.1:5000
@@ -109,12 +109,12 @@ http://127.0.0.1:5000
 
 ---
 
-🤖 Face Recognition
+Face Recognition
 
 Requirements:
 - Webcam
 - Camera Permission
 - Good Lighting
 
-📄 Status
+Status
 Currently under development.
