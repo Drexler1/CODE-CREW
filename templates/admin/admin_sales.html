@@ -1,0 +1,3954 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Books & Blooms Café — Sales</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gold: #c9a961;
+            --dark-gold: #a88850;
+            --black: #1a1a1a;
+            --dark-gray: #2d2d2d;
+            --light-gray: #f5f5f5;
+            --white: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #dc3545;
+            --info: #2196f3;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #f0f0f0;
+            color: var(--black);
+            overflow-x: hidden;
+        }
+
+        /* ── Header ── */
+        header {
+            background: var(--black);
+            border-bottom: 3px solid var(--gold);
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .logo-icon {
+            width: 55px;
+            height: 55px;
+            background: transparent;
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold);
+            font-size: 28px;
+        }
+
+        .logo-text h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.75rem;
+            font-weight: 400;
+            color: var(--white);
+            letter-spacing: 1px;
+            line-height: 1.2;
+        }
+
+        .logo-text h1 span {
+            color: var(--gold);
+        }
+
+        .logo-subtitle {
+            font-size: 0.7rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .date-time {
+            text-align: right;
+        }
+
+        .date-time .date {
+            color: var(--gold);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .date-time .time {
+            color: #999;
+            font-size: 0.85rem;
+            margin-top: 2px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--dark-gray);
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            border: 1px solid rgba(201, 169, 97, 0.3);
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--black);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .user-details h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 2px;
+        }
+
+        .user-details p {
+            font-size: 0.8rem;
+            color: var(--gold);
+        }
+
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        /* ── Nav ── */
+        nav {
+            background: var(--dark-gray);
+            border-bottom: 1px solid rgba(201, 169, 97, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 87px;
+            z-index: 99;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            margin: 0;
+            padding: 0;
+            overflow-x: auto;
+        }
+
+        nav ul::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        nav ul::-webkit-scrollbar-thumb {
+            background: var(--gold);
+        }
+
+        nav li {
+            flex-shrink: 0;
+        }
+
+        nav a {
+            display: block;
+            padding: 1rem 1.75rem;
+            text-decoration: none;
+            color: #aaa;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        nav a:hover {
+            background: rgba(201, 169, 97, 0.1);
+            color: var(--gold);
+        }
+
+        nav a.active {
+            color: var(--gold);
+            background: rgba(201, 169, 97, 0.15);
+            border-bottom-color: var(--gold);
+        }
+
+        /* ── Layout ── */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--black);
+            margin-bottom: 0.4rem;
+        }
+
+        .page-subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .header-btns {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            border: 2px solid transparent;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--black);
+            color: var(--gold);
+            border-color: var(--black);
+        }
+
+        .btn-primary:hover {
+            background: var(--gold);
+            color: var(--black);
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--black);
+            border-color: #ddd;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .btn-success:hover {
+            background: #388e3c;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.9rem;
+            font-size: 0.8rem;
+        }
+
+        /* ── Summary Cards ── */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.75rem;
+            min-height: 170px;
+            box-shadow: 0 2px 10px var(--shadow);
+            border: 1px solid #e0e0e0;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            animation: fadeInUp 0.5s ease-out backwards;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--gold);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(201, 169, 97, 0.22);
+        }
+
+        .stat-card:nth-child(1) {
+            animation-delay: .05s
+        }
+
+        .stat-card:nth-child(2) {
+            animation-delay: .1s
+        }
+
+        .stat-card:nth-child(3) {
+            animation-delay: .15s
+        }
+
+        .stat-card:nth-child(4) {
+            animation-delay: .2s
+        }
+
+        .stat-card:nth-child(5) {
+            animation-delay: .25s
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon.gold {
+            background: linear-gradient(135deg, var(--gold), var(--dark-gold));
+        }
+
+        .stat-icon.green {
+            background: linear-gradient(135deg, #4caf50, #388e3c);
+        }
+
+        .stat-icon.blue {
+            background: linear-gradient(135deg, #2196f3, #1565c0);
+        }
+
+        .stat-icon.purple {
+            background: linear-gradient(135deg, #9c27b0, #6a1b9a);
+        }
+
+        .stat-icon.orange {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+        }
+
+        .stat-label {
+            font-size: 0.72rem;
+            color: #888;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 0.4rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--black);
+            line-height: 1;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-sub {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        /* ── Controls ── */
+        .controls-bar {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 10px var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .ctrl-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        .ctrl-input {
+            padding: 0.55rem 0.9rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.2s;
+            background: white;
+        }
+
+        .ctrl-input:focus {
+            border-color: var(--gold);
+        }
+
+        .ctrl-select {
+            padding: 0.55rem 0.9rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            outline: none;
+            cursor: pointer;
+            background: white;
+        }
+
+        .ctrl-select:focus {
+            border-color: var(--gold);
+        }
+
+        .ctrl-divider {
+            width: 1px;
+            height: 32px;
+            background: #e0e0e0;
+        }
+
+        /* ── Table Card ── */
+        .table-card {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 10px var(--shadow);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .table-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.1rem 1.5rem;
+            border-bottom: 2px solid var(--gold);
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .table-card-header h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .record-count {
+            font-size: 0.78rem;
+            color: #888;
+            margin-top: 0.1rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--black);
+            color: var(--gold);
+        }
+
+        th {
+            padding: 0.85rem 1.1rem;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 0.85rem 1.1rem;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.88rem;
+            vertical-align: middle;
+        }
+
+        tbody tr {
+            transition: background 0.15s;
+        }
+
+        tbody tr:hover {
+            background: #fafafa;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.85rem 1.25rem;
+            border-top: 1px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: 0.65rem;
+        }
+
+        .pagination-info {
+            font-size: 0.82rem;
+            color: #888;
+        }
+
+        /* ── Badges ── */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.65rem;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .badge-cash {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .badge-card {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .badge-gcash {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .badge-maya {
+            background: #e0f7fa;
+            color: #006064;
+        }
+
+        .badge-other {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .badge-completed {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .amount-col {
+            font-weight: 800;
+            color: var(--dark-gold);
+        }
+
+        /* ── Cashier Report Section ── */
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .cashier-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .cashier-card {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 10px var(--shadow);
+            overflow: hidden;
+            transition: all 0.3s;
+            animation: fadeInUp 0.5s ease-out backwards;
+        }
+
+        .cashier-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(201, 169, 97, 0.2);
+        }
+
+        .cashier-card-header {
+            background: var(--black);
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--gold);
+        }
+
+        .cashier-name-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .cashier-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--black);
+            font-weight: 800;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        .cashier-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .cashier-txn-count {
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-top: 1px;
+        }
+
+        .cashier-card-body {
+            padding: 1rem 1.25rem;
+        }
+
+        .cashier-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.45rem 0;
+            border-bottom: 1px dashed #f0f0f0;
+            font-size: 0.85rem;
+        }
+
+        .cashier-stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .cashier-stat-label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .cashier-stat-value {
+            font-weight: 800;
+            color: var(--black);
+        }
+
+        .cashier-stat-value.gold {
+            color: var(--dark-gold);
+            font-size: 1.05rem;
+        }
+
+        .cashier-card-footer {
+            padding: 0.75rem 1.25rem;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            background: #fafafa;
+        }
+
+        /* ── Toast ── */
+        #toastContainer {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .toast {
+            background: var(--dark-gray);
+            border-left: 4px solid var(--gold);
+            color: white;
+            padding: 0.85rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            animation: slideInRight 0.3s ease;
+            max-width: 320px;
+        }
+
+        .toast.error {
+            border-left-color: var(--danger);
+            color: #ff8080;
+        }
+
+        .toast.success {
+            border-left-color: var(--success);
+            color: #80e080;
+        }
+
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center;
+            padding: 3.5rem 2rem;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            opacity: 0.25;
+            margin-bottom: 0.85rem;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* ── Loading ── */
+        .loading-row td {
+            text-align: center;
+            padding: 3rem;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* ── Cash Flow Chart ── */
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 10px var(--shadow);
+            overflow: visible;
+            margin-top: 1.5rem;
+            animation: fadeInUp 0.5s ease-out backwards;
+        }
+
+        .chart-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.1rem 1.5rem;
+            border-bottom: 2px solid var(--gold);
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .chart-card-header h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .chart-toggle-group {
+            display: flex;
+            gap: 0.35rem;
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 3px;
+        }
+
+        .chart-toggle-btn {
+            padding: 0.35rem 0.85rem;
+            border: none;
+            border-radius: 6px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: transparent;
+            color: #888;
+            transition: all 0.2s;
+        }
+
+        .chart-toggle-btn.active {
+            background: var(--black);
+            color: var(--gold);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+        }
+
+        .chart-toggle-btn:hover:not(.active) {
+            background: rgba(201, 169, 97, 0.12);
+            color: var(--dark-gold);
+        }
+
+        .chart-body {
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .chart-canvas-wrap {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .chart-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .chart-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .chart-summary-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .chart-metric {
+            text-align: center;
+        }
+
+        .chart-metric-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #999;
+            margin-bottom: 0.25rem;
+        }
+
+        .chart-metric-value {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--black);
+        }
+
+        .chart-metric-value.gold { color: var(--dark-gold); }
+        .chart-metric-value.green { color: var(--success); }
+        .chart-metric-value.blue { color: var(--info); }
+
+        .chart-no-data {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 240px;
+            color: #bbb;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .chart-no-data-icon {
+            font-size: 2.5rem;
+            opacity: 0.3;
+            margin-bottom: 0.75rem;
+        }
+
+        /* ══════════════════════════════════════════
+           HAMBURGER MENU BUTTON (mobile only)
+        ══════════════════════════════════════════ */
+        .hamburger-btn {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            width: 40px;
+            height: 40px;
+            background: var(--dark-gray);
+            border: 1px solid rgba(201,169,97,0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .hamburger-btn span {
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: var(--gold);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-btn.open span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+
+        .hamburger-btn.open span:nth-child(2) {
+            opacity: 0;
+            transform: scaleX(0);
+        }
+
+        .hamburger-btn.open span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+        .mobile-nav-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 98;
+        }
+
+        /* ══════════════════════════════════════════
+           TABLET — max 1024px
+        ══════════════════════════════════════════ */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 1.5rem;
+            }
+
+            .summary-cards {
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 1rem;
+            }
+
+            .cashier-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 1rem;
+            }
+
+            .chart-summary-row {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .controls-bar {
+                gap: 0.65rem;
+            }
+
+            .ctrl-divider {
+                display: none;
+            }
+
+            .date-time {
+                display: none;
+            }
+        }
+
+        /* ══════════════════════════════════════════
+           MOBILE — max 768px
+        ══════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            /* Header */
+            header {
+                padding: 0.85rem 1rem;
+                gap: 0.75rem;
+            }
+
+            .logo-icon {
+                width: 42px;
+                height: 42px;
+                font-size: 22px;
+            }
+
+            .logo-text h1 {
+                font-size: 1.3rem;
+            }
+
+            .logo-subtitle {
+                font-size: 0.6rem;
+                letter-spacing: 3px;
+            }
+
+            .header-actions {
+                gap: 0.65rem;
+            }
+
+            .date-time {
+                display: none;
+            }
+
+            .user-info {
+                padding: 0.5rem 0.75rem;
+                gap: 0.5rem;
+            }
+
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 0.85rem;
+            }
+
+            .user-details h3 {
+                font-size: 0.82rem;
+            }
+
+            .user-details p {
+                font-size: 0.72rem;
+            }
+
+            .logout-btn {
+                padding: 0.4rem 0.75rem;
+                font-size: 0.78rem;
+            }
+
+            /* Hamburger */
+            .hamburger-btn {
+                display: flex;
+            }
+
+            /* Nav — slide-down drawer */
+            nav {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: var(--dark-gray);
+                border-bottom: none;
+                z-index: 999;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                overflow-y: auto;
+                padding-top: 4rem;
+            }
+
+            nav.mobile-open {
+                transform: translateX(0);
+            }
+
+            nav ul {
+                flex-direction: column;
+                overflow-x: visible;
+            }
+
+            nav li {
+                flex-shrink: unset;
+                border-bottom: 1px solid rgba(201,169,97,0.1);
+            }
+
+            nav a {
+                padding: 1.1rem 1.75rem;
+                font-size: 1rem;
+                border-bottom: none;
+                border-left: 4px solid transparent;
+            }
+
+            nav a.active {
+                border-left-color: var(--gold);
+                border-bottom-color: transparent;
+                background: rgba(201,169,97,0.12);
+            }
+
+            .nav-close-btn {
+                display: flex !important;
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                width: 36px;
+                height: 36px;
+                background: rgba(255,255,255,0.08);
+                border: 1px solid rgba(255,255,255,0.15);
+                border-radius: 8px;
+                color: var(--gold);
+                font-size: 1.1rem;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+            }
+
+            /* Container & spacing */
+            .container {
+                padding: 1rem;
+            }
+
+            /* Page header */
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+                margin-bottom: 1.25rem;
+            }
+
+            .page-title {
+                font-size: 1.85rem;
+            }
+
+            .page-subtitle {
+                font-size: 0.88rem;
+            }
+
+            .header-btns {
+                width: 100%;
+            }
+
+            .header-btns .btn {
+                flex: 1;
+                justify-content: center;
+                font-size: 0.8rem;
+                padding: 0.55rem 0.75rem;
+            }
+
+            /* Summary cards — 2 columns */
+            .summary-cards {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+                margin-bottom: 1.25rem;
+            }
+
+            .stat-card {
+                padding: 1.1rem;
+                min-height: 130px;
+            }
+
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+                margin-bottom: 0.65rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .stat-label {
+                font-size: 0.68rem;
+            }
+
+            .stat-sub {
+                font-size: 0.7rem;
+            }
+
+            /* Section titles */
+            .section-title {
+                font-size: 1.3rem;
+                margin-bottom: 0.85rem;
+            }
+
+            /* Controls bar — vertical stack */
+            .controls-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.6rem;
+                padding: 0.85rem 1rem;
+            }
+
+            .ctrl-label {
+                font-size: 0.75rem;
+                margin-bottom: -0.2rem;
+            }
+
+            .ctrl-input,
+            .ctrl-select {
+                width: 100%;
+                font-size: 0.9rem;
+                padding: 0.6rem 0.85rem;
+            }
+
+            .ctrl-divider {
+                display: none;
+            }
+
+            /* Controls bar — report period row */
+            .report-controls-row {
+                display: flex;
+                gap: 0.6rem;
+                flex-wrap: wrap;
+            }
+
+            .report-controls-row .ctrl-input,
+            .report-controls-row .ctrl-select {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .report-controls-row .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            /* Table card header */
+            .table-card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+                padding: 0.85rem 1rem;
+            }
+
+            .table-card-header > div:last-child {
+                width: 100%;
+            }
+
+            .table-card-header > div:last-child .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            /* Transactions table — card layout on mobile */
+            .txn-table-desktop { display: none !important; }
+            .txn-cards-mobile {
+                display: flex !important;
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .txn-card-mobile {
+                padding: 0.9rem 1rem;
+                border-bottom: 1px solid #f0f0f0;
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: 0.25rem 0.5rem;
+            }
+
+            .txn-card-mobile:last-child { border-bottom: none; }
+
+            .txn-mobile-id {
+                font-size: 0.72rem;
+                font-weight: 700;
+                color: #888;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+            }
+
+            .txn-mobile-amount {
+                font-size: 1.15rem;
+                font-weight: 800;
+                color: var(--dark-gold);
+                text-align: right;
+            }
+
+            .txn-mobile-cashier {
+                font-size: 0.88rem;
+                font-weight: 600;
+                color: var(--black);
+            }
+
+            .txn-mobile-badge {
+                display: flex;
+                justify-content: flex-end;
+            }
+
+            .txn-mobile-meta {
+                font-size: 0.75rem;
+                color: #999;
+                grid-column: 1 / -1;
+                display: flex;
+                gap: 0.6rem;
+                flex-wrap: wrap;
+                margin-top: 0.2rem;
+            }
+
+            .txn-mobile-actions {
+                grid-column: 1 / -1;
+                margin-top: 0.35rem;
+            }
+
+            .txn-mobile-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            /* Cash flow table — scrollable with sticky first col */
+            #cashFlowTable {
+                min-width: 600px;
+            }
+
+            /* Chart card */
+            .chart-card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.65rem;
+                padding: 0.85rem 1rem;
+            }
+
+            .chart-toggle-group {
+                width: 100%;
+                justify-content: stretch;
+            }
+
+            .chart-toggle-btn {
+                flex: 1;
+                text-align: center;
+            }
+
+            .chart-canvas-wrap {
+                height: 220px;
+            }
+
+            .chart-body {
+                padding: 1rem;
+            }
+
+            .chart-summary-row {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+
+            .chart-metric-value {
+                font-size: 0.95rem;
+            }
+
+            /* Cashier grid — single column */
+            .cashier-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            /* Toast */
+            #toastContainer {
+                top: auto;
+                bottom: 1rem;
+                right: 1rem;
+                left: 1rem;
+            }
+
+            .toast {
+                max-width: 100%;
+            }
+
+            /* Table footer */
+            .table-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+                padding: 0.75rem 1rem;
+            }
+
+            .table-footer > div {
+                display: flex;
+                gap: 0.5rem;
+            }
+
+            .table-footer .btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            /* Receipt modal */
+            #receiptModal > div {
+                max-width: 100% !important;
+                border-radius: 12px !important;
+                margin: 0;
+            }
+        }
+
+        /* ══════════════════════════════════════════
+           SMALL MOBILE — max 480px
+        ══════════════════════════════════════════ */
+        @media (max-width: 480px) {
+            .logo-text h1 {
+                font-size: 1.1rem;
+            }
+
+            .logo-subtitle {
+                display: none;
+            }
+
+            .user-details {
+                display: none;
+            }
+
+            .summary-cards {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stat-card {
+                min-height: 110px;
+            }
+
+            .stat-value {
+                font-size: 1.3rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .chart-summary-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* ════════════════════════════════════════════
+           PRINT STYLES — 80mm thermal / long receipt
+        ════════════════════════════════════════════ */
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            /* Hide everything except the receipt */
+            body>*:not(#receiptPrintArea) {
+                display: none !important;
+            }
+
+            #receiptPrintArea {
+                display: block !important;
+            }
+
+            @page {
+                size: 80mm auto;
+                /* thermal roll width; height auto = long receipt */
+                margin: 4mm 3mm;
+            }
+
+            #receiptPrintArea {
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 9pt;
+                color: #000;
+                width: 100%;
+                background: #fff;
+            }
+
+            .rp-store {
+                text-align: center;
+                font-size: 11pt;
+                font-weight: bold;
+                margin-bottom: 2mm;
+            }
+
+            .rp-sub {
+                text-align: center;
+                font-size: 8pt;
+                margin-bottom: 1mm;
+            }
+
+            .rp-divider {
+                border: none;
+                border-top: 1px dashed #000;
+                margin: 2mm 0;
+            }
+
+            .rp-section {
+                font-size: 8.5pt;
+                font-weight: bold;
+                margin: 2mm 0 1mm;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .rp-row {
+                display: flex;
+                justify-content: space-between;
+                font-size: 8.5pt;
+                margin: 0.5mm 0;
+            }
+
+            .rp-row span:last-child {
+                font-weight: bold;
+            }
+
+            .rp-total-row {
+                display: flex;
+                justify-content: space-between;
+                font-size: 10pt;
+                font-weight: bold;
+                margin: 1mm 0;
+                border-top: 1px solid #000;
+                padding-top: 1mm;
+            }
+
+            .rp-txn-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 7.5pt;
+                margin: 1mm 0;
+            }
+
+            .rp-txn-table th {
+                text-align: left;
+                border-bottom: 1px dashed #000;
+                padding: 0.5mm 0;
+                font-size: 7pt;
+            }
+
+            .rp-txn-table td {
+                padding: 0.4mm 0;
+                vertical-align: top;
+            }
+
+            .rp-txn-table td:last-child {
+                text-align: right;
+                white-space: nowrap;
+            }
+
+            .rp-footer {
+                text-align: center;
+                font-size: 8pt;
+                margin-top: 3mm;
+            }
+
+            .rp-cashier-block {
+                border: 1px dashed #000;
+                padding: 1.5mm;
+                margin: 2mm 0;
+            }
+
+            .rp-cashier-title {
+                font-weight: bold;
+                font-size: 9pt;
+                margin-bottom: 1mm;
+            }
+        }
+        /* ══════════════════════════════════════════
+           MONTHLY PRODUCT ANALYTICS MODULE
+        ══════════════════════════════════════════ */
+
+        /* Section wrapper */
+        .mpa-section {
+            margin-bottom: 2.5rem;
+        }
+
+        /* Module header card */
+        .mpa-header-card {
+            background: var(--black);
+            border-radius: 12px 12px 0 0;
+            padding: 1.2rem 1.6rem;
+            border-bottom: 3px solid var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.85rem;
+        }
+
+        .mpa-header-left h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.45rem;
+            font-weight: 600;
+            color: var(--white);
+            margin: 0;
+        }
+
+        .mpa-header-left p {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        .mpa-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        /* KPI Strip */
+        .mpa-kpi-strip {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            background: white;
+            border: 1px solid #e8e8e8;
+            border-top: none;
+            border-bottom: none;
+        }
+
+        .mpa-kpi {
+            padding: 1.1rem 1.2rem;
+            border-right: 1px solid #f0f0f0;
+            position: relative;
+        }
+
+        .mpa-kpi:last-child { border-right: none; }
+
+        .mpa-kpi::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+        }
+
+        .mpa-kpi.gold::before   { background: var(--gold); }
+        .mpa-kpi.green::before  { background: var(--success); }
+        .mpa-kpi.blue::before   { background: var(--info); }
+        .mpa-kpi.red::before    { background: var(--danger); }
+        .mpa-kpi.purple::before { background: #9c27b0; }
+
+        .mpa-kpi-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #aaa;
+            margin-bottom: 0.3rem;
+        }
+
+        .mpa-kpi-val {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--black);
+            line-height: 1;
+            margin-bottom: 0.2rem;
+        }
+
+        .mpa-kpi-sub {
+            font-size: 0.68rem;
+            color: #bbb;
+        }
+
+        /* Two-column highlight grid */
+        .mpa-highlights {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            background: white;
+            border: 1px solid #e8e8e8;
+            border-top: none;
+        }
+
+        .mpa-highlight-col {
+            padding: 1.25rem 1.5rem;
+        }
+
+        .mpa-highlight-col:first-child {
+            border-right: 1px solid #f0f0f0;
+        }
+
+        .mpa-highlight-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 0.85rem;
+        }
+
+        .mpa-highlight-title.best  { color: #c9a961; }
+        .mpa-highlight-title.low   { color: #e53935; }
+
+        .mpa-highlight-pill {
+            display: inline-block;
+            padding: 0.18rem 0.55rem;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 0.1rem;
+        }
+
+        .mpa-highlight-pill.best-pill {
+            background: rgba(201,169,97,0.12);
+            color: #a88850;
+            border: 1px solid rgba(201,169,97,0.3);
+        }
+
+        .mpa-highlight-pill.low-pill {
+            background: rgba(220,53,69,0.08);
+            color: #c62828;
+            border: 1px solid rgba(220,53,69,0.2);
+        }
+
+        .mpa-highlight-pill.mid-pill {
+            background: rgba(33,150,243,0.08);
+            color: #1565c0;
+            border: 1px solid rgba(33,150,243,0.2);
+        }
+
+        /* Highlight item rows */
+        .mpa-item-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid #f8f8f8;
+        }
+
+        .mpa-item-row:last-child { border-bottom: none; }
+
+        .mpa-item-rank {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--light-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #666;
+            flex-shrink: 0;
+        }
+
+        .mpa-item-rank.gold-rank {
+            background: linear-gradient(135deg, #c9a961, #a88850);
+            color: white;
+        }
+
+        .mpa-item-rank.silver-rank {
+            background: linear-gradient(135deg, #b0bec5, #78909c);
+            color: white;
+        }
+
+        .mpa-item-rank.bronze-rank {
+            background: linear-gradient(135deg, #ce8a63, #a0622e);
+            color: white;
+        }
+
+        .mpa-item-info { flex: 1; min-width: 0; }
+
+        .mpa-item-name {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--black);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mpa-item-cat {
+            font-size: 0.7rem;
+            color: #aaa;
+            margin-top: 1px;
+        }
+
+        .mpa-item-stats { text-align: right; flex-shrink: 0; }
+
+        .mpa-item-units {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--black);
+            line-height: 1;
+        }
+
+        .mpa-item-rev {
+            font-size: 0.72rem;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .mpa-item-mom {
+            font-size: 0.68rem;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .mpa-item-mom.up   { color: var(--success); }
+        .mpa-item-mom.down { color: var(--danger); }
+        .mpa-item-mom.flat { color: #aaa; }
+
+        /* Bar inside item */
+        .mpa-bar-wrap {
+            height: 4px;
+            background: #f0f0f0;
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .mpa-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.8s cubic-bezier(.4,0,.2,1);
+        }
+
+        /* Chart + full table layout */
+        .mpa-bottom {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 0;
+            background: white;
+            border: 1px solid #e8e8e8;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .mpa-donut-col {
+            border-right: 1px solid #f0f0f0;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .mpa-donut-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            margin-bottom: 0.85rem;
+            align-self: flex-start;
+        }
+
+        .mpa-donut-canvas-wrap {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin-bottom: 1rem;
+        }
+
+        .mpa-donut-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .mpa-donut-center-val {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--black);
+            line-height: 1;
+        }
+
+        .mpa-donut-center-sub {
+            font-size: 0.62rem;
+            color: #aaa;
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .mpa-donut-legend {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .mpa-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .mpa-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .mpa-legend-label { flex: 1; color: #555; font-weight: 600; }
+        .mpa-legend-val { font-weight: 800; color: var(--black); }
+
+        /* Full product table */
+        .mpa-table-col {
+            overflow-x: auto;
+        }
+
+        .mpa-table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .mpa-table-header h4 {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--black);
+        }
+
+        .mpa-filter-row {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .mpa-filter-btn {
+            padding: 0.25rem 0.7rem;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 20px;
+            background: white;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #666;
+        }
+
+        .mpa-filter-btn.active,
+        .mpa-filter-btn:hover {
+            background: var(--black);
+            border-color: var(--black);
+            color: var(--gold);
+        }
+
+        .mpa-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.83rem;
+        }
+
+        .mpa-table thead tr {
+            background: #fafafa;
+        }
+
+        .mpa-table thead th {
+            padding: 0.6rem 0.9rem;
+            text-align: left;
+            font-size: 0.66rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #999;
+            border-bottom: 1px solid #efefef;
+            white-space: nowrap;
+        }
+
+        .mpa-table thead th.num { text-align: right; }
+
+        .mpa-table tbody tr {
+            border-bottom: 1px solid #f8f8f8;
+            transition: background 0.12s;
+        }
+
+        .mpa-table tbody tr:hover { background: rgba(201,169,97,0.04); }
+        .mpa-table tbody tr:last-child { border-bottom: none; }
+
+        .mpa-table td {
+            padding: 0.6rem 0.9rem;
+            vertical-align: middle;
+        }
+
+        .mpa-table td.num {
+            text-align: right;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .tier-chip {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+        }
+
+        .tier-chip.best_seller {
+            background: rgba(201,169,97,0.12);
+            color: #a88850;
+        }
+
+        .tier-chip.barely_sold {
+            background: rgba(220,53,69,0.09);
+            color: #c62828;
+        }
+
+        .tier-chip.mid {
+            background: rgba(33,150,243,0.08);
+            color: #1565c0;
+        }
+
+        .mpa-mom-chip {
+            font-size: 0.7rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .mpa-mom-chip.up   { color: var(--success); }
+        .mpa-mom-chip.down { color: var(--danger); }
+        .mpa-mom-chip.new  { color: #9c27b0; }
+
+        /* Empty/loading state */
+        .mpa-empty {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #bbb;
+            background: white;
+            border: 1px solid #e8e8e8;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .mpa-empty-icon { font-size: 2.8rem; opacity: 0.25; margin-bottom: 0.6rem; }
+
+        /* Bottom border radius */
+        .mpa-bottom { border-radius: 0 0 12px 12px; overflow: hidden; }
+        .mpa-kpi-strip { border-radius: 0; }
+
+        @media (max-width: 900px) {
+            .mpa-kpi-strip { grid-template-columns: repeat(3, 1fr); }
+            .mpa-highlights { grid-template-columns: 1fr; }
+            .mpa-highlight-col:first-child { border-right: none; border-bottom: 1px solid #f0f0f0; }
+            .mpa-bottom { grid-template-columns: 1fr; }
+            .mpa-donut-col { border-right: none; border-bottom: 1px solid #f0f0f0; }
+        }
+
+        @media (max-width: 600px) {
+            .mpa-kpi-strip { grid-template-columns: repeat(2, 1fr); }
+            .mpa-controls { width: 100%; justify-content: stretch; }
+            .mpa-controls .ctrl-input,
+            .mpa-controls .btn { flex: 1; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── Header ── -->
+    <header>
+        <div class="logo">
+            <div class="logo-icon">📚</div>
+            <div class="logo-text">
+                <h1>Books <span>&</span> Blooms</h1>
+                <div class="logo-subtitle">CAFÉ</div>
+            </div>
+        </div>
+        <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="header-actions">
+            <div class="date-time">
+                <div class="date" id="currentDate"></div>
+                <div class="time" id="currentTime"></div>
+            </div>
+            <div class="user-info">
+                <div class="user-details">
+                    <h3>{{ full_name or 'Admin' }}</h3>
+                    <p>{{ session.get('role')|capitalize }}</p>
+                </div>
+                <div class="user-avatar">{{ full_name[0] if full_name else 'A' }}</div>
+            </div>
+            <form method="POST" action="{{ url_for('logout') }}" style="display:inline;margin:0;"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="logout-btn">➜] Logout</button></form>
+        </div>
+    </header>
+
+    <!-- ── Nav ── -->
+    <nav id="mainNav">
+        <button class="nav-close-btn" id="navCloseBtn" style="display:none;">✕</button>
+        <ul>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_sales') }}" class="active">Sales</a></li>
+            <li><a href="{{ url_for('inventory') }}">Inventory</a></li>
+            <li><a href="{{ url_for('staff_attendance') }}">Staff Attendance</a></li>
+            <li><a href="{{ url_for('product_management') }}">Product Management</a></li>
+            <li><a href="{{ url_for('admin_settings') }}">Settings</a></li>
+            <li><a href="{{ url_for('employee_management') }}">Employee Management</a></li>
+            <li><a href="{{ url_for('payroll') }}">Payroll</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+
+        <!-- ── Page Header ── -->
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Sales Overview</h1>
+                <p class="page-subtitle">Track transactions, revenue, and cashier performance.</p>
+            </div>
+            <div class="header-btns">
+                <button class="btn btn-outline" id="refreshBtn">↺ Refresh</button>
+                <button class="btn btn-primary" id="printAllReportsBtn">🖨️ Print All Shift Reports</button>
+            </div>
+        </div>
+
+        <!-- ── Summary Cards ── -->
+        <div class="summary-cards">
+            <div class="stat-card">
+                <div class="stat-icon gold">💰</div>
+                <div class="stat-label">Today's Revenue</div>
+                <div class="stat-value" id="statRevenue">—</div>
+                <div class="stat-sub">total sales</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">🧾</div>
+                <div class="stat-label">Transactions</div>
+                <div class="stat-value" id="statTxns">—</div>
+                <div class="stat-sub">completed today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue">📈</div>
+                <div class="stat-label">Avg. Order Value</div>
+                <div class="stat-value" id="statAvg">—</div>
+                <div class="stat-sub">per transaction</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple">💳</div>
+                <div class="stat-label">Top Payment</div>
+                <div class="stat-value" id="statTopMethod">—</div>
+                <div class="stat-sub" id="statTopMethodSub">most used today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange">👤</div>
+                <div class="stat-label">Active Cashiers</div>
+                <div class="stat-value" id="statCashiers">—</div>
+                <div class="stat-sub">with sales today</div>
+            </div>
+        </div>
+
+        <!-- ── Cash Flow Reports ── -->
+        <div class="section-title">📊 Cash Flow Reports</div>
+
+        <!-- Report Type Selector -->
+        <div class="controls-bar" style="margin-bottom: 1rem;">
+            <span class="ctrl-label">Report Period:</span>
+            <select class="ctrl-select" id="reportPeriod">
+                <option value="weekly">Weekly Report</option>
+                <option value="monthly">Monthly Report</option>
+                <option value="yearly">Yearly Report</option>
+            </select>
+            <div class="ctrl-divider"></div>
+            <span class="ctrl-label" id="periodLabel">Week:</span>
+            <input type="week" class="ctrl-input" id="weekPicker" style="min-width:160px;">
+            <input type="month" class="ctrl-input" id="monthPicker" style="min-width:160px;display:none;">
+            <input type="number" class="ctrl-input" id="yearPicker" style="min-width:100px;display:none;" min="2020" max="2030" placeholder="YYYY">
+            <button class="btn btn-primary btn-sm" id="generateReportBtn">📈 Generate Report</button>
+            <button class="btn btn-outline btn-sm" id="printReportBtn" style="display:none;">🖨️ Print Report</button>
+        </div>
+
+        <!-- Cash Flow Report Display -->
+        <div class="table-card" id="cashFlowReportCard" style="display:none;">
+            <div class="table-card-header">
+                <div>
+                    <h3 id="reportTitle">Cash Flow Report</h3>
+                    <div class="record-count" id="reportPeriodInfo"></div>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="cashFlowTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Transactions</th>
+                            <th>Items Sold</th>
+                            <th>Gross Sales</th>
+                            <th>Discounts</th>
+                            <th>Net Revenue</th>
+                            <th>Cash</th>
+                            <th>Digital</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cashFlowTableBody">
+                    </tbody>
+                    <tfoot id="cashFlowTableFoot" style="background: var(--light-gray); font-weight: 700;">
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── Cash Flow Visualization Chart ── -->
+        <div class="chart-card" id="cashFlowChartCard" style="display:none;">
+            <div class="chart-card-header">
+                <div>
+                    <h3>📈 Revenue Visualization</h3>
+                    <div class="record-count" id="chartSubtitle">Cash &amp; digital breakdown</div>
+                </div>
+                <div class="chart-toggle-group">
+                    <button class="chart-toggle-btn active" id="toggleBar" onclick="switchChartType('bar')">Bar</button>
+                    <button class="chart-toggle-btn" id="toggleLine" onclick="switchChartType('line')">Line</button>
+                    <button class="chart-toggle-btn" id="toggleArea" onclick="switchChartType('area')">Area</button>
+                </div>
+            </div>
+            <div class="chart-body">
+                <div class="chart-canvas-wrap">
+                    <canvas id="cashFlowChart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="chart-legend-item">
+                        <div class="chart-legend-dot" style="background:#c9a961;"></div>
+                        Net Revenue
+                    </div>
+                    <div class="chart-legend-item">
+                        <div class="chart-legend-dot" style="background:#4caf50;"></div>
+                        Cash
+                    </div>
+                    <div class="chart-legend-item">
+                        <div class="chart-legend-dot" style="background:#2196f3;"></div>
+                        Digital
+                    </div>
+                </div>
+                <div class="chart-summary-row" id="chartMetricsRow">
+                    <div class="chart-metric">
+                        <div class="chart-metric-label">Peak Period</div>
+                        <div class="chart-metric-value gold" id="chartPeak">—</div>
+                    </div>
+                    <div class="chart-metric">
+                        <div class="chart-metric-label">Lowest Period</div>
+                        <div class="chart-metric-value" id="chartLow">—</div>
+                    </div>
+                    <div class="chart-metric">
+                        <div class="chart-metric-label">Cash Share</div>
+                        <div class="chart-metric-value green" id="chartCashPct">—</div>
+                    </div>
+                    <div class="chart-metric">
+                        <div class="chart-metric-label">Digital Share</div>
+                        <div class="chart-metric-value blue" id="chartDigitalPct">—</div>
+                    </div>
+                    <div class="chart-metric">
+                        <div class="chart-metric-label">Avg per Period</div>
+                        <div class="chart-metric-value" id="chartAvgPeriod">—</div>
+                    </div>
+                    <div class="chart-metric">
+                        <div class="chart-metric-label">Growth vs First</div>
+                        <div class="chart-metric-value" id="chartGrowth">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cash Flow Summary Cards -->
+        <div class="summary-cards" id="cashFlowSummary" style="display:none; margin-top: 1.5rem;">
+            <div class="stat-card">
+                <div class="stat-icon gold">💵</div>
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value" id="cfRevenue">—</div>
+                <div class="stat-sub" id="cfRevenueSub">period total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">📊</div>
+                <div class="stat-label" id="cfAvgLabel">Avg per Period</div>
+                <div class="stat-value" id="cfAvgDaily">—</div>
+                <div class="stat-sub">per day</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue">🛒</div>
+                <div class="stat-label">Total Transactions</div>
+                <div class="stat-value" id="cfTotalTxns">—</div>
+                <div class="stat-sub">completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple">🎯</div>
+                <div class="stat-label">Best Day</div>
+                <div class="stat-value" id="cfBestDay">—</div>
+                <div class="stat-sub" id="cfBestDaySub">highest revenue</div>
+            </div>
+        </div>
+
+        <!-- ── Filters ── -->
+        <div class="controls-bar" style="margin-top: 2rem;">
+            <span class="ctrl-label">Date:</span>
+            <input type="date" class="ctrl-input" id="filterDate">
+            <div class="ctrl-divider"></div>
+            <span class="ctrl-label">Cashier:</span>
+            <select class="ctrl-select" id="filterCashier">
+                <option value="">All Cashiers</option>
+            </select>
+            <div class="ctrl-divider"></div>
+            <span class="ctrl-label">Payment:</span>
+            <select class="ctrl-select" id="filterPayment">
+                <option value="">All Methods</option>
+                <option value="cash">Cash</option>
+                <option value="card">Card</option>
+                <option value="gcash">GCash</option>
+                <option value="maya">Maya</option>
+                <option value="other">Other</option>
+            </select>
+            <div class="ctrl-divider"></div>
+            <input type="text" class="ctrl-input" id="filterSearch" placeholder="🔍 Search ID or cashier…"
+                style="min-width:200px;">
+            <button class="btn btn-outline btn-sm" id="clearFiltersBtn">✕ Clear</button>
+        </div>
+
+        <!-- ── Transactions Table ── -->
+        <div class="table-card">
+            <div class="table-card-header">
+                <div>
+                    <h3>Transaction History</h3>
+                    <div class="record-count" id="recordCount">Loading…</div>
+                </div>
+                <div style="display:flex;gap:0.5rem;">
+                    <button class="btn btn-outline btn-sm" id="exportCsvBtn">📥 Export CSV</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="txn-table-desktop">
+                    <thead>
+                        <tr>
+                            <th>Txn ID</th>
+                            <th>Cashier</th>
+                            <th>Items</th>
+                            <th>Subtotal</th>
+                            <th>Discount</th>
+                            <th>Total</th>
+                            <th>Payment</th>
+                            <th>Tendered</th>
+                            <th>Change</th>
+                            <th>Date & Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="txnTableBody">
+                        <tr class="loading-row">
+                            <td colspan="11">⏳ Loading transactions…</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="txn-cards-mobile" id="txnCardsMobile" style="display:none;"></div>
+            </div>
+            <div class="table-footer">
+                <span class="pagination-info" id="paginationInfo"></span>
+                <div style="display:flex;gap:0.5rem;">
+                    <button class="btn btn-outline btn-sm" id="prevBtn">‹ Prev</button>
+                    <button class="btn btn-outline btn-sm" id="nextBtn">Next ›</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Cashier Shift Reports ── -->
+        <div class="section-title">📋 Cashier Shift Reports</div>
+        <div class="cashier-grid" id="cashierGrid">
+            <div class="empty-state" style="grid-column:1/-1">
+                <div class="empty-state-icon">⏳</div>
+                <p>Loading cashier reports…</p>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             MONTHLY PRODUCT ANALYTICS MODULE
+        ══════════════════════════════════════════════════════════════ -->
+        <div class="mpa-section" id="mpaSection">
+
+            <!-- Module header -->
+            <div class="mpa-header-card">
+                <div class="mpa-header-left">
+                    <h2>📦 Monthly Product Sales Analytics</h2>
+                    <p>Best Sellers · Barely Sold · Unit rankings & month-over-month trends</p>
+                </div>
+                <div class="mpa-controls">
+                    <input type="month" class="ctrl-input" id="mpaMonthPicker" style="min-width:155px;">
+                    <button class="btn btn-primary btn-sm" id="mpaLoadBtn">📊 Load Report</button>
+                    <button class="btn btn-outline btn-sm" id="mpaExportBtn" style="display:none;">📥 Export CSV</button>
+                </div>
+            </div>
+
+            <!-- Content injected by JS -->
+            <div id="mpaBody">
+                <div class="mpa-empty">
+                    <div class="mpa-empty-icon">📦</div>
+                    <p>Select a month and click <strong>Load Report</strong> to view product analytics.</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div><!-- /container -->
+
+    <div id="toastContainer"></div>
+    <div class="mobile-nav-overlay" id="navOverlay"></div>
+
+    <!-- ════════════════════════════════════════════
+     RECEIPT DETAIL MODAL
+════════════════════════════════════════════ -->
+    <div id="receiptModal"
+        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:999;align-items:center;justify-content:center;padding:1rem;">
+        <div
+            style="background:white;border-radius:16px;width:100%;max-width:440px;box-shadow:0 24px 80px rgba(0,0,0,0.4);display:flex;flex-direction:column;max-height:92vh;overflow:hidden;">
+            <div
+                style="background:var(--black);padding:1.2rem 1.6rem;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--gold);flex-shrink:0;">
+                <span style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:white;">🧾
+                    <span style="color:var(--gold);">Receipt</span></span>
+                <button onclick="closeReceiptModal()"
+                    style="width:32px;height:32px;border-radius:6px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;cursor:pointer;font-size:1rem;">✕</button>
+            </div>
+            <div id="receiptModalBody" style="padding:1.5rem;overflow-y:auto;flex:1;font-size:0.88rem;"></div>
+            <div
+                style="padding:0.85rem 1.5rem;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;gap:0.5rem;background:#fafafa;flex-shrink:0;">
+                <button onclick="closeReceiptModal()" class="btn btn-outline btn-sm">Close</button>
+                <button onclick="printReceiptOnly()" class="btn btn-primary btn-sm">🖨️ Print Receipt</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+     PRINT RECEIPT AREA (hidden on screen)
+════════════════════════════════════════════ -->
+    <div id="receiptPrintArea" style="display:none;"></div>
+
+    <script>
+        /* ── Mobile Nav ── */
+        (function() {
+            const hamburger = document.getElementById('hamburgerBtn');
+            const nav = document.getElementById('mainNav');
+            const overlay = document.getElementById('navOverlay');
+            const closeBtn = document.getElementById('navCloseBtn');
+
+            function openNav() {
+                nav.classList.add('mobile-open');
+                overlay.style.display = 'block';
+                hamburger.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeNav() {
+                nav.classList.remove('mobile-open');
+                overlay.style.display = 'none';
+                hamburger.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+
+            hamburger.addEventListener('click', () => nav.classList.contains('mobile-open') ? closeNav() : openNav());
+            if (closeBtn) closeBtn.addEventListener('click', closeNav);
+            overlay.addEventListener('click', closeNav);
+
+            // Close nav on link click (mobile)
+            nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+                if (window.innerWidth <= 768) closeNav();
+            }));
+        })();
+
+        /* ── Clock ── */
+        function updateClock() {
+            const now = new Date();
+            const d = document.getElementById('currentDate');
+            const t = document.getElementById('currentTime');
+            if (d) d.textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            if (t) t.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        updateClock(); setInterval(updateClock, 1000);
+
+        /* ── Toast ── */
+        function showToast(msg, type = 'success') {
+            const c = document.getElementById('toastContainer');
+            const el = document.createElement('div');
+            el.className = `toast ${type}`;
+            el.textContent = msg;
+            c.appendChild(el);
+            setTimeout(() => el.remove(), 3500);
+        }
+
+        /* ── State ── */
+        let allTxns = [];
+        let filtered = [];
+        let cashierMap = {};   // cashier_name → aggregate stats
+        let page = 1;
+        const perPage = 20;
+
+        const methodLabels = { cash: 'Cash', card: 'Card', gcash: 'GCash', maya: 'Maya', other: 'Other' };
+        const methodBadge = { cash: 'badge-cash', card: 'badge-card', gcash: 'badge-gcash', maya: 'badge-maya', other: 'badge-other' };
+
+        /* ── Set default date to today ── */
+        // Date filter is intentionally left blank on load so ALL transactions are shown.
+        // The admin can narrow by date using the date picker.
+        // document.getElementById('filterDate').value = new Date().toISOString().slice(0, 10);
+
+        /* ── Load all data ── */
+        async function loadData() {
+            const date = document.getElementById('filterDate').value;
+            const cashier = document.getElementById('filterCashier').value;
+
+            document.getElementById('txnTableBody').innerHTML = `<tr class="loading-row"><td colspan="11">⏳ Loading…</td></tr>`;
+            document.getElementById('cashierGrid').innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">⏳</div><p>Loading…</p></div>`;
+
+            const qs = new URLSearchParams({ limit: 500 });
+            if (date) qs.set('date', date);
+
+            try {
+                const r = await fetch('/api/pos/transactions?' + qs.toString());
+                const d = await r.json();
+                if (!d.success) throw new Error(d.message);
+
+                allTxns = d.transactions;
+                buildCashierOptions();
+                applyFilters();
+                updateSummaryCards();
+                buildCashierReports();
+            } catch (e) {
+                showToast('❌ ' + e.message, 'error');
+                document.getElementById('txnTableBody').innerHTML = `<tr class="loading-row"><td colspan="11">⚠️ ${e.message}</td></tr>`;
+            }
+        }
+
+        /* ── Cashier dropdown ── */
+        function buildCashierOptions() {
+            const names = [...new Set(allTxns.map(t => t.cashier_name))].sort();
+            const sel = document.getElementById('filterCashier');
+            const cur = sel.value;
+            sel.innerHTML = `<option value="">All Cashiers</option>` +
+                names.map(n => `<option value="${n}" ${n === cur ? 'selected' : ''}>${n}</option>`).join('');
+        }
+
+        /* ── Summary cards ── */
+        function updateSummaryCards() {
+            // Use filtered if populated, otherwise fall back to allTxns so cards
+            // show correct totals on initial load before any filter is applied.
+            const source = filtered.length ? filtered : allTxns;
+            const total = source.reduce((s, t) => s + t.total_amount, 0);
+            const count = source.length;
+            const avg = count ? total / count : 0;
+            const cashiers = new Set(source.map(t => t.cashier_name)).size;
+
+            // Top payment method
+            const methodCount = {};
+            source.forEach(t => { methodCount[t.payment_method] = (methodCount[t.payment_method] || 0) + 1; });
+            const topMethod = Object.entries(methodCount).sort((a, b) => b[1] - a[1])[0];
+
+            document.getElementById('statRevenue').textContent = `₱${total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('statTxns').textContent = count;
+            document.getElementById('statAvg').textContent = count ? `₱${avg.toFixed(2)}` : '—';
+            document.getElementById('statTopMethod').textContent = topMethod ? methodLabels[topMethod[0]] : '—';
+            document.getElementById('statTopMethodSub').textContent = topMethod ? `${topMethod[1]} transactions` : 'no data';
+            document.getElementById('statCashiers').textContent = cashiers;
+        }
+
+        /* ── Filters ── */
+        function applyFilters() {
+            const search = document.getElementById('filterSearch').value.toLowerCase();
+            const cashier = document.getElementById('filterCashier').value;
+            const payment = document.getElementById('filterPayment').value;
+
+            filtered = allTxns.filter(t => {
+                const matchSearch = !search || String(t.transaction_id).includes(search) || (t.cashier_name || '').toLowerCase().includes(search);
+                const matchCashier = !cashier || t.cashier_name === cashier;
+                const matchPayment = !payment || t.payment_method === payment;
+                return matchSearch && matchCashier && matchPayment;
+            });
+
+            page = 1;
+            renderTable();
+            updateSummaryCards();
+        }
+
+        /* ── Render table ── */
+        function renderTable() {
+            const tbody = document.getElementById('txnTableBody');
+            const mobileCards = document.getElementById('txnCardsMobile');
+            const total = filtered.length;
+            const start = (page - 1) * perPage;
+            const slice = filtered.slice(start, start + perPage);
+
+            document.getElementById('recordCount').textContent = `${total} record${total !== 1 ? 's' : ''}`;
+            document.getElementById('paginationInfo').textContent = total
+                ? `Showing ${start + 1}–${Math.min(start + perPage, total)} of ${total}`
+                : 'No records';
+
+            if (!slice.length) {
+                tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="empty-state-icon">📊</div><p>No transactions match your filters.</p></div></td></tr>`;
+                mobileCards.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><p>No transactions match your filters.</p></div>`;
+                return;
+            }
+
+            tbody.innerHTML = slice.map(t => {
+                const dt = new Date(t.created_at);
+                const badge = methodBadge[t.payment_method] || 'badge-other';
+                const method = methodLabels[t.payment_method] || t.payment_method;
+                const roleLabel = (t.cashier_role || 'cashier').charAt(0).toUpperCase() + (t.cashier_role || 'cashier').slice(1);
+                const roleColor = t.cashier_role === 'admin' ? '#dc3545' : t.cashier_role === 'manager' ? '#6f42c1' : '#0d6efd';
+                return `<tr>
+            <td style="font-weight:700;color:var(--dark-gold);font-family:monospace;">#${t.transaction_id}</td>
+            <td>
+                <div style="font-weight:700;font-size:0.88rem;">${t.cashier_name}</div>
+                <div style="display:flex;align-items:center;gap:0.3rem;margin-top:2px;">
+                    <span style="font-size:0.7rem;color:#999;font-family:monospace;">ID #${t.cashier_id}</span>
+                    <span style="font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:8px;background:${roleColor}18;color:${roleColor};border:1px solid ${roleColor}40;text-transform:uppercase;letter-spacing:0.3px;">${roleLabel}</span>
+                </div>
+            </td>
+            <td style="font-weight:700;">${t.item_count}</td>
+            <td>₱${t.subtotal.toFixed(2)}</td>
+            <td style="color:var(--success);">${t.discount_amount > 0 ? `−₱${t.discount_amount.toFixed(2)}` : '—'}</td>
+            <td class="amount-col">₱${t.total_amount.toFixed(2)}</td>
+            <td><span class="badge ${badge}">${method}</span></td>
+            <td>₱${t.amount_tendered.toFixed(2)}</td>
+            <td style="color:var(--success);font-weight:700;">₱${t.change_amount.toFixed(2)}</td>
+            <td style="font-size:0.8rem;color:#666;">${dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</td>
+            <td><button class="btn btn-outline btn-sm" onclick="viewReceipt(${t.transaction_id})">🧾</button></td>
+        </tr>`;
+            }).join('');
+
+            // Mobile card view
+            mobileCards.innerHTML = slice.map(t => {
+                const dt = new Date(t.created_at);
+                const badge = methodBadge[t.payment_method] || 'badge-other';
+                const method = methodLabels[t.payment_method] || t.payment_method;
+                const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                return `<div class="txn-card-mobile">
+                    <div class="txn-mobile-id">#${t.transaction_id}</div>
+                    <div class="txn-mobile-amount">₱${t.total_amount.toFixed(2)}</div>
+                    <div class="txn-mobile-cashier">${t.cashier_name}</div>
+                    <div class="txn-mobile-badge"><span class="badge ${badge}">${method}</span></div>
+                    <div class="txn-mobile-meta">
+                        <span>📦 ${t.item_count} item${t.item_count !== 1 ? 's' : ''}</span>
+                        <span>🕐 ${dateStr}</span>
+                        ${t.discount_amount > 0 ? `<span style="color:var(--success);">💚 −₱${t.discount_amount.toFixed(2)}</span>` : ''}
+                    </div>
+                    <div class="txn-mobile-actions">
+                        <button class="btn btn-outline btn-sm" onclick="viewReceipt(${t.transaction_id})">🧾 View Receipt</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        /* ── Cashier reports ── */
+        function buildCashierReports() {
+            const grid = document.getElementById('cashierGrid');
+            const date = document.getElementById('filterDate').value;
+
+            // Aggregate per cashier
+            cashierMap = {};
+            allTxns.forEach(t => {
+                if (!cashierMap[t.cashier_name]) {
+                    cashierMap[t.cashier_name] = {
+                        name: t.cashier_name,
+                        cashier_id: t.cashier_id,
+                        cashier_role: t.cashier_role || 'cashier',
+                        cashier_contact: t.cashier_contact || '',
+                        txns: [], revenue: 0, discount: 0,
+                        items: 0, methods: {},
+                        first_txn: t.created_at, last_txn: t.created_at,
+                    };
+                }
+                const c = cashierMap[t.cashier_name];
+                c.txns.push(t);
+                c.revenue += t.total_amount;
+                c.discount += t.discount_amount;
+                c.items += t.item_count;
+                c.methods[t.payment_method] = (c.methods[t.payment_method] || 0) + 1;
+                if (t.created_at < c.first_txn) c.first_txn = t.created_at;
+                if (t.created_at > c.last_txn) c.last_txn = t.created_at;
+            });
+
+            const cashiers = Object.values(cashierMap).sort((a, b) => b.revenue - a.revenue);
+
+            if (!cashiers.length) {
+                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">📋</div><p>No cashier data for this period.</p></div>`;
+                return;
+            }
+
+            grid.innerHTML = cashiers.map((c, idx) => {
+                const avg = c.txns.length ? c.revenue / c.txns.length : 0;
+                const topM = Object.entries(c.methods).sort((a, b) => b[1] - a[1])[0];
+                const firstFmt = new Date(c.first_txn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const lastFmt = new Date(c.last_txn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const initials = c.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                const methodRows = Object.entries(c.methods)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([m, cnt]) => `<div class="cashier-stat-row"><span class="cashier-stat-label">${methodLabels[m] || m}</span><span class="cashier-stat-value">${cnt} txn${cnt !== 1 ? 's' : ''}</span></div>`)
+                    .join('');
+
+                return `
+        <div class="cashier-card" style="animation-delay:${idx * 0.06}s">
+            <div class="cashier-card-header">
+                <div class="cashier-name-wrap">
+                    <div class="cashier-avatar">${initials}</div>
+                    <div>
+                        <div class="cashier-name">${c.name}</div>
+                        <div class="cashier-txn-count">${c.txns.length} transaction${c.txns.length !== 1 ? 's' : ''} · ${firstFmt} – ${lastFmt}</div>
+                        <div style="display:flex;align-items:center;gap:0.35rem;margin-top:3px;">
+                            <span style="font-size:0.68rem;color:rgba(255,255,255,0.55);font-family:monospace;">ID #${c.cashier_id}</span>
+                            <span style="font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.85);text-transform:uppercase;letter-spacing:0.4px;">${c.cashier_role}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="cashier-card-body">
+                ${c.cashier_contact ? `<div class="cashier-stat-row" style="margin-bottom:0.5rem;padding-bottom:0.5rem;border-bottom:1px dashed #eee;"><span class="cashier-stat-label">📞 Contact</span><span class="cashier-stat-value" style="font-size:0.82rem;">${c.cashier_contact}</span></div>` : ''}
+                <div class="cashier-stat-row">
+                    <span class="cashier-stat-label">Total Revenue</span>
+                    <span class="cashier-stat-value gold">₱${c.revenue.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div class="cashier-stat-row">
+                    <span class="cashier-stat-label">Items Sold</span>
+                    <span class="cashier-stat-value">${c.items}</span>
+                </div>
+                <div class="cashier-stat-row">
+                    <span class="cashier-stat-label">Avg. Order</span>
+                    <span class="cashier-stat-value">₱${avg.toFixed(2)}</span>
+                </div>
+                <div class="cashier-stat-row">
+                    <span class="cashier-stat-label">Total Discounts</span>
+                    <span class="cashier-stat-value" style="color:var(--success);">₱${c.discount.toFixed(2)}</span>
+                </div>
+                <div style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed #eee;">
+                    <div style="font-size:0.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.4rem;">By Payment Method</div>
+                    ${methodRows}
+                </div>
+            </div>
+            <div class="cashier-card-footer">
+                <button class="btn btn-outline btn-sm" onclick="filterByCashier('${c.name}')">🔍 View Txns</button>
+                <button class="btn btn-primary btn-sm" onclick="printShiftReport('${c.name}')">🖨️ Print Report</button>
+            </div>
+        </div>`;
+            }).join('');
+        }
+
+        /* ── Filter by cashier shortcut ── */
+        function filterByCashier(name) {
+            document.getElementById('filterCashier').value = name;
+            applyFilters();
+            document.querySelector('.table-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        /* ── View receipt modal ── */
+        async function viewReceipt(txnId) {
+            document.getElementById('receiptModal').style.display = 'flex';
+            document.getElementById('receiptModalBody').innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;">⏳ Loading…</div>';
+
+            try {
+                const r = await fetch(`/api/pos/transactions/${txnId}`);
+                const d = await r.json();
+                if (!d.success) throw new Error(d.message);
+
+                const receipt = d.transaction;
+                const method = methodLabels[receipt.payment_method] || receipt.payment_method;
+                const roleLabel = (receipt.cashier_role || 'cashier').charAt(0).toUpperCase() + (receipt.cashier_role || 'cashier').slice(1);
+                const roleColor = receipt.cashier_role === 'admin' ? '#dc3545' : receipt.cashier_role === 'manager' ? '#6f42c1' : '#0d6efd';
+                const _f = n => `₱${(parseFloat(n)||0).toFixed(2)}`;
+                const dtype    = receipt.discount_type || 'none';
+                const netSales = parseFloat(receipt.net_sales)  || parseFloat(receipt.total_amount||0) / 1.12;
+                const vatAmt   = parseFloat(receipt.vat_amount) || netSales * 0.12;
+                const dtypeLbls = { senior:'Senior Citizen (20%)', pwd:'PWD (20%)', manual:'Manual Discount', none:'' };
+                const itemsHtml = (receipt.items || []).map(i =>
+                    `<div style="display:flex;justify-content:space-between;font-size:0.82rem;padding:0.3rem 0;border-bottom:1px dashed #f0f0f0;">
+                <span>${i.product_name} <span style="color:#999;">×${i.quantity}</span></span>
+                <span style="font-weight:700;">${_f(i.line_total)}</span>
+            </div>`).join('');
+
+                document.getElementById('receiptModalBody').innerHTML = `
+            <div style="text-align:center;margin-bottom:1rem;">
+                <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;">📚 Books & Blooms Café</div>
+                <div style="font-size:0.72rem;color:#999;text-transform:uppercase;letter-spacing:2px;margin-top:2px;">Official Receipt · VAT Reg</div>
+                <div style="margin-top:0.4rem;display:inline-block;background:#f5f5f5;border-radius:6px;padding:0.2rem 0.7rem;font-size:0.75rem;font-weight:700;color:#666;">TXN #${receipt.transaction_id}</div>
+                <div style="font-size:0.75rem;color:#aaa;margin-top:3px;">${receipt.created_at}</div>
+            </div>
+            <div style="background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:0.65rem 0.85rem;margin-bottom:0.85rem;">
+                <div style="font-size:0.7rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.4rem;">Processed by</div>
+                <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div style="width:34px;height:34px;border-radius:50%;background:var(--dark-gold);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;flex-shrink:0;">${(receipt.cashier_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+                    <div>
+                        <div style="font-weight:700;font-size:0.88rem;">${receipt.cashier_name}</div>
+                        <div style="display:flex;align-items:center;gap:0.35rem;margin-top:2px;">
+                            <span style="font-size:0.7rem;color:#888;font-family:monospace;">ID #${receipt.cashier_id}</span>
+                            <span style="font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:8px;background:${roleColor}18;color:${roleColor};border:1px solid ${roleColor}40;text-transform:uppercase;">${roleLabel}</span>
+                        </div>
+                        ${receipt.cashier_contact ? `<div style="font-size:0.72rem;color:#888;margin-top:1px;">📞 ${receipt.cashier_contact}</div>` : ''}
+                    </div>
+                </div>
+            </div>
+            <hr style="border:none;border-top:1px dashed #ccc;margin:0.75rem 0;">
+            ${itemsHtml}
+            <hr style="border:none;border-top:1px dashed #ccc;margin:0.75rem 0;">
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;color:#555;"><span>Subtotal</span><span>${_f(receipt.subtotal)}</span></div>
+            ${parseFloat(receipt.discount_amount) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;color:var(--success);"><span>Discount${dtype!=='none'?' — '+dtypeLbls[dtype]:''}</span><span>−${_f(receipt.discount_amount)}</span></div>` : ''}
+            <div style="display:flex;justify-content:space-between;font-size:1rem;font-weight:800;padding:0.5rem 0;border-top:2px solid var(--gold);margin-top:0.3rem;"><span>TOTAL (VAT incl.)</span><span style="color:var(--dark-gold);">${_f(receipt.total_amount)}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;color:#555;"><span>Tendered (${method})</span><span>${_f(receipt.amount_tendered)}</span></div>
+            ${parseFloat(receipt.change_amount) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;color:var(--success);font-weight:700;"><span>Change</span><span>${_f(receipt.change_amount)}</span></div>` : ''}
+            <hr style="border:none;border-top:1px dashed #ccc;margin:0.75rem 0;">
+            <div style="background:#f9f9f9;border:1px solid #eee;border-radius:6px;padding:0.6rem 0.8rem;font-size:0.78rem;margin-bottom:0.65rem;">
+                <div style="font-size:0.68rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.3rem;">VAT Summary (BIR)</div>
+                <div style="display:flex;justify-content:space-between;padding:0.15rem 0;color:#555;"><span>VATable Sales</span><span>${_f(netSales)}</span></div>
+                <div style="display:flex;justify-content:space-between;padding:0.15rem 0;color:#888;font-style:italic;"><span>VAT (12%)</span><span>${_f(vatAmt)}</span></div>
+                <div style="display:flex;justify-content:space-between;padding:0.15rem 0;color:#bbb;"><span>Zero-Rated Sales</span><span>₱0.00</span></div>
+                <div style="display:flex;justify-content:space-between;padding:0.15rem 0;color:#bbb;"><span>VAT-Exempt Sales</span><span>₱0.00</span></div>
+            </div>
+            <div style="text-align:center;font-size:0.75rem;color:#aaa;">Thank you for visiting Books & Blooms Café! ☕<br><span style="font-size:0.68rem;letter-spacing:0.4px;">This serves as your official receipt.</span></div>`;
+
+                // Also prep the print area for this single receipt
+                buildSingleReceiptPrintArea(receipt);
+            } catch (e) {
+                document.getElementById('receiptModalBody').innerHTML = `<div style="text-align:center;padding:2rem;color:#c00;">⚠️ ${e.message}</div>`;
+            }
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receiptModal').style.display = 'none';
+        }
+
+        /* Print ONLY the receipt (not a shift report) */
+        function printReceiptOnly() {
+            // The print area is already populated by buildSingleReceiptPrintArea.
+            // Just trigger print — @media print hides everything except #receiptPrintArea.
+            window.print();
+        }
+        document.getElementById('receiptModal').addEventListener('click', e => {
+            if (e.target === document.getElementById('receiptModal')) closeReceiptModal();
+        });
+
+        /* ── Build single receipt print area ── */
+        function buildSingleReceiptPrintArea(receipt) {
+            const method = methodLabels[receipt.payment_method] || receipt.payment_method;
+            const _pf = n => `₱${(parseFloat(n)||0).toFixed(2)}`;
+            const pNetSales = parseFloat(receipt.net_sales)  || parseFloat(receipt.total_amount||0) / 1.12;
+            const pVatAmt   = parseFloat(receipt.vat_amount) || pNetSales * 0.12;
+            const pDtype    = receipt.discount_type || 'none';
+            const pDtypeLbls = { senior:'Senior (20%)', pwd:'PWD (20%)', manual:'Manual', none:'' };
+            const itemRows = (receipt.items || []).map(i =>
+                `<tr><td>${i.product_name}</td><td style="text-align:center;">${i.quantity}</td><td style="text-align:right;">${_pf(i.line_total)}</td></tr>`
+            ).join('');
+
+            document.getElementById('receiptPrintArea').innerHTML = `
+        <div class="rp-store">📚 Books & Blooms Café</div>
+        <div class="rp-sub">Official Receipt · VAT Reg. TIN: 000-000-000-000</div>
+        <div class="rp-sub">TXN #${receipt.transaction_id} · ${receipt.created_at}</div>
+        <div class="rp-sub">Cashier: ${receipt.cashier_name} · ID #${receipt.cashier_id} · ${(receipt.cashier_role||'cashier').toUpperCase()}${receipt.cashier_contact ? ` · ${receipt.cashier_contact}` : ''}</div>
+        <hr class="rp-divider">
+        <table class="rp-txn-table">
+            <thead><tr><th>Item</th><th>Qty</th><th>Amt</th></tr></thead>
+            <tbody>${itemRows}</tbody>
+        </table>
+        <hr class="rp-divider">
+        <div class="rp-row"><span>Subtotal</span><span>${_pf(receipt.subtotal)}</span></div>
+        ${parseFloat(receipt.discount_amount) > 0 ? `<div class="rp-row"><span>Discount${pDtype!=='none'?' ('+pDtypeLbls[pDtype]+')':''}</span><span>−${_pf(receipt.discount_amount)}</span></div>` : ''}
+        <div class="rp-total-row"><span>TOTAL (VAT incl.)</span><span>${_pf(receipt.total_amount)}</span></div>
+        <div class="rp-row"><span>Tendered (${method})</span><span>${_pf(receipt.amount_tendered)}</span></div>
+        ${parseFloat(receipt.change_amount) > 0 ? `<div class="rp-row"><span>Change</span><span>${_pf(receipt.change_amount)}</span></div>` : ''}
+        <hr class="rp-divider">
+        <div class="rp-section">VAT Summary (BIR)</div>
+        <div class="rp-row"><span>VATable Sales</span><span>${_pf(pNetSales)}</span></div>
+        <div class="rp-row"><span>VAT 12%</span><span>${_pf(pVatAmt)}</span></div>
+        <div class="rp-row"><span>Zero-Rated Sales</span><span>₱0.00</span></div>
+        <hr class="rp-divider">
+        <div class="rp-footer">Thank you for visiting!<br>Books & Blooms Café ☕</div>`;
+        }
+
+        /* ── Print single cashier shift report ── */
+        function printShiftReport(cashierName) {
+            const c = cashierMap[cashierName];
+            if (!c) return;
+
+            const date = document.getElementById('filterDate').value || new Date().toISOString().slice(0, 10);
+            const avg = c.txns.length ? c.revenue / c.txns.length : 0;
+            const firstFmt = new Date(c.first_txn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const lastFmt = new Date(c.last_txn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const printedAt = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            const methodRows = Object.entries(c.methods)
+                .sort((a, b) => b[1] - a[1])
+                .map(([m, cnt]) => {
+                    const revenue = c.txns.filter(t => t.payment_method === m).reduce((s, t) => s + t.total_amount, 0);
+                    return `<div class="rp-row"><span>${methodLabels[m] || m} (${cnt})</span><span>₱${revenue.toFixed(2)}</span></div>`;
+                }).join('');
+
+            const txnRows = c.txns
+                .sort((a, b) => a.transaction_id - b.transaction_id)
+                .map(t => {
+                    const time = new Date(t.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    return `<tr>
+                <td>#${t.transaction_id}</td>
+                <td>${time}</td>
+                <td>${t.item_count}</td>
+                <td style="text-align:right;">₱${t.total_amount.toFixed(2)}</td>
+                <td style="text-align:right;">${methodLabels[t.payment_method] || t.payment_method}</td>
+            </tr>`;
+                }).join('');
+
+            document.getElementById('receiptPrintArea').innerHTML = `
+        <div class="rp-store">📚 Books & Blooms Café</div>
+        <div class="rp-sub">CASHIER END-OF-SHIFT REPORT</div>
+        <div class="rp-sub">${date}</div>
+        <hr class="rp-divider">
+
+        <div class="rp-cashier-block">
+            <div class="rp-cashier-title">👤 ${c.name}</div>
+            <div class="rp-row"><span>Employee ID</span><span>#${c.cashier_id}</span></div>
+            <div class="rp-row"><span>Role</span><span>${(c.cashier_role||'cashier').toUpperCase()}</span></div>
+            ${c.cashier_contact ? `<div class="rp-row"><span>Contact</span><span>${c.cashier_contact}</span></div>` : ''}
+            <div class="rp-row"><span>Shift Start</span><span>${firstFmt}</span></div>
+            <div class="rp-row"><span>Shift End</span><span>${lastFmt}</span></div>
+            <div class="rp-row"><span>Transactions</span><span>${c.txns.length}</span></div>
+            <div class="rp-row"><span>Items Sold</span><span>${c.items}</span></div>
+        </div>
+
+        <div class="rp-section">Revenue Summary</div>
+        <div class="rp-row"><span>Gross Sales</span><span>₱${c.revenue.toFixed(2)}</span></div>
+        <div class="rp-row"><span>Total Discounts</span><span>₱${c.discount.toFixed(2)}</span></div>
+        <div class="rp-row"><span>Avg. Order Value</span><span>₱${avg.toFixed(2)}</span></div>
+        <div class="rp-total-row"><span>NET REVENUE</span><span>₱${(c.revenue - c.discount).toFixed(2)}</span></div>
+
+        <hr class="rp-divider">
+        <div class="rp-section">By Payment Method</div>
+        ${methodRows}
+
+        <hr class="rp-divider">
+        <div class="rp-section">Transaction Log</div>
+        <table class="rp-txn-table">
+            <thead><tr><th>#</th><th>Time</th><th>Items</th><th>Total</th><th>Method</th></tr></thead>
+            <tbody>${txnRows}</tbody>
+        </table>
+
+        <hr class="rp-divider">
+        <div class="rp-row"><span>Printed by</span><span>{{ full_name or 'Admin' }}</span></div>
+        <div class="rp-row"><span>Printed at</span><span>${printedAt}</span></div>
+        <div class="rp-footer">— End of Shift Report —<br>Books & Blooms Café</div>`;
+
+            window.print();
+        }
+
+        /* ── Print all shift reports (one block per cashier) ── */
+        function printAllShiftReports() {
+            if (!Object.keys(cashierMap).length) {
+                showToast('No data to print yet.', 'error');
+                return;
+            }
+
+            const date = document.getElementById('filterDate').value || new Date().toISOString().slice(0, 10);
+            const printedAt = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            const cashiers = Object.values(cashierMap).sort((a, b) => b.revenue - a.revenue);
+            let html = `
+        <div class="rp-store">📚 Books & Blooms Café</div>
+        <div class="rp-sub">ALL CASHIERS END-OF-SHIFT REPORT</div>
+        <div class="rp-sub">${date}</div>
+        <div class="rp-sub">Printed at ${printedAt}</div>
+        <hr class="rp-divider">`;
+
+            const grandTotal = cashiers.reduce((s, c) => s + c.revenue, 0);
+            const grandDiscount = cashiers.reduce((s, c) => s + c.discount, 0);
+            const grandTxns = cashiers.reduce((s, c) => s + c.txns.length, 0);
+            const grandItems = cashiers.reduce((s, c) => s + c.items, 0);
+
+            html += `
+        <div class="rp-section">Overall Summary</div>
+        <div class="rp-row"><span>Total Cashiers</span><span>${cashiers.length}</span></div>
+        <div class="rp-row"><span>Total Transactions</span><span>${grandTxns}</span></div>
+        <div class="rp-row"><span>Total Items Sold</span><span>${grandItems}</span></div>
+        <div class="rp-row"><span>Total Discounts</span><span>₱${grandDiscount.toFixed(2)}</span></div>
+        <div class="rp-total-row"><span>GRAND TOTAL</span><span>₱${grandTotal.toFixed(2)}</span></div>
+        <hr class="rp-divider">`;
+
+            cashiers.forEach(c => {
+                const avg = c.txns.length ? c.revenue / c.txns.length : 0;
+                const firstFmt = new Date(c.first_txn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const lastFmt = new Date(c.last_txn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const methodRows = Object.entries(c.methods)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([m, cnt]) => {
+                        const rev = c.txns.filter(t => t.payment_method === m).reduce((s, t) => s + t.total_amount, 0);
+                        return `<div class="rp-row"><span>${methodLabels[m] || m} (${cnt})</span><span>₱${rev.toFixed(2)}</span></div>`;
+                    }).join('');
+
+                const txnRows = c.txns
+                    .sort((a, b) => a.transaction_id - b.transaction_id)
+                    .map(t => {
+                        const time = new Date(t.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                        return `<tr><td>#${t.transaction_id}</td><td>${time}</td><td>${t.item_count}</td><td style="text-align:right;">₱${t.total_amount.toFixed(2)}</td><td style="text-align:right;">${methodLabels[t.payment_method] || t.payment_method}</td></tr>`;
+                    }).join('');
+
+                html += `
+        <div class="rp-cashier-block">
+            <div class="rp-cashier-title">👤 ${c.name}</div>
+            <div class="rp-row"><span>Employee ID</span><span>#${c.cashier_id}</span></div>
+            <div class="rp-row"><span>Role</span><span>${(c.cashier_role||'cashier').toUpperCase()}</span></div>
+            ${c.cashier_contact ? `<div class="rp-row"><span>Contact</span><span>${c.cashier_contact}</span></div>` : ''}
+            <div class="rp-row"><span>Shift</span><span>${firstFmt} – ${lastFmt}</span></div>
+            <div class="rp-row"><span>Transactions</span><span>${c.txns.length}</span></div>
+            <div class="rp-row"><span>Items Sold</span><span>${c.items}</span></div>
+            <div class="rp-row"><span>Avg. Order</span><span>₱${avg.toFixed(2)}</span></div>
+            <div class="rp-row"><span>Discounts Given</span><span>₱${c.discount.toFixed(2)}</span></div>
+            <div class="rp-total-row"><span>Total Revenue</span><span>₱${c.revenue.toFixed(2)}</span></div>
+            <div style="margin:1mm 0 0.5mm;font-size:7pt;font-weight:bold;text-transform:uppercase;">Payment Breakdown</div>
+            ${methodRows}
+            <div style="margin-top:1mm;font-size:7pt;font-weight:bold;text-transform:uppercase;">Transactions</div>
+            <table class="rp-txn-table">
+                <thead><tr><th>#</th><th>Time</th><th>Items</th><th>Total</th><th>Method</th></tr></thead>
+                <tbody>${txnRows}</tbody>
+            </table>
+        </div>`;
+            });
+
+            html += `<hr class="rp-divider"><div class="rp-footer">— End of Report —<br>Books & Blooms Café</div>`;
+
+            document.getElementById('receiptPrintArea').innerHTML = html;
+            window.print();
+        }
+
+        /* ── Export CSV ── */
+        function exportCSV() {
+            if (!filtered.length) { showToast('No data to export.', 'error'); return; }
+
+            const headers = ['TxnID', 'CashierID', 'Cashier', 'CashierRole', 'Items', 'Subtotal', 'Discount', 'Total', 'Payment', 'Tendered', 'Change', 'DateTime'];
+            const rows = filtered.map(t => [
+                t.transaction_id, t.cashier_id, `"${t.cashier_name}"`,
+                t.cashier_role || 'cashier',
+                t.item_count, t.subtotal.toFixed(2), t.discount_amount.toFixed(2),
+                t.total_amount.toFixed(2), t.payment_method,
+                t.amount_tendered.toFixed(2), t.change_amount.toFixed(2),
+                `"${t.created_at}"`
+            ].join(','));
+
+            const csv = [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sales_${document.getElementById('filterDate').value || 'all'}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('✅ CSV exported!');
+        }
+
+        /* ══════════════════════════════════════════════════
+           CASH FLOW REPORTS (Weekly & Monthly)
+        ══════════════════════════════════════════════════ */
+        let cashFlowData = [];
+
+        // Toggle between weekly, monthly, and yearly report
+        document.getElementById('reportPeriod').addEventListener('change', function () {
+            const reportType = this.value;
+            const isWeekly = reportType === 'weekly';
+            const isMonthly = reportType === 'monthly';
+            const isYearly = reportType === 'yearly';
+            
+            document.getElementById('weekPicker').style.display = isWeekly ? 'inline-block' : 'none';
+            document.getElementById('monthPicker').style.display = isMonthly ? 'inline-block' : 'none';
+            document.getElementById('yearPicker').style.display = isYearly ? 'inline-block' : 'none';
+            
+            if (isWeekly) document.getElementById('periodLabel').textContent = 'Week:';
+            else if (isMonthly) document.getElementById('periodLabel').textContent = 'Month:';
+            else if (isYearly) document.getElementById('periodLabel').textContent = 'Year:';
+            
+            document.getElementById('cashFlowReportCard').style.display = 'none';
+            document.getElementById('cashFlowSummary').style.display = 'none';
+            document.getElementById('printReportBtn').style.display = 'none';
+        });
+
+        // Initialize date pickers with current week/month/year
+        function initDatePickers() {
+            const now = new Date();
+
+            // Set week picker to current week
+            const year = now.getFullYear();
+            const week = getWeekNumber(now);
+            document.getElementById('weekPicker').value = `${year}-W${week.toString().padStart(2, '0')}`;
+
+            // Set month picker to current month
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            document.getElementById('monthPicker').value = `${year}-${month}`;
+            
+            // Set year picker to current year
+            document.getElementById('yearPicker').value = year;
+        }
+
+        function getWeekNumber(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
+        // Generate cash flow report
+        async function generateCashFlowReport() {
+            const reportType = document.getElementById('reportPeriod').value;
+            let startDate, endDate, period;
+
+            if (reportType === 'weekly') {
+                const weekValue = document.getElementById('weekPicker').value;
+                if (!weekValue) {
+                    showToast('Please select a week', 'error');
+                    return;
+                }
+                const [year, week] = weekValue.split('-W');
+                const dates = getWeekDates(parseInt(year), parseInt(week));
+                startDate = dates.start;
+                endDate = dates.end;
+                period = `Week ${week}, ${year}`;
+            } else if (reportType === 'monthly') {
+                const monthValue = document.getElementById('monthPicker').value;
+                if (!monthValue) {
+                    showToast('Please select a month', 'error');
+                    return;
+                }
+                const [year, month] = monthValue.split('-');
+                startDate = `${year}-${month}-01`;
+                const lastDay = new Date(year, month, 0).getDate();
+                endDate = `${year}-${month}-${lastDay}`;
+                const monthName = new Date(year, month - 1).toLocaleDateString('en-US', { month: 'long' });
+                period = `${monthName} ${year}`;
+            } else if (reportType === 'yearly') {
+                const yearValue = document.getElementById('yearPicker').value;
+                if (!yearValue) {
+                    showToast('Please select a year', 'error');
+                    return;
+                }
+                startDate = `${yearValue}-01-01`;
+                endDate = `${yearValue}-12-31`;
+                period = `Year ${yearValue}`;
+            }
+
+            try {
+                const response = await fetch(`/api/sales/cashflow?start=${startDate}&end=${endDate}`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    showToast(data.message || 'Failed to load cash flow data', 'error');
+                    return;
+                }
+
+                cashFlowData = data.daily_data || [];
+                displayCashFlowReport(cashFlowData, period, reportType);
+
+            } catch (error) {
+                showToast('Error loading cash flow report', 'error');
+                console.error(error);
+            }
+        }
+
+        function getWeekDates(year, week) {
+            const simple = new Date(year, 0, 1 + (week - 1) * 7);
+            const dow = simple.getDay();
+            const ISOweekStart = simple;
+            if (dow <= 4)
+                ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+            else
+                ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+
+            const start = ISOweekStart.toISOString().split('T')[0];
+            const endDate = new Date(ISOweekStart);
+            endDate.setDate(endDate.getDate() + 6);
+            const end = endDate.toISOString().split('T')[0];
+
+            return { start, end };
+        }
+
+        function displayCashFlowReport(data, period, reportType) {
+            let reportTitle = 'Cash Flow Report';
+            if (reportType === 'weekly') reportTitle = 'Weekly Cash Flow Report';
+            else if (reportType === 'monthly') reportTitle = 'Monthly Cash Flow Report';
+            else if (reportType === 'yearly') reportTitle = 'Yearly Cash Flow Report';
+            
+            document.getElementById('reportTitle').textContent = reportTitle;
+            document.getElementById('reportPeriodInfo').textContent = period;
+
+            // Build table rows
+            const tbody = document.getElementById('cashFlowTableBody');
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;color:#999;">No transactions found for this period.</td></tr>';
+                document.getElementById('cashFlowReportCard').style.display = 'block';
+                document.getElementById('cashFlowSummary').style.display = 'none';
+                document.getElementById('printReportBtn').style.display = 'none';
+                document.getElementById('cashFlowChartCard').style.display = 'none';
+                return;
+            }
+
+            tbody.innerHTML = data.map(day => {
+                // For yearly reports the date is YYYY-MM-DD (first of month); parse with UTC
+                // to avoid timezone day-off-by-one. For weekly/monthly rows it's also YYYY-MM-DD.
+                const dateObj = new Date(day.date + 'T00:00:00');
+                const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                // Yearly report: group by month, so show "Jan 2026" instead of "Mon, Jan 1"
+                const isYearlyMode = document.getElementById('reportPeriod').value === 'yearly';
+                const labelStr = isYearlyMode
+                    ? dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                    : `${dayName}, ${dateStr}`;
+
+                return `<tr>
+            <td style="font-weight:600;">${labelStr}</td>
+            <td style="text-align:center;">${day.transaction_count}</td>
+            <td style="text-align:center;">${day.items_sold}</td>
+            <td>₱${day.gross_sales.toFixed(2)}</td>
+            <td style="color:var(--success);">${day.total_discount > 0 ? `−₱${day.total_discount.toFixed(2)}` : '—'}</td>
+            <td class="amount-col" style="font-weight:700;">₱${day.net_revenue.toFixed(2)}</td>
+            <td>₱${day.cash_payment.toFixed(2)}</td>
+            <td>₱${day.digital_payment.toFixed(2)}</td>
+        </tr>`;
+            }).join('');
+
+            // Calculate totals
+            const totals = data.reduce((acc, day) => ({
+                transactions: acc.transactions + day.transaction_count,
+                items: acc.items + day.items_sold,
+                gross: acc.gross + day.gross_sales,
+                discount: acc.discount + day.total_discount,
+                net: acc.net + day.net_revenue,
+                cash: acc.cash + day.cash_payment,
+                digital: acc.digital + day.digital_payment
+            }), { transactions: 0, items: 0, gross: 0, discount: 0, net: 0, cash: 0, digital: 0 });
+
+            // Build footer with totals
+            const tfoot = document.getElementById('cashFlowTableFoot');
+            tfoot.innerHTML = `<tr>
+        <td style="font-weight:800;">TOTALS</td>
+        <td style="text-align:center;font-weight:800;">${totals.transactions}</td>
+        <td style="text-align:center;font-weight:800;">${totals.items}</td>
+        <td style="font-weight:800;">₱${totals.gross.toFixed(2)}</td>
+        <td style="color:var(--success);font-weight:800;">${totals.discount > 0 ? `−₱${totals.discount.toFixed(2)}` : '—'}</td>
+        <td class="amount-col" style="font-weight:800;color:var(--dark-gold);">₱${totals.net.toFixed(2)}</td>
+        <td style="font-weight:800;">₱${totals.cash.toFixed(2)}</td>
+        <td style="font-weight:800;">₱${totals.digital.toFixed(2)}</td>
+    </tr>`;
+
+            // Update summary cards
+            const avgDaily = totals.net / data.length;
+            const bestDay = data.reduce((max, day) => day.net_revenue > max.net_revenue ? day : max, data[0]);
+            const bestDayDate = new Date(bestDay.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+            document.getElementById('cfRevenue').textContent = `₱${totals.net.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('cfRevenueSub').textContent = `${data.length} day${data.length !== 1 ? 's' : ''}`;
+            document.getElementById('cfAvgDaily').textContent = `₱${avgDaily.toFixed(2)}`;
+            const cfAvgLbl = document.getElementById('cfAvgLabel');
+            if (cfAvgLbl) {
+                const periodType = document.getElementById('reportPeriod').value;
+                cfAvgLbl.textContent = periodType === 'yearly' ? 'Monthly Average' : periodType === 'monthly' ? 'Weekly Average' : 'Daily Average';
+            }
+            document.getElementById('cfTotalTxns').textContent = totals.transactions.toLocaleString();
+            document.getElementById('cfBestDay').textContent = bestDayDate;
+            document.getElementById('cfBestDaySub').textContent = `₱${bestDay.net_revenue.toFixed(2)}`;
+
+            // Show report
+            document.getElementById('cashFlowReportCard').style.display = 'block';
+            document.getElementById('cashFlowSummary').style.display = 'grid';
+            document.getElementById('printReportBtn').style.display = 'inline-flex';
+
+            // Render visualization chart — defer until after the card is visible in DOM
+            requestAnimationFrame(() => {
+                renderCashFlowChart(data, reportType, currentChartType);
+            });
+
+            // Scroll to report
+            document.getElementById('cashFlowReportCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Print cash flow report
+        function printCashFlowReport() {
+            const reportType = document.getElementById('reportPeriod').value;
+            const period = document.getElementById('reportPeriodInfo').textContent;
+            const printedAt = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            if (!cashFlowData.length) {
+                showToast('No data to print', 'error');
+                return;
+            }
+
+            const totals = cashFlowData.reduce((acc, day) => ({
+                transactions: acc.transactions + day.transaction_count,
+                items: acc.items + day.items_sold,
+                gross: acc.gross + day.gross_sales,
+                discount: acc.discount + day.total_discount,
+                net: acc.net + day.net_revenue,
+                cash: acc.cash + day.cash_payment,
+                digital: acc.digital + day.digital_payment
+            }), { transactions: 0, items: 0, gross: 0, discount: 0, net: 0, cash: 0, digital: 0 });
+
+            const dataRows = cashFlowData.map(day => {
+                const dateObj = new Date(day.date);
+                const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                return `<tr>
+            <td>${dateStr}</td>
+            <td style="text-align:center;">${day.transaction_count}</td>
+            <td style="text-align:right;">₱${day.net_revenue.toFixed(2)}</td>
+        </tr>`;
+            }).join('');
+
+            let reportTypeLabel = 'Cash Flow Report';
+            if (reportType === 'weekly') reportTypeLabel = 'Weekly Cash Flow Report';
+            else if (reportType === 'monthly') reportTypeLabel = 'Monthly Cash Flow Report';
+            else if (reportType === 'yearly') reportTypeLabel = 'Yearly Cash Flow Report';
+
+            document.getElementById('receiptPrintArea').innerHTML = `
+        <div class="rp-store">📚 Books & Blooms Café</div>
+        <div class="rp-sub">${reportTypeLabel}</div>
+        <div class="rp-sub">${period}</div>
+        <div class="rp-sub">Printed at ${printedAt}</div>
+        <hr class="rp-divider">
+        <div class="rp-section">Summary</div>
+        <div class="rp-row"><span>Total Transactions</span><span>${totals.transactions}</span></div>
+        <div class="rp-row"><span>Total Items Sold</span><span>${totals.items}</span></div>
+        <div class="rp-row"><span>Gross Sales</span><span>₱${totals.gross.toFixed(2)}</span></div>
+        <div class="rp-row"><span>Total Discounts</span><span>−₱${totals.discount.toFixed(2)}</span></div>
+        <div class="rp-total-row"><span>NET REVENUE</span><span>₱${totals.net.toFixed(2)}</span></div>
+        <hr class="rp-divider">
+        <div class="rp-section">Payment Methods</div>
+        <div class="rp-row"><span>Cash</span><span>₱${totals.cash.toFixed(2)}</span></div>
+        <div class="rp-row"><span>Digital</span><span>₱${totals.digital.toFixed(2)}</span></div>
+        <hr class="rp-divider">
+        <div class="rp-section">Daily Breakdown</div>
+        <table class="rp-txn-table">
+            <thead><tr><th>Date</th><th>Txns</th><th>Revenue</th></tr></thead>
+            <tbody>${dataRows}</tbody>
+        </table>
+        <hr class="rp-divider">
+        <div class="rp-footer">Books & Blooms Café<br>Cash Flow Report</div>`;
+
+            window.print();
+        }
+
+        /* ══════════════════════════════════════════
+           CASH FLOW CHART
+        ══════════════════════════════════════════ */
+        let cashFlowChartInstance = null;
+        let currentChartType = 'bar';
+        let currentChartData = null;
+        let currentReportType = 'weekly';
+
+        function buildChartData(data, reportType) {
+            let labels, netRevenue, cashPayment, digitalPayment;
+
+            if (reportType === 'yearly') {
+                // Group by month
+                const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                const monthMap = {};
+                data.forEach(day => {
+                    const d = new Date(day.date);
+                    const key = d.getMonth();
+                    if (!monthMap[key]) monthMap[key] = { net: 0, cash: 0, digital: 0 };
+                    monthMap[key].net += day.net_revenue;
+                    monthMap[key].cash += day.cash_payment;
+                    monthMap[key].digital += day.digital_payment;
+                });
+                const keys = Object.keys(monthMap).sort((a,b) => a - b);
+                labels = keys.map(k => monthNames[k]);
+                netRevenue = keys.map(k => +monthMap[k].net.toFixed(2));
+                cashPayment = keys.map(k => +monthMap[k].cash.toFixed(2));
+                digitalPayment = keys.map(k => +monthMap[k].digital.toFixed(2));
+            } else if (reportType === 'monthly') {
+                // Group by week-of-month
+                const weekMap = {};
+                data.forEach(day => {
+                    const d = new Date(day.date);
+                    const weekNum = Math.ceil(d.getDate() / 7);
+                    const key = `Week ${weekNum}`;
+                    if (!weekMap[key]) weekMap[key] = { net: 0, cash: 0, digital: 0 };
+                    weekMap[key].net += day.net_revenue;
+                    weekMap[key].cash += day.cash_payment;
+                    weekMap[key].digital += day.digital_payment;
+                });
+                labels = Object.keys(weekMap);
+                netRevenue = labels.map(k => +weekMap[k].net.toFixed(2));
+                cashPayment = labels.map(k => +weekMap[k].cash.toFixed(2));
+                digitalPayment = labels.map(k => +weekMap[k].digital.toFixed(2));
+            } else {
+                // Weekly — each day
+                const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+                labels = data.map(day => {
+                    const d = new Date(day.date);
+                    return dayNames[d.getDay()] + ' ' + (d.getMonth()+1) + '/' + d.getDate();
+                });
+                netRevenue = data.map(d => +d.net_revenue.toFixed(2));
+                cashPayment = data.map(d => +d.cash_payment.toFixed(2));
+                digitalPayment = data.map(d => +d.digital_payment.toFixed(2));
+            }
+
+            return { labels, netRevenue, cashPayment, digitalPayment };
+        }
+
+        function renderCashFlowChart(data, reportType, chartType) {
+            currentChartData = data;
+            currentReportType = reportType;
+
+            const { labels, netRevenue, cashPayment, digitalPayment } = buildChartData(data, reportType);
+
+            const canvas = document.getElementById('cashFlowChart');
+            if (cashFlowChartInstance) {
+                cashFlowChartInstance.destroy();
+                cashFlowChartInstance = null;
+            }
+            // Reset canvas dimensions so Chart.js recomputes layout cleanly
+            canvas.style.width = '';
+            canvas.style.height = '';
+
+            const isLine = chartType === 'line' || chartType === 'area';
+            const isArea = chartType === 'area';
+
+            const goldColor = '#c9a961';
+            const greenColor = '#4caf50';
+            const blueColor = '#2196f3';
+
+            const createDataset = (label, values, color, fill) => ({
+                label,
+                data: values,
+                backgroundColor: isArea
+                    ? hexToRgba(color, 0.15)
+                    : isLine
+                        ? 'transparent'
+                        : hexToRgba(color, 0.82),
+                borderColor: color,
+                borderWidth: isLine ? 2.5 : 0,
+                pointBackgroundColor: isLine ? color : undefined,
+                pointBorderColor: isLine ? '#fff' : undefined,
+                pointBorderWidth: isLine ? 1.5 : undefined,
+                pointRadius: isLine ? 4 : undefined,
+                pointHoverRadius: isLine ? 6 : undefined,
+                fill: isArea ? fill : false,
+                tension: isLine ? 0.4 : 0,
+                borderRadius: isLine ? 0 : 5,
+                borderSkipped: false,
+            });
+
+            const datasets = [
+                createDataset('Net Revenue', netRevenue, goldColor, 'origin'),
+                createDataset('Cash', cashPayment, greenColor, 'origin'),
+                createDataset('Digital', digitalPayment, blueColor, 'origin'),
+            ];
+
+            cashFlowChartInstance = new Chart(canvas, {
+                type: isLine ? 'line' : 'bar',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1a1a1a',
+                            titleColor: '#c9a961',
+                            bodyColor: '#e0e0e0',
+                            borderColor: '#c9a961',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: ctx => ` ${ctx.dataset.label}: ₱${ctx.parsed.y.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { family: 'DM Sans', size: 11, weight: '600' },
+                                color: '#888',
+                                maxRotation: 35,
+                            },
+                            border: { color: '#e0e0e0' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+                            ticks: {
+                                font: { family: 'DM Sans', size: 11 },
+                                color: '#888',
+                                callback: v => '₱' + (v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0))
+                            },
+                            border: { display: false }
+                        }
+                    },
+                    animation: {
+                        duration: 600,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+
+            // Update metrics row
+            const totalNet = netRevenue.reduce((s, v) => s + v, 0);
+            const totalCash = cashPayment.reduce((s, v) => s + v, 0);
+            const totalDigital = digitalPayment.reduce((s, v) => s + v, 0);
+            const peakIdx = netRevenue.indexOf(Math.max(...netRevenue));
+            const lowIdx = netRevenue.indexOf(Math.min(...netRevenue.filter(v => v > 0)));
+            const cashPct = totalNet > 0 ? ((totalCash / totalNet) * 100).toFixed(1) : '0.0';
+            const digitalPct = totalNet > 0 ? ((totalDigital / totalNet) * 100).toFixed(1) : '0.0';
+            const avgPeriod = netRevenue.length > 0 ? totalNet / netRevenue.length : 0;
+            const firstNonZero = netRevenue.find(v => v > 0) || 0;
+            const lastVal = netRevenue[netRevenue.length - 1] || 0;
+            const growth = firstNonZero > 0 ? (((lastVal - firstNonZero) / firstNonZero) * 100).toFixed(1) : null;
+
+            document.getElementById('chartPeak').textContent = labels[peakIdx] || '—';
+            document.getElementById('chartLow').textContent = lowIdx >= 0 ? labels[lowIdx] : '—';
+            document.getElementById('chartCashPct').textContent = cashPct + '%';
+            document.getElementById('chartDigitalPct').textContent = digitalPct + '%';
+            document.getElementById('chartAvgPeriod').textContent = '₱' + avgPeriod.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            const growthEl = document.getElementById('chartGrowth');
+            if (growth !== null) {
+                const sign = parseFloat(growth) >= 0 ? '+' : '';
+                growthEl.textContent = sign + growth + '%';
+                growthEl.style.color = parseFloat(growth) >= 0 ? 'var(--success)' : 'var(--danger)';
+            } else {
+                growthEl.textContent = '—';
+                growthEl.style.color = '';
+            }
+
+            // Update subtitle
+            const typeLabels = { weekly: 'Daily breakdown for the week', monthly: 'Weekly breakdown for the month', yearly: 'Monthly breakdown for the year' };
+            document.getElementById('chartSubtitle').textContent = typeLabels[reportType] || 'Cash & digital breakdown';
+
+            document.getElementById('cashFlowChartCard').style.display = 'block';
+            document.getElementById('cashFlowChartCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function switchChartType(type) {
+            currentChartType = type;
+            document.querySelectorAll('.chart-toggle-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('toggle' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('active');
+            if (currentChartData && currentChartData.length) {
+                renderCashFlowChart(currentChartData, currentReportType, type);
+            }
+        }
+
+        function hexToRgba(hex, alpha) {
+            const r = parseInt(hex.slice(1,3), 16);
+            const g = parseInt(hex.slice(3,5), 16);
+            const b = parseInt(hex.slice(5,7), 16);
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
+
+        document.getElementById('generateReportBtn').addEventListener('click', generateCashFlowReport);
+        document.getElementById('printReportBtn').addEventListener('click', printCashFlowReport);
+
+        /* ══════════════════════════════════════════════════════════════════
+           MONTHLY PRODUCT ANALYTICS MODULE
+        ══════════════════════════════════════════════════════════════════ */
+
+        let mpaChartInstance = null;
+        let mpaCurrentData   = null;   // full API response
+        let mpaActiveTier    = 'all';  // all | best_seller | mid | barely_sold
+
+        // ── Initialise month picker to current month ─────────────────────────
+        (function () {
+            const now = new Date();
+            const mm  = String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('mpaMonthPicker').value = `${now.getFullYear()}-${mm}`;
+        })();
+
+        document.getElementById('mpaLoadBtn').addEventListener('click', loadMpaReport);
+        document.getElementById('mpaExportBtn').addEventListener('click', exportMpaCsv);
+
+        async function loadMpaReport() {
+            const month = document.getElementById('mpaMonthPicker').value;
+            if (!month) { showToast('Please select a month', 'error'); return; }
+
+            const btn = document.getElementById('mpaLoadBtn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Loading…';
+
+            document.getElementById('mpaBody').innerHTML = `
+                <div class="mpa-empty">
+                    <div class="mpa-empty-icon">⏳</div>
+                    <p>Fetching product data for <strong>${month}</strong>…</p>
+                </div>`;
+
+            let data;
+            try {
+                const res = await fetch(`/api/sales/monthly-product-summary?month=${encodeURIComponent(month)}`);
+                data = await res.json();
+            } catch (e) {
+                document.getElementById('mpaBody').innerHTML = `
+                    <div class="mpa-empty"><div class="mpa-empty-icon">❌</div><p>Network error.</p></div>`;
+                btn.disabled = false; btn.innerHTML = '📊 Load Report';
+                return;
+            }
+
+            btn.disabled = false; btn.innerHTML = '📊 Load Report';
+
+            if (!data.success) {
+                document.getElementById('mpaBody').innerHTML = `
+                    <div class="mpa-empty"><div class="mpa-empty-icon">❌</div><p>${data.message || 'Error loading data'}</p></div>`;
+                return;
+            }
+
+            mpaCurrentData = data;
+            mpaActiveTier  = 'all';
+            renderMpa(data);
+            document.getElementById('mpaExportBtn').style.display = 'inline-flex';
+            document.getElementById('mpaSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderMpa(data) {
+            const { summary, products, month_label } = data;
+
+            if (!products || !products.length) {
+                document.getElementById('mpaBody').innerHTML = `
+                    <div class="mpa-empty">
+                        <div class="mpa-empty-icon">📭</div>
+                        <p>No sales recorded for <strong>${month_label}</strong>.</p>
+                    </div>`;
+                return;
+            }
+
+            const bestSellers  = products.filter(p => p.tier === 'best_seller');
+            const barelySold   = products.filter(p => p.tier === 'barely_sold');
+            const midSellers   = products.filter(p => p.tier === 'mid');
+            const fmtNum  = n  => (n || 0).toLocaleString('en-PH');
+            const fmtPeso = n  => `₱${(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            // ── KPI Strip ────────────────────────────────────────────────────
+            const kpiHtml = `
+            <div class="mpa-kpi-strip">
+                <div class="mpa-kpi gold">
+                    <div class="mpa-kpi-label">Total Units Sold</div>
+                    <div class="mpa-kpi-val">${fmtNum(summary.total_units)}</div>
+                    <div class="mpa-kpi-sub">${month_label}</div>
+                </div>
+                <div class="mpa-kpi green">
+                    <div class="mpa-kpi-label">Total Revenue</div>
+                    <div class="mpa-kpi-val" style="font-size:1.25rem;">${fmtPeso(summary.total_revenue)}</div>
+                    <div class="mpa-kpi-sub">all products</div>
+                </div>
+                <div class="mpa-kpi blue">
+                    <div class="mpa-kpi-label">Unique Products</div>
+                    <div class="mpa-kpi-val">${summary.total_products}</div>
+                    <div class="mpa-kpi-sub">sold this month</div>
+                </div>
+                <div class="mpa-kpi gold">
+                    <div class="mpa-kpi-label">🏆 Best Sellers</div>
+                    <div class="mpa-kpi-val">${bestSellers.length}</div>
+                    <div class="mpa-kpi-sub">top 20% by units</div>
+                </div>
+                <div class="mpa-kpi red">
+                    <div class="mpa-kpi-label">⚠️ Barely Sold</div>
+                    <div class="mpa-kpi-val">${barelySold.length}</div>
+                    <div class="mpa-kpi-sub">bottom 20% by units</div>
+                </div>
+            </div>`;
+
+            // ── Highlight Columns ─────────────────────────────────────────────
+            function buildHighlightRow(p, idx) {
+                const rankClass = idx === 0 ? 'gold-rank' : idx === 1 ? 'silver-rank' : idx === 2 ? 'bronze-rank' : '';
+                const maxUnits  = products[0] ? products[0].units_sold : 1;
+                const barWidth  = Math.round((p.units_sold / maxUnits) * 100);
+                const barColor  = p.tier === 'best_seller' ? '#c9a961' : '#e53935';
+                let momHtml = '';
+                if (p.units_change_pct !== null && p.units_change_pct !== undefined) {
+                    const sign   = p.units_change_pct >= 0 ? '+' : '';
+                    const cls    = p.units_change_pct >= 0 ? 'up' : 'down';
+                    momHtml = `<div class="mpa-item-mom ${cls}">${sign}${p.units_change_pct}% vs last month</div>`;
+                } else if (p.prev_units === null || p.prev_units === undefined) {
+                    momHtml = `<div class="mpa-item-mom flat">New this month</div>`;
+                }
+                return `
+                <div class="mpa-item-row">
+                    <div class="mpa-item-rank ${rankClass}">${p.rank}</div>
+                    <div class="mpa-item-info">
+                        <div class="mpa-item-name">${p.name}</div>
+                        <div class="mpa-item-cat">${p.category}</div>
+                        <div class="mpa-bar-wrap"><div class="mpa-bar-fill" style="width:${barWidth}%;background:${barColor};"></div></div>
+                    </div>
+                    <div class="mpa-item-stats">
+                        <div class="mpa-item-units">${fmtNum(p.units_sold)} <span style="font-size:0.7rem;color:#aaa;font-weight:600;">units</span></div>
+                        <div class="mpa-item-rev">${fmtPeso(p.revenue)}</div>
+                        ${momHtml}
+                    </div>
+                </div>`;
+            }
+
+            const bestColRows = bestSellers.length
+                ? bestSellers.slice(0, 8).map((p, i) => buildHighlightRow(p, i)).join('')
+                : `<div style="text-align:center;padding:1.5rem;color:#ccc;font-size:0.85rem;">No best sellers this month.</div>`;
+
+            const lowColRows = barelySold.length
+                ? barelySold.slice(-8).map((p, i) => buildHighlightRow(p, i)).join('')
+                : `<div style="text-align:center;padding:1.5rem;color:#ccc;font-size:0.85rem;">No barely-sold items this month.</div>`;
+
+            const highlightsHtml = `
+            <div class="mpa-highlights">
+                <div class="mpa-highlight-col">
+                    <div class="mpa-highlight-title best">🏆 Best Sellers <span class="mpa-highlight-pill best-pill">${bestSellers.length} products</span></div>
+                    ${bestColRows}
+                </div>
+                <div class="mpa-highlight-col">
+                    <div class="mpa-highlight-title low">⚠️ Barely Sold <span class="mpa-highlight-pill low-pill">${barelySold.length} products</span></div>
+                    ${lowColRows}
+                </div>
+            </div>`;
+
+            // ── Donut chart data (top 8 + others) ────────────────────────────
+            const TOP_N    = 7;
+            const topParts = products.slice(0, TOP_N);
+            const restUnits = products.slice(TOP_N).reduce((s, p) => s + p.units_sold, 0);
+            const donutLabels = topParts.map(p => p.name.length > 22 ? p.name.slice(0,20) + '…' : p.name);
+            const donutValues = topParts.map(p => p.units_sold);
+            const donutColors = [
+                '#c9a961','#4caf50','#2196f3','#9c27b0',
+                '#ff9800','#e91e63','#00bcd4',
+            ];
+            if (restUnits > 0) {
+                donutLabels.push('Others');
+                donutValues.push(restUnits);
+                donutColors.push('#bdbdbd');
+            }
+
+            const legendHtml = topParts.map((p, i) => `
+                <div class="mpa-legend-item">
+                    <div class="mpa-legend-dot" style="background:${donutColors[i]};"></div>
+                    <span class="mpa-legend-label">${donutLabels[i]}</span>
+                    <span class="mpa-legend-val">${fmtNum(p.units_sold)}</span>
+                </div>`).join('') + (restUnits > 0 ? `
+                <div class="mpa-legend-item">
+                    <div class="mpa-legend-dot" style="background:#bdbdbd;"></div>
+                    <span class="mpa-legend-label">Others</span>
+                    <span class="mpa-legend-val">${fmtNum(restUnits)}</span>
+                </div>` : '');
+
+            // ── Full table rows ───────────────────────────────────────────────
+            function buildTableRow(p) {
+                const tierLabel = { best_seller: '🏆 Best Seller', barely_sold: '⚠️ Barely Sold', mid: 'Regular' };
+                let momCell = '—';
+                if (p.units_change_pct !== null && p.units_change_pct !== undefined) {
+                    const sign = p.units_change_pct >= 0 ? '+' : '';
+                    const cls  = p.units_change_pct >= 0 ? 'up' : 'down';
+                    momCell = `<span class="mpa-mom-chip ${cls}">${sign}${p.units_change_pct}%</span>`;
+                } else {
+                    momCell = `<span class="mpa-mom-chip new">New</span>`;
+                }
+                const prevCell = p.prev_units !== null && p.prev_units !== undefined
+                    ? fmtNum(p.prev_units) : '—';
+                return `
+                <tr data-tier="${p.tier}">
+                    <td style="font-weight:700;color:#888;font-variant-numeric:tabular-nums;">#${p.rank}</td>
+                    <td>
+                        <div style="font-weight:700;font-size:0.88rem;">${p.name}</div>
+                        <div style="font-size:0.7rem;color:#aaa;">${p.category}</div>
+                    </td>
+                    <td><span class="tier-chip ${p.tier}">${tierLabel[p.tier]}</span></td>
+                    <td class="num" style="font-size:1rem;font-weight:800;color:var(--black);">${fmtNum(p.units_sold)}</td>
+                    <td class="num" style="color:var(--dark-gold);">${fmtPeso(p.revenue)}</td>
+                    <td class="num">${fmtPeso(p.avg_price)}</td>
+                    <td class="num">
+                        <div style="display:flex;align-items:center;gap:0.4rem;justify-content:flex-end;">
+                            <div style="flex:1;max-width:60px;height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;">
+                                <div style="height:100%;width:${p.units_share}%;background:var(--gold);border-radius:3px;"></div>
+                            </div>
+                            <span style="font-size:0.75rem;">${p.units_share}%</span>
+                        </div>
+                    </td>
+                    <td class="num">${prevCell}</td>
+                    <td class="num">${momCell}</td>
+                </tr>`;
+            }
+
+            const tableRows = products.map(p => buildTableRow(p)).join('');
+
+            const bottomHtml = `
+            <div class="mpa-bottom">
+                <div class="mpa-donut-col">
+                    <div class="mpa-donut-title">Units Distribution</div>
+                    <div class="mpa-donut-canvas-wrap">
+                        <canvas id="mpaDonutChart" width="180" height="180"></canvas>
+                        <div class="mpa-donut-center">
+                            <div class="mpa-donut-center-val">${fmtNum(summary.total_units)}</div>
+                            <div class="mpa-donut-center-sub">Total Units</div>
+                        </div>
+                    </div>
+                    <div class="mpa-donut-legend">${legendHtml}</div>
+                </div>
+                <div class="mpa-table-col">
+                    <div class="mpa-table-header">
+                        <h4>All Products — ${month_label}</h4>
+                        <div class="mpa-filter-row">
+                            <button class="mpa-filter-btn active" data-tier="all">All</button>
+                            <button class="mpa-filter-btn" data-tier="best_seller">🏆 Best Sellers</button>
+                            <button class="mpa-filter-btn" data-tier="mid">Regular</button>
+                            <button class="mpa-filter-btn" data-tier="barely_sold">⚠️ Barely Sold</button>
+                        </div>
+                    </div>
+                    <table class="mpa-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Product</th>
+                                <th>Tier</th>
+                                <th class="num">Units Sold</th>
+                                <th class="num">Revenue</th>
+                                <th class="num">Avg Price</th>
+                                <th class="num">Units Share</th>
+                                <th class="num">Last Month</th>
+                                <th class="num">MoM Change</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mpaTableBody">${tableRows}</tbody>
+                    </table>
+                </div>
+            </div>`;
+
+            document.getElementById('mpaBody').innerHTML = kpiHtml + highlightsHtml + bottomHtml;
+
+            // ── Wire filter buttons ───────────────────────────────────────────
+            document.querySelectorAll('.mpa-filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    mpaActiveTier = btn.dataset.tier;
+                    document.querySelectorAll('.mpa-filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.querySelectorAll('#mpaTableBody tr').forEach(row => {
+                        row.style.display = (mpaActiveTier === 'all' || row.dataset.tier === mpaActiveTier) ? '' : 'none';
+                    });
+                });
+            });
+
+            // ── Render donut chart ────────────────────────────────────────────
+            if (mpaChartInstance) { mpaChartInstance.destroy(); mpaChartInstance = null; }
+            requestAnimationFrame(() => {
+                const canvas = document.getElementById('mpaDonutChart');
+                if (!canvas) return;
+                mpaChartInstance = new Chart(canvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: donutLabels,
+                        datasets: [{
+                            data: donutValues,
+                            backgroundColor: donutColors,
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
+                            hoverBorderWidth: 3,
+                        }]
+                    },
+                    options: {
+                        responsive: false,
+                        cutout: '68%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#1a1a1a',
+                                titleColor: '#c9a961',
+                                bodyColor: '#e0e0e0',
+                                borderColor: '#c9a961',
+                                borderWidth: 1,
+                                padding: 10,
+                                cornerRadius: 8,
+                                callbacks: {
+                                    label: ctx => {
+                                        const pct = summary.total_units > 0
+                                            ? ((ctx.parsed / summary.total_units) * 100).toFixed(1)
+                                            : 0;
+                                        return ` ${ctx.parsed.toLocaleString('en-PH')} units (${pct}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        animation: { duration: 700, easing: 'easeOutQuart' }
+                    }
+                });
+            });
+        }
+
+        // ── Export CSV ────────────────────────────────────────────────────────
+        function exportMpaCsv() {
+            if (!mpaCurrentData || !mpaCurrentData.products.length) return;
+            const { products, month_label } = mpaCurrentData;
+            const headers = ['Rank','Product','Category','Tier','Units Sold','Revenue (₱)','Avg Price (₱)','Units Share (%)','Last Month Units','MoM Change (%)'];
+            const rows = products.map(p => [
+                p.rank,
+                `"${p.name.replace(/"/g, '""')}"`,
+                `"${p.category}"`,
+                p.tier,
+                p.units_sold,
+                p.revenue.toFixed(2),
+                p.avg_price.toFixed(2),
+                p.units_share,
+                p.prev_units !== null && p.prev_units !== undefined ? p.prev_units : '',
+                p.units_change_pct !== null && p.units_change_pct !== undefined ? p.units_change_pct : 'New',
+            ].join(','));
+            const csv = [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url  = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `product_sales_${mpaCurrentData.month}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('CSV exported ✅', 'success');
+        }
+
+        /* ── Event listeners ── */
+        document.getElementById('refreshBtn').addEventListener('click', loadData);
+        document.getElementById('printAllReportsBtn').addEventListener('click', printAllShiftReports);
+        document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
+        document.getElementById('filterDate').addEventListener('change', loadData);
+        document.getElementById('filterCashier').addEventListener('change', applyFilters);
+        document.getElementById('filterPayment').addEventListener('change', applyFilters);
+        document.getElementById('filterSearch').addEventListener('input', applyFilters);
+        document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+            document.getElementById('filterSearch').value = '';
+            document.getElementById('filterCashier').value = '';
+            document.getElementById('filterPayment').value = '';
+            applyFilters();
+        });
+        document.getElementById('prevBtn').addEventListener('click', () => { if (page > 1) { page--; renderTable(); } });
+        document.getElementById('nextBtn').addEventListener('click', () => { if (page * perPage < filtered.length) { page++; renderTable(); } });
+
+        /* ── Init ── */
+        initDatePickers();
+        loadData();
+    </script>
+</body>
+
+</html>
