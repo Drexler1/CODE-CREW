@@ -3283,6 +3283,40 @@
 
 
                 <!-- ═══════════════════════════════════════════════════════════
+                     STOCK REQUESTS PANEL (Cashier → Admin approval)
+                ═══════════════════════════════════════════════════════════ -->
+                <div class="section-card" id="stockRequestsPanel" style="margin-top:1.5rem;">
+                    <div class="section-card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+                        <h3>📥 Stock Requests <span id="pendingBadge" style="display:none;background:var(--danger);color:#fff;font-size:0.72rem;padding:2px 8px;border-radius:12px;margin-left:8px;vertical-align:middle;"></span></h3>
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                            <button class="btn btn-sm btn-outline" id="srFilterAll" onclick="srSetFilter('all')" style="font-size:0.8rem;">All</button>
+                            <button class="btn btn-sm btn-primary" id="srFilterPending" onclick="srSetFilter('pending')" style="font-size:0.8rem;">Pending</button>
+                            <button class="btn btn-sm btn-outline" onclick="loadStockRequests()" style="font-size:0.8rem;">↻ Refresh</button>
+                        </div>
+                    </div>
+                    <div class="section-card-body" style="padding:0;">
+                        <div id="srTableWrap" style="overflow-x:auto;">
+                            <table id="srTable" style="width:100%;border-collapse:collapse;font-size:0.875rem;">
+                                <thead>
+                                    <tr style="background:rgba(201,169,97,0.08);color:var(--gold);text-align:left;">
+                                        <th style="padding:0.75rem 1rem;">Item</th>
+                                        <th style="padding:0.75rem 0.5rem;">Type</th>
+                                        <th style="padding:0.75rem 0.5rem;">Qty</th>
+                                        <th style="padding:0.75rem 0.5rem;">Requested By</th>
+                                        <th style="padding:0.75rem 0.5rem;">Date</th>
+                                        <th style="padding:0.75rem 0.5rem;">Status</th>
+                                        <th style="padding:0.75rem 1rem;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="srTableBody">
+                                    <tr><td colspan="7" style="text-align:center;padding:2rem;color:#888;">Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════
                      DAILY INVENTORY REPORT PANEL
                 ═══════════════════════════════════════════════════════════ -->
                 <div class="eod-panel" id="eodPanel" style="display:none;">
@@ -3548,6 +3582,26 @@
                         <path d="M14 11v6" />
                         <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
                     </svg> Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STOCK REQUEST REVIEW MODAL -->
+    <div class="modal-overlay" id="srReviewModal">
+        <div class="modal" style="max-width:440px;">
+            <div class="modal-header">
+                <h2>Review <span id="srReviewAction">Request</span></h2>
+                <button class="modal-close" onclick="closeModal('srReviewModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom:1rem;color:#ccc;">Item: <strong id="srReviewItemName" style="color:var(--gold);"></strong></p>
+                <label style="display:block;margin-bottom:0.4rem;font-size:0.85rem;color:#aaa;">Note (optional)</label>
+                <textarea id="srReviewNote" rows="3" placeholder="Leave a note for the cashier…"
+                    style="width:100%;padding:0.6rem 0.8rem;border-radius:6px;border:1px solid rgba(201,169,97,0.3);background:#2d2d2d;color:#fff;font-family:inherit;font-size:0.875rem;resize:vertical;"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('srReviewModal')">Cancel</button>
+                <button class="btn" id="srConfirmBtn" onclick="submitReview()">Confirm</button>
             </div>
         </div>
     </div>
@@ -4896,6 +4950,115 @@
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
+        /* ═══════════════════════════════════════════════════════════════════
+           STOCK REQUESTS — Admin Panel
+        ═══════════════════════════════════════════════════════════════════ */
+        let srCurrentFilter = 'pending';
+        let srPendingReviewId = null;
+        let srPendingReviewAction = null;
+
+        function srSetFilter(f) {
+            srCurrentFilter = f;
+            document.getElementById('srFilterAll').className     = f === 'all'     ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline';
+            document.getElementById('srFilterPending').className = f === 'pending' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline';
+            document.getElementById('srFilterAll').style.fontSize = '0.8rem';
+            document.getElementById('srFilterPending').style.fontSize = '0.8rem';
+            loadStockRequests();
+        }
+
+        async function loadStockRequests() {
+            const tbody = document.getElementById('srTableBody');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#888;">Loading…</td></tr>';
+            try {
+                const res  = await fetch(`/api/admin/stock_requests?status=${srCurrentFilter}`);
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message);
+                renderSrTable(data.requests);
+                updatePendingBadge();
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--danger);">Error: ${escHtml(e.message)}</td></tr>`;
+            }
+        }
+
+        function renderSrTable(rows) {
+            const tbody = document.getElementById('srTableBody');
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2.5rem;color:#888;">No requests found.</td></tr>';
+                return;
+            }
+            const statusColor = { pending: '#ff9800', approved: '#4caf50', rejected: '#dc3545' };
+            tbody.innerHTML = rows.map(r => `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <td style="padding:0.75rem 1rem;font-weight:600;color:#fff;">${escHtml(r.item_name)}</td>
+                    <td style="padding:0.75rem 0.5rem;color:#aaa;text-transform:capitalize;">${escHtml(r.item_type)}</td>
+                    <td style="padding:0.75rem 0.5rem;color:#ccc;">${r.quantity} ${escHtml(r.unit)}</td>
+                    <td style="padding:0.75rem 0.5rem;color:#ccc;">${escHtml(r.requested_by)}</td>
+                    <td style="padding:0.75rem 0.5rem;color:#888;font-size:0.8rem;">${escHtml(r.requested_at)}</td>
+                    <td style="padding:0.75rem 0.5rem;">
+                        <span style="background:${statusColor[r.status] || '#888'}22;color:${statusColor[r.status] || '#888'};padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:600;text-transform:capitalize;">${r.status}</span>
+                        ${r.review_note ? `<div style="font-size:0.72rem;color:#888;margin-top:3px;">Note: ${escHtml(r.review_note)}</div>` : ''}
+                    </td>
+                    <td style="padding:0.75rem 1rem;">
+                        ${r.status === 'pending' ? `
+                            <button class="btn btn-sm" style="background:var(--success);color:#fff;font-size:0.78rem;margin-right:4px;" onclick="openSrReview(${r.id},'approve','${escHtml(r.item_name)}')">✓ Approve</button>
+                            <button class="btn btn-sm btn-danger" style="font-size:0.78rem;" onclick="openSrReview(${r.id},'reject','${escHtml(r.item_name)}')">✕ Reject</button>
+                        ` : `<span style="color:#555;font-size:0.8rem;">Reviewed by ${escHtml(r.reviewed_by || '—')}<br><span style="font-size:0.72rem;">${escHtml(r.reviewed_at || '')}</span></span>`}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function updatePendingBadge() {
+            try {
+                const res  = await fetch('/api/admin/stock_requests/pending_count');
+                const data = await res.json();
+                const badge = document.getElementById('pendingBadge');
+                if (data.success && data.count > 0) {
+                    badge.textContent = `${data.count} pending`;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch (_) {}
+        }
+
+        function openSrReview(id, action, itemName) {
+            srPendingReviewId     = id;
+            srPendingReviewAction = action;
+            document.getElementById('srReviewItemName').textContent = itemName;
+            document.getElementById('srReviewAction').textContent   = action === 'approve' ? 'Approve' : 'Reject';
+            document.getElementById('srReviewNote').value = '';
+            const btn = document.getElementById('srConfirmBtn');
+            btn.textContent = action === 'approve' ? '✓ Approve' : '✕ Reject';
+            btn.style.background = action === 'approve' ? 'var(--success)' : 'var(--danger)';
+            btn.style.color = '#fff';
+            btn.style.border = 'none';
+            openModal('srReviewModal');
+        }
+
+        async function submitReview() {
+            if (!srPendingReviewId) return;
+            const note = document.getElementById('srReviewNote').value.trim();
+            try {
+                const res  = await fetch(`/api/admin/stock_requests/${srPendingReviewId}/review`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: srPendingReviewAction, review_note: note })
+                });
+                const data = await res.json();
+                closeModal('srReviewModal');
+                showToast(data.message || (data.success ? 'Done.' : 'Error'), data.success ? 'success' : 'error');
+                if (data.success) loadStockRequests();
+            } catch (e) {
+                showToast('Network error.', 'error');
+            }
+        }
+
+        // Load on page ready and refresh badge every 60 seconds
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStockRequests();
+            setInterval(updatePendingBadge, 60000);
+        });
 
     </script>
 </body>

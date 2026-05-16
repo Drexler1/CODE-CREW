@@ -29,7 +29,7 @@
             --danger: #dc3545;
             --warning: #ff9800;
             --info: #2196f3;
-            --header-h: 87px;
+            --header-h: 72px;
             --nav-h: 50px;
         }
 
@@ -54,75 +54,74 @@
             flex: 0 0 var(--header-h);
             background: var(--black);
             border-bottom: 3px solid var(--gold);
-            padding: 1.25rem 2rem;
+            padding: 0 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            position: sticky;
-            top: 0;
             z-index: 100;
         }
 
         .logo { display: flex; align-items: center; gap: 1.25rem; }
 
         .logo-icon {
-            width: 55px; height: 55px;
+            width: 48px; height: 48px;
             background: transparent;
             border: 2px solid var(--gold);
             border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
-            color: var(--gold); font-size: 28px;
+            color: var(--gold); font-size: 24px;
+            flex-shrink: 0;
         }
 
         .logo-text h1 {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 1.75rem; font-weight: 400;
+            font-size: 1.6rem; font-weight: 400;
             color: var(--white); letter-spacing: 1px; line-height: 1.2;
         }
 
         .logo-text h1 span { color: var(--gold); }
 
         .logo-subtitle {
-            font-size: 0.7rem; color: var(--gold);
+            font-size: 0.65rem; color: var(--gold);
             text-transform: uppercase; letter-spacing: 4px;
-            font-weight: 400; margin-top: 2px;
+            font-weight: 400; margin-top: 1px;
         }
 
-        .header-actions { display: flex; align-items: center; gap: 2rem; }
+        .header-actions { display: flex; align-items: center; gap: 1.5rem; }
 
         .date-time { text-align: right; }
-        .date-time .date { color: var(--gold); font-size: 0.9rem; font-weight: 600; }
-        .date-time .time { color: #999; font-size: 0.85rem; margin-top: 2px; }
+        .date-time .date { color: var(--gold); font-size: 0.85rem; font-weight: 600; }
+        .date-time .time { color: #999; font-size: 0.8rem; margin-top: 1px; }
 
         .user-info {
-            display: flex; align-items: center; gap: 1rem;
+            display: flex; align-items: center; gap: 0.85rem;
             background: var(--dark-gray);
-            padding: 0.75rem 1.25rem;
+            padding: 0.6rem 1.1rem;
             border-radius: 8px;
             border: 1px solid rgba(201,169,97,0.3);
         }
 
         .user-avatar {
-            width: 45px; height: 45px; border-radius: 50%;
+            width: 38px; height: 38px; border-radius: 50%;
             background: var(--gold);
             display: flex; align-items: center; justify-content: center;
-            color: var(--black); font-weight: 700; font-size: 1rem;
+            color: var(--black); font-weight: 700; font-size: 0.9rem;
+            flex-shrink: 0;
         }
 
-        .user-details h3 { font-size: 0.95rem; font-weight: 600; color: var(--white); margin-bottom: 2px; }
-        .user-details p  { font-size: 0.8rem; color: var(--gold); }
+        .user-details h3 { font-size: 0.88rem; font-weight: 600; color: var(--white); margin-bottom: 1px; }
+        .user-details p  { font-size: 0.75rem; color: var(--gold); }
 
         .logout-btn {
             background: var(--danger); color: white; border: none;
-            padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600;
-            cursor: pointer; font-size: 0.85rem; transition: all 0.3s;
-            text-decoration: none; display: inline-block;
+            padding: 0.45rem 0.95rem; border-radius: 6px; font-weight: 600;
+            cursor: pointer; font-size: 0.82rem; transition: all 0.3s;
+            text-decoration: none; display: inline-block; white-space: nowrap;
         }
 
         .logout-btn:hover {
             background: #c82333; transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220,53,69,0.4);
         }
 
         /* ── Nav ── */
@@ -130,8 +129,7 @@
             flex: 0 0 var(--nav-h);
             background: var(--dark-gray);
             border-bottom: 1px solid rgba(201,169,97,0.2);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            position: sticky; top: 87px; z-index: 99; overflow: hidden;
+            z-index: 99; overflow: hidden;
         }
 
         nav ul {
@@ -147,10 +145,11 @@
 
         nav a {
             display: flex; align-items: center; gap: 0.45rem;
-            padding: 1rem 1.75rem; text-decoration: none;
-            color: #aaa; font-weight: 600; font-size: 0.9rem;
+            padding: 0 1.6rem; text-decoration: none;
+            color: #aaa; font-weight: 600; font-size: 0.88rem;
             transition: all 0.2s;
             border-bottom: 3px solid transparent; white-space: nowrap;
+            cursor: pointer;
         }
 
         nav a:hover { background: rgba(201,169,97,0.1); color: var(--gold); }
@@ -699,13 +698,10 @@
         <!-- ── Header ── -->
         <header>
             <div class="logo">
-                <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open navigation" aria-expanded="false">
-                    <span></span><span></span><span></span>
-                </button>
                 <div class="logo-icon">📚</div>
                 <div class="logo-text">
                     <h1>Books <span>&</span> Blooms</h1>
-                    <div class="logo-subtitle">Café · Supply Monitor</div>
+                    <div class="logo-subtitle">CAFÉ</div>
                 </div>
             </div>
             <div class="header-actions">
@@ -720,18 +716,17 @@
                         <p>Cashier · Supply Monitor</p>
                     </div>
                 </div>
-                <form method="POST" action="{{ url_for('logout') }}" style="display:inline;margin:0;"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="logout-btn">Sign Out</button></form>
+                <form method="POST" action="{{ url_for('logout') }}" style="display:inline;margin:0;"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="logout-btn">➜ Logout</button></form>
             </div>
         </header>
 
         <!-- ── Nav ── -->
         <nav id="mainNav">
-            <button class="nav-close-btn" id="navCloseBtn" aria-label="Close navigation">✕</button>
             <ul>
                 <li><a href="{{ url_for('cashier_dashboard') }}">📠 POS</a></li>
                 <li><a href="{{ url_for('cashier_transactions') }}">📊 My Transactions</a></li>
+                <li><a href="{{ url_for('cashier_attendance') }}">📅 Attendance</a></li>
                 <li><a href="{{ url_for('cashier_inventory') }}" class="active">📦 Supply Monitor</a></li>
-                <li><a href="{{ url_for('cashier_attendance') }}">🕐 My Attendance</a></li>
             </ul>
         </nav>
 
@@ -863,9 +858,79 @@
                     </div>
                 </div>
 
+                <!-- My Stock Requests -->
+                <div class="section-card" style="margin-top:1rem;">
+                    <div class="section-card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+                        <h3>📤 My Stock <span>Requests</span></h3>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('requestItemModal')" style="font-size:0.82rem;">+ Request New Item</button>
+                    </div>
+                    <div class="supply-table-wrap">
+                        <table class="log-table" id="myRequestsTable">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Type</th>
+                                    <th>Qty</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Admin Note</th>
+                                </tr>
+                            </thead>
+                            <tbody id="myRequestsBody">
+                                <tr class="loading-row"><td colspan="6">Loading…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div><!-- /container -->
         </main>
     </div><!-- /app-shell -->
+
+    <!-- ── REQUEST NEW ITEM Modal ── -->
+    <div class="modal-overlay" id="requestItemModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Request <span>New Item</span></h3>
+                <button class="modal-close" onclick="closeModal('requestItemModal')">✕</button>
+            </div>
+            <div class="modal-body" style="display:flex;flex-direction:column;gap:1rem;">
+                <div>
+                    <label style="display:block;margin-bottom:0.4rem;font-size:0.83rem;color:#aaa;">Item Name *</label>
+                    <input type="text" id="reqItemName" placeholder="e.g. Oat Milk, Brown Sugar…"
+                        style="width:100%;padding:0.6rem 0.8rem;border-radius:6px;border:1px solid rgba(201,169,97,0.3);background:#2d2d2d;color:#fff;font-family:inherit;font-size:0.875rem;">
+                </div>
+                <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:130px;">
+                        <label style="display:block;margin-bottom:0.4rem;font-size:0.83rem;color:#aaa;">Type *</label>
+                        <select id="reqItemType" style="width:100%;padding:0.6rem 0.8rem;border-radius:6px;border:1px solid rgba(201,169,97,0.3);background:#2d2d2d;color:#fff;font-family:inherit;font-size:0.875rem;">
+                            <option value="ingredient">Ingredient</option>
+                            <option value="packaging">Packaging</option>
+                        </select>
+                    </div>
+                    <div style="flex:1;min-width:100px;">
+                        <label style="display:block;margin-bottom:0.4rem;font-size:0.83rem;color:#aaa;">Initial Qty *</label>
+                        <input type="number" id="reqItemQty" min="0.01" step="0.01" placeholder="0"
+                            style="width:100%;padding:0.6rem 0.8rem;border-radius:6px;border:1px solid rgba(201,169,97,0.3);background:#2d2d2d;color:#fff;font-family:inherit;font-size:0.875rem;">
+                    </div>
+                    <div style="flex:1;min-width:100px;">
+                        <label style="display:block;margin-bottom:0.4rem;font-size:0.83rem;color:#aaa;">Unit *</label>
+                        <input type="text" id="reqItemUnit" placeholder="pcs / kg / L…"
+                            style="width:100%;padding:0.6rem 0.8rem;border-radius:6px;border:1px solid rgba(201,169,97,0.3);background:#2d2d2d;color:#fff;font-family:inherit;font-size:0.875rem;">
+                    </div>
+                </div>
+                <div>
+                    <label style="display:block;margin-bottom:0.4rem;font-size:0.83rem;color:#aaa;">Note / Reason (optional)</label>
+                    <textarea id="reqItemNote" rows="2" placeholder="Why is this item needed?"
+                        style="width:100%;padding:0.6rem 0.8rem;border-radius:6px;border:1px solid rgba(201,169,97,0.3);background:#2d2d2d;color:#fff;font-family:inherit;font-size:0.875rem;resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('requestItemModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitItemRequest()">📤 Submit Request</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ── CONSUME Modal ── -->
     <div class="modal-overlay" id="consumeModal">
@@ -1314,11 +1379,76 @@
         /* ═══════════════════════════════════════
            MODAL CLOSE ON BACKDROP CLICK
         ═══════════════════════════════════════ */
-        ['consumeModal', 'restockModal'].forEach(id => {
+        ['consumeModal', 'restockModal', 'requestItemModal'].forEach(id => {
             document.getElementById(id).addEventListener('click', e => {
                 if (e.target.id === id) closeModal(id);
             });
         });
+
+        /* ═══════════════════════════════════════
+           STOCK REQUEST — Cashier
+        ═══════════════════════════════════════ */
+        async function submitItemRequest() {
+            const name = (document.getElementById('reqItemName').value || '').trim();
+            const type = document.getElementById('reqItemType').value;
+            const qty  = parseFloat(document.getElementById('reqItemQty').value);
+            const unit = (document.getElementById('reqItemUnit').value || '').trim();
+            const note = (document.getElementById('reqItemNote').value || '').trim();
+
+            if (!name)       return showToast('Item name is required.', 'error');
+            if (!qty || qty <= 0) return showToast('Quantity must be greater than 0.', 'error');
+            if (!unit)       return showToast('Unit is required.', 'error');
+
+            try {
+                const res  = await fetch('/api/cashier/inv/request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ item_name: name, item_type: type, quantity: qty, unit, note })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeModal('requestItemModal');
+                    document.getElementById('reqItemName').value = '';
+                    document.getElementById('reqItemQty').value  = '';
+                    document.getElementById('reqItemUnit').value = '';
+                    document.getElementById('reqItemNote').value = '';
+                    showToast(data.message, 'success');
+                    loadMyRequests();
+                } else {
+                    showToast(data.message || 'Error submitting request.', 'error');
+                }
+            } catch (e) {
+                showToast('Network error. Please try again.', 'error');
+            }
+        }
+
+        async function loadMyRequests() {
+            const tbody = document.getElementById('myRequestsBody');
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6">Loading…</td></tr>';
+            try {
+                const res  = await fetch('/api/cashier/inv/my_requests');
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message);
+                const rows = data.requests;
+                if (!rows.length) {
+                    tbody.innerHTML = '<tr class="loading-row"><td colspan="6">No requests yet.</td></tr>';
+                    return;
+                }
+                const statusColor = { pending: '#ff9800', approved: '#4caf50', rejected: '#dc3545' };
+                tbody.innerHTML = rows.map(r => `
+                    <tr>
+                        <td><strong>${escHtml(r.item_name)}</strong></td>
+                        <td style="text-transform:capitalize;">${escHtml(r.item_type)}</td>
+                        <td>${r.quantity} ${escHtml(r.unit)}</td>
+                        <td style="font-size:0.78rem;color:#888;">${escHtml(r.requested_at)}</td>
+                        <td><span style="background:${statusColor[r.status]}22;color:${statusColor[r.status]};padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:600;text-transform:capitalize;">${r.status}</span></td>
+                        <td style="font-size:0.8rem;color:#aaa;">${r.review_note ? escHtml(r.review_note) : '—'}</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = `<tr class="loading-row"><td colspan="6">Error: ${escHtml(e.message)}</td></tr>`;
+            }
+        }
 
         /* ═══════════════════════════════════════
            INIT
@@ -1327,6 +1457,7 @@
             await checkConnectivity();
             await loadUserInfo();
             await refreshAll();
+            await loadMyRequests();
         })();
 
         // Auto-refresh every 30s

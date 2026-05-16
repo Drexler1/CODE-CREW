@@ -4343,6 +4343,12 @@ def run_auto_migration():
     except Exception as exc:
         app.logger.error(f"[migration] Step 18 (late_deduction schema) failed: {exc}")
 
+    # ── STEP 19: stock_requests table (cashier → admin approval flow) ─────────
+    try:
+        _ensure_stock_requests_table()
+    except Exception as exc:
+        app.logger.error(f"[migration] Step 19 (stock_requests table) failed: {exc}")
+
     app.logger.info("[migration] run_auto_migration complete.")
 
 
@@ -9980,6 +9986,237 @@ def api_cashier_inv_log():
         return jsonify({"success": True, "log": rows})
     except Exception as exc:
         app.logger.error(f"[cashier_inv] api_cashier_inv_log: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║                     STOCK REQUEST FEATURE                                   ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+def _ensure_stock_requests_table():
+    """
+    Create stock_requests table if it doesn't exist.
+    Cashiers submit new-item requests; admins approve or reject them.
+    """
+    try:
+        conn = mysql.connection
+        cur = conn.cursor()
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS `stock_requests` (
+              `id`            int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+              `item_name`     varchar(120) NOT NULL,
+              `item_type`     enum('ingredient','packaging') NOT NULL DEFAULT 'ingredient',
+              `quantity`      decimal(12,2) NOT NULL DEFAULT 0,
+              `unit`          varchar(20) NOT NULL DEFAULT 'pcs',
+              `note`          varchar(255) DEFAULT NULL,
+              `requested_by`  varchar(80) NOT NULL,
+              `requested_at`  timestamp NOT NULL DEFAULT current_timestamp(),
+              `status`        enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+              `reviewed_by`   varchar(80) DEFAULT NULL,
+              `reviewed_at`   timestamp NULL DEFAULT NULL,
+              `review_note`   varchar(255) DEFAULT NULL,
+              PRIMARY KEY (`id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+            """
+        )
+        conn.commit()
+        app.logger.info("[migration] stock_requests table ready.")
+    except Exception as exc:
+        app.logger.error(f"[migration] _ensure_stock_requests_table failed: {exc}")
+
+
+# ── Cashier: submit a new stock request ──────────────────────────────────────
+@app.route("/api/cashier/inv/request", methods=["POST"])
+@csrf.exempt
+def api_cashier_inv_request():
+    """Cashier submits a request to add a new inventory item."""
+    if not _is_cashier():
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    try:
+        data = request.get_json(force=True) or {}
+        item_name = (data.get("item_name") or "").strip()
+        item_type = data.get("item_type", "ingredient")
+        quantity  = float(data.get("quantity", 0))
+        unit      = (data.get("unit") or "pcs").strip()
+        note      = (data.get("note") or "").strip()
+
+        if not item_name:
+            return jsonify({"success": False, "message": "Item name is required."}), 400
+        if quantity <= 0:
+            return jsonify({"success": False, "message": "Quantity must be greater than 0."}), 400
+        if item_type not in ("ingredient", "packaging"):
+            item_type = "ingredient"
+
+        emp_id   = session.get("employee_id")
+        emp_name = session.get("full_name") or f"Cashier#{emp_id}"
+
+        conn = mysql.connection
+        cur  = conn.cursor()
+        cur.execute(
+            """INSERT INTO stock_requests
+               (item_name, item_type, quantity, unit, note, requested_by)
+               VALUES (%s, %s, %s, %s, %s, %s)""",
+            (item_name, item_type, quantity, unit, note or None, emp_name),
+        )
+        conn.commit()
+        return jsonify({"success": True, "message": f"Request for '{item_name}' submitted. Awaiting admin approval."})
+    except Exception as exc:
+        app.logger.error(f"[stock_request] submit: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+# ── Cashier: view own requests ────────────────────────────────────────────────
+@app.route("/api/cashier/inv/my_requests", methods=["GET"])
+def api_cashier_inv_my_requests():
+    """Return the logged-in cashier's own stock requests."""
+    if not _is_cashier():
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    try:
+        emp_name = session.get("full_name") or f"Cashier#{session.get('employee_id')}"
+        conn = mysql.connection
+        cur  = conn.cursor()
+        cur.execute(
+            """SELECT id, item_name, item_type, quantity, unit, note,
+                      requested_at, status, reviewed_by, reviewed_at, review_note
+               FROM stock_requests
+               WHERE requested_by = %s
+               ORDER BY requested_at DESC
+               LIMIT 50""",
+            (emp_name,),
+        )
+        rows = cur.fetchall()
+        for r in rows:
+            if r.get("requested_at"):
+                r["requested_at"] = r["requested_at"].strftime("%b %d, %Y %I:%M %p")
+            if r.get("reviewed_at"):
+                r["reviewed_at"] = r["reviewed_at"].strftime("%b %d, %Y %I:%M %p")
+            r["quantity"] = float(r["quantity"])
+        return jsonify({"success": True, "requests": rows})
+    except Exception as exc:
+        app.logger.error(f"[stock_request] my_requests: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+# ── Admin: list all pending/all requests ─────────────────────────────────────
+@app.route("/api/admin/stock_requests", methods=["GET"])
+def api_admin_stock_requests():
+    """Return all stock requests (admin only). ?status=pending|all"""
+    if not is_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    try:
+        status_filter = request.args.get("status", "all")
+        conn = mysql.connection
+        cur  = conn.cursor()
+        if status_filter == "pending":
+            cur.execute(
+                """SELECT id, item_name, item_type, quantity, unit, note,
+                          requested_by, requested_at, status,
+                          reviewed_by, reviewed_at, review_note
+                   FROM stock_requests WHERE status = 'pending'
+                   ORDER BY requested_at ASC"""
+            )
+        else:
+            cur.execute(
+                """SELECT id, item_name, item_type, quantity, unit, note,
+                          requested_by, requested_at, status,
+                          reviewed_by, reviewed_at, review_note
+                   FROM stock_requests
+                   ORDER BY requested_at DESC
+                   LIMIT 100"""
+            )
+        rows = cur.fetchall()
+        for r in rows:
+            if r.get("requested_at"):
+                r["requested_at"] = r["requested_at"].strftime("%b %d, %Y %I:%M %p")
+            if r.get("reviewed_at"):
+                r["reviewed_at"] = r["reviewed_at"].strftime("%b %d, %Y %I:%M %p")
+            r["quantity"] = float(r["quantity"])
+        return jsonify({"success": True, "requests": rows})
+    except Exception as exc:
+        app.logger.error(f"[stock_request] admin_list: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+# ── Admin: approve or reject a request ───────────────────────────────────────
+@app.route("/api/admin/stock_requests/<int:req_id>/review", methods=["POST"])
+@csrf.exempt
+def api_admin_stock_request_review(req_id):
+    """
+    Approve or reject a stock request.
+    Body: { action: 'approve'|'reject', review_note: '...' }
+    On approve: creates the inv_items row automatically.
+    """
+    if not is_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    try:
+        data        = request.get_json(force=True) or {}
+        action      = data.get("action", "").lower()
+        review_note = (data.get("review_note") or "").strip() or None
+
+        if action not in ("approve", "reject"):
+            return jsonify({"success": False, "message": "action must be 'approve' or 'reject'"}), 400
+
+        admin_name = session.get("admin_username") or "Admin"
+        conn = mysql.connection
+        cur  = conn.cursor()
+
+        cur.execute(
+            "SELECT * FROM stock_requests WHERE id = %s LIMIT 1", (req_id,)
+        )
+        req_row = cur.fetchone()
+        if not req_row:
+            return jsonify({"success": False, "message": "Request not found."}), 404
+        if req_row["status"] != "pending":
+            return jsonify({"success": False, "message": "Request already reviewed."}), 409
+
+        new_status = "approved" if action == "approve" else "rejected"
+        cur.execute(
+            """UPDATE stock_requests
+               SET status=%s, reviewed_by=%s, reviewed_at=NOW(), review_note=%s
+               WHERE id=%s""",
+            (new_status, admin_name, review_note, req_id),
+        )
+
+        if action == "approve":
+            cur.execute(
+                """INSERT INTO inv_items (name, type, stock, unit, reorder_point, note)
+                   VALUES (%s, %s, %s, %s, 10, %s)""",
+                (
+                    req_row["item_name"],
+                    req_row["item_type"],
+                    req_row["quantity"],
+                    req_row["unit"],
+                    f"Added via cashier request by {req_row['requested_by']}",
+                ),
+            )
+
+        conn.commit()
+        msg = (
+            f"'{req_row['item_name']}' approved and added to inventory."
+            if action == "approve"
+            else f"Request for '{req_row['item_name']}' rejected."
+        )
+        return jsonify({"success": True, "message": msg})
+    except Exception as exc:
+        app.logger.error(f"[stock_request] review req#{req_id}: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+# ── Admin: pending count (for badge) ─────────────────────────────────────────
+@app.route("/api/admin/stock_requests/pending_count", methods=["GET"])
+def api_admin_stock_requests_pending_count():
+    """Return the count of pending stock requests."""
+    if not is_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    try:
+        conn = mysql.connection
+        cur  = conn.cursor()
+        cur.execute("SELECT COUNT(*) AS c FROM stock_requests WHERE status = 'pending'")
+        count = cur.fetchone()["c"]
+        return jsonify({"success": True, "count": int(count)})
+    except Exception as exc:
+        app.logger.error(f"[stock_request] pending_count: {exc}")
         return jsonify({"success": False, "message": str(exc)}), 500
 
 
