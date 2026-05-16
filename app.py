@@ -10075,7 +10075,7 @@ def api_cashier_inv_my_requests():
     try:
         emp_name = session.get("full_name") or f"Cashier#{session.get('employee_id')}"
         conn = mysql.connection
-        cur  = conn.cursor()
+        cur  = conn.cursor(DictCursor)
         cur.execute(
             """SELECT id, item_name, item_type, quantity, unit, note,
                       requested_at, status, reviewed_by, reviewed_at, review_note
@@ -10085,7 +10085,7 @@ def api_cashier_inv_my_requests():
                LIMIT 50""",
             (emp_name,),
         )
-        rows = cur.fetchall()
+        rows = list(cur.fetchall())
         for r in rows:
             if r.get("requested_at"):
                 r["requested_at"] = r["requested_at"].strftime("%b %d, %Y %I:%M %p")
@@ -10107,7 +10107,7 @@ def api_admin_stock_requests():
     try:
         status_filter = request.args.get("status", "all")
         conn = mysql.connection
-        cur  = conn.cursor()
+        cur  = conn.cursor(DictCursor)
         if status_filter == "pending":
             cur.execute(
                 """SELECT id, item_name, item_type, quantity, unit, note,
@@ -10125,7 +10125,7 @@ def api_admin_stock_requests():
                    ORDER BY requested_at DESC
                    LIMIT 100"""
             )
-        rows = cur.fetchall()
+        rows = list(cur.fetchall())
         for r in rows:
             if r.get("requested_at"):
                 r["requested_at"] = r["requested_at"].strftime("%b %d, %Y %I:%M %p")
@@ -10159,7 +10159,7 @@ def api_admin_stock_request_review(req_id):
 
         admin_name = session.get("admin_username") or "Admin"
         conn = mysql.connection
-        cur  = conn.cursor()
+        cur  = conn.cursor(DictCursor)
 
         cur.execute(
             "SELECT * FROM stock_requests WHERE id = %s LIMIT 1", (req_id,)
@@ -10211,7 +10211,7 @@ def api_admin_stock_requests_pending_count():
         return jsonify({"success": False, "message": "Unauthorized"}), 403
     try:
         conn = mysql.connection
-        cur  = conn.cursor()
+        cur  = conn.cursor(DictCursor)
         cur.execute("SELECT COUNT(*) AS c FROM stock_requests WHERE status = 'pending'")
         count = cur.fetchone()["c"]
         return jsonify({"success": True, "count": int(count)})
