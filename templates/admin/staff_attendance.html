@@ -190,8 +190,6 @@
             padding: 1.5rem 2rem;
             display: flex;
             flex-direction: column;
-            flex: 1;
-            min-height: 0;
         }
 
         .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem; }
@@ -245,8 +243,6 @@
             grid-template-columns: 1fr 320px;
             gap: 1.25rem;
             align-items: start;
-            flex: 1;
-            min-height: 0;
         }
 
         /* Table card stretches full column */
@@ -254,7 +250,7 @@
         .table-card-header { display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 1.5rem; border-bottom: 2px solid var(--gold); flex-shrink: 0; }
         .table-card-header h3 { font-size: 1.2rem; font-weight: 700; }
         .record-count { font-size: 0.8rem; color: #888; margin-top: 0.2rem; }
-        .table-wrapper { overflow-x: auto; overflow-y: auto; flex: 1; }
+        .table-wrapper { overflow-x: auto; overflow-y: auto; max-height: 480px; }
         table { width: 100%; border-collapse: collapse; }
         thead { background: var(--black); color: var(--gold); position: sticky; top: 0; z-index: 1; }
         th { padding: 0.85rem 1.1rem; text-align: left; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
@@ -1210,6 +1206,7 @@
                                 <tr>
                                     <th>Employee</th><th>Dept.</th><th>Shift</th><th>Status</th>
                                     <th>Clock-In</th><th>Clock-Out</th><th>Hours</th><th>Fulfill Working Hours</th>
+                                    <th>Late</th><th>Deduction</th>
                                 </tr>
                             </thead>
                             <tbody id="attendanceTableBody">
@@ -1259,7 +1256,10 @@
                     <div class="panel-card">
                         <div class="panel-header">
                             <h3>🕐 Today's Shifts</h3>
-                            <button class="btn btn-outline btn-sm" id="openShiftManager">⚙️ Manage</button>
+                            <div style="display:flex;gap:0.4rem;">
+                                <button class="btn btn-outline btn-sm" id="openShiftManager">⚙️ Manage</button>
+                                <button class="btn btn-outline btn-sm" id="openLDSettings" title="Late Deduction Settings">🕓 Late Fine</button>
+                            </div>
                         </div>
                         <div class="panel-body">
                             <div class="shift-list" id="shiftListDisplay">
@@ -1319,6 +1319,73 @@
                 <button class="btn" id="denyOTBtn" style="background:#ffebee;color:#c62828;border:1px solid #ef9a9a;">❌ Deny</button>
                 <button class="btn btn-primary" id="approveOTBtn">✅ Approve</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ DEDUCTION EDIT MODAL ═══ -->
+<div class="modal-overlay" id="deductionEditModal">
+    <div class="modal" style="max-width:400px;">
+        <div class="modal-header">
+            <h2>Edit <span>Late Deduction</span></h2>
+            <button class="modal-close" onclick="document.getElementById('deductionEditModal').classList.remove('open')">✕</button>
+        </div>
+        <div class="modal-body" style="padding:1.5rem;">
+            <p style="color:#666;font-size:0.9rem;margin-bottom:1rem;">
+                Manually override the late-arrival deduction for this attendance record.
+                Checking "Waive" sets the deduction to ₱0 regardless of the amount entered.
+            </p>
+            <input type="hidden" id="deductEditAttId">
+            <div style="margin-bottom:1rem;">
+                <label style="font-weight:600;display:block;margin-bottom:0.35rem;">💸 Deduction Amount (₱)</label>
+                <input type="number" id="deductEditAmount" min="0" step="0.01"
+                    style="width:100%;box-sizing:border-box;padding:0.6rem 0.75rem;border:1px solid #ddd;border-radius:8px;font-size:0.95rem;">
+            </div>
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.93rem;margin-bottom:1rem;">
+                <input type="checkbox" id="deductEditWaive" style="width:16px;height:16px;">
+                <span>Waive deduction (sets amount to ₱0)</span>
+            </label>
+            <div id="deductEditError" style="display:none;background:#fff3f3;border:1px solid #ffcdd2;color:#c62828;padding:0.6rem 0.85rem;border-radius:8px;font-size:0.9rem;margin-bottom:0.5rem;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="document.getElementById('deductionEditModal').classList.remove('open')">Cancel</button>
+            <button class="btn btn-primary" id="saveDeductionBtn">💾 Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ LATE DEDUCTION SETTINGS MODAL ═══ -->
+<div class="modal-overlay" id="lateDeductionSettingsModal">
+    <div class="modal" style="max-width:400px;">
+        <div class="modal-header">
+            <h2>⚙️ Late Deduction <span>Settings</span></h2>
+            <button class="modal-close" onclick="document.getElementById('lateDeductionSettingsModal').classList.remove('open')">✕</button>
+        </div>
+        <div class="modal-body" style="padding:1.5rem;">
+            <p style="color:#666;font-size:0.9rem;margin-bottom:1.2rem;">
+                Configure the grace period and flat deduction applied to late arrivals.
+                These settings apply to all shifts globally.
+            </p>
+            <div style="margin-bottom:1rem;">
+                <label style="font-weight:600;display:block;margin-bottom:0.35rem;">⏱ Grace Period (minutes)</label>
+                <input type="number" id="ldGraceMinutes" min="0" max="120" step="1"
+                    style="width:100%;box-sizing:border-box;padding:0.6rem 0.75rem;border:1px solid #ddd;border-radius:8px;font-size:0.95rem;"
+                    placeholder="10">
+                <small style="color:#888;font-size:0.8rem;">Employees within this many minutes of shift start will not be penalised.</small>
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label style="font-weight:600;display:block;margin-bottom:0.35rem;">💸 Deduction Amount (₱ per occurrence)</label>
+                <input type="number" id="ldDeductionAmount" min="0" step="0.01"
+                    style="width:100%;box-sizing:border-box;padding:0.6rem 0.75rem;border:1px solid #ddd;border-radius:8px;font-size:0.95rem;"
+                    placeholder="3.00">
+                <small style="color:#888;font-size:0.8rem;">Flat peso amount deducted when an employee exceeds the grace period. Set to 0 to disable.</small>
+            </div>
+            <div id="ldSettingsError"   style="display:none;background:#fff3f3;border:1px solid #ffcdd2;color:#c62828;padding:0.6rem 0.85rem;border-radius:8px;font-size:0.9rem;margin-bottom:0.5rem;"></div>
+            <div id="ldSettingsSuccess" style="display:none;background:#f1f8e9;border:1px solid #aed581;color:#33691e;padding:0.6rem 0.85rem;border-radius:8px;font-size:0.9rem;margin-bottom:0.5rem;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="document.getElementById('lateDeductionSettingsModal').classList.remove('open')">Close</button>
+            <button class="btn btn-primary" id="saveLDSettingsBtn">💾 Save Settings</button>
         </div>
     </div>
 </div>
@@ -1445,10 +1512,10 @@
 
         <!-- Footer -->
         <div class="modal-footer">
-            <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+            <button class="btn btn-outline" id="attendanceBackBtn" onclick="prevStep()">← Back</button>
             <div class="modal-footer-right">
                 <button class="btn btn-outline" onclick="closeAttendance()">Cancel</button>
-                <button class="btn btn-primary" onclick="nextStep()">Next →</button>
+                <button class="btn btn-primary" id="attendanceNextBtn" onclick="nextStep()">Next →</button>
             </div>
         </div>
 
@@ -1553,8 +1620,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const modal          = document.getElementById("attendanceModal");
     const openBtn        = document.getElementById("openClockModal");
     const closeBtn       = document.getElementById("closeAttendanceModal");
-    const backBtn        = document.querySelector(".modal-footer .btn-outline");
-    const nextBtn        = document.querySelector(".modal-footer .btn-primary");
+    const backBtn        = document.getElementById("attendanceBackBtn");
+    const nextBtn        = document.getElementById("attendanceNextBtn");
     // Expose globally so the outside verifyIdentity() function can access it
     window.cameraFeed    = document.getElementById("cameraFeed");
     const employeeSelect = document.getElementById("employeeSelect");
@@ -1779,6 +1846,22 @@ document.addEventListener("DOMContentLoaded", () => {
                        </button>`
                     : '';
 
+                const lateMin  = parseInt(r.late_minutes || 0);
+                const deduction = parseFloat(r.late_deduction || 0);
+                const waived    = !!r.deduction_waived;
+                const lateBadge = lateMin > 0
+                    ? `<span class="badge badge-late">${lateMin}m late</span>`
+                    : `<span class="badge badge-present">On time</span>`;
+                const deductionCell = deduction > 0
+                    ? waived
+                        ? `<span style="color:#388e3c;font-weight:600;font-size:0.85rem;">Waived</span>
+                           <button onclick="openDeductionEdit(${r.attendance_id}, ${deduction}, ${waived ? 1 : 0})"
+                             style="font-size:0.72rem;padding:2px 8px;border:1px solid #aaa;border-radius:6px;background:transparent;color:#555;cursor:pointer;margin-left:4px;">✏️</button>`
+                        : `<span style="color:#c62828;font-weight:600;font-size:0.85rem;">−₱${deduction.toFixed(2)}</span>
+                           <button onclick="openDeductionEdit(${r.attendance_id}, ${deduction}, 0)"
+                             style="font-size:0.72rem;padding:2px 8px;border:1px solid #aaa;border-radius:6px;background:transparent;color:#555;cursor:pointer;margin-left:4px;">✏️</button>`
+                    : `<span style="color:#aaa;font-size:0.85rem;">—</span>`;
+
                 body.insertAdjacentHTML("beforeend", `
                     <tr>
                         <td data-label="Employee">
@@ -1797,6 +1880,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         <td data-label="Clock-Out" class="time-cell">${r.clock_out || '<span class="time-cell missing">—</span>'} ${overrideBtn}</td>
                         <td data-label="Hours"><span class="hours-chip ${fulfill ? 'over' : (r.hours_worked ? 'short' : '')}">${hours}</span></td>
                         <td data-label="Fulfilled">${fulfillBadge}</td>
+                        <td data-label="Late">${lateBadge}</td>
+                        <td data-label="Deduction">${deductionCell}</td>
                     </tr>`);
             });
 
@@ -2246,23 +2331,73 @@ document.addEventListener("DOMContentLoaded", () => {
                 };
                 const statusLabel = s => ({ pending: '⏳ Pending', approved: '✅ Approved', denied: '❌ Denied', cancelled: 'Cancelled' }[s] || s);
 
-                listEl.innerHTML = rows.map(r => `
-                    <div style="padding:0.85rem 1.1rem;border-bottom:1px solid #f0f0f0;">
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;flex-wrap:wrap;">
-                            <div>
-                                <div style="font-weight:700;font-size:0.95rem;">${escapeHtml(r.employee_name)}</div>
-                                <div style="color:#888;font-size:0.82rem;">${r.request_date} · <strong>${parseFloat(r.extended_hours).toFixed(1)} hr${r.extended_hours != 1 ? 's' : ''} OT</strong></div>
-                            </div>
-                            <span style="padding:2px 10px;border-radius:20px;font-size:0.8rem;font-weight:600;white-space:nowrap;${statusStyle(r.status)}">${statusLabel(r.status)}</span>
-                        </div>
-                        ${r.reason ? `<div style="margin-top:0.35rem;font-size:0.87rem;color:#444;">${escapeHtml(r.reason)}</div>` : ''}
-                        ${r.admin_note ? `<div style="margin-top:0.3rem;font-size:0.83rem;color:#777;font-style:italic;">Note: ${escapeHtml(r.admin_note)}</div>` : ''}
-                        ${r.status === 'pending' ? `
-                        <div style="margin-top:0.6rem;display:flex;gap:0.5rem;">
-                            <button class="btn btn-sm icon-btn-approve" style="flex:1;font-size:0.83rem;padding:0.35rem 0.5rem;border-radius:6px;" onclick="quickOTAction(${r.request_id}, 'approve', ${JSON.stringify(escapeHtml(r.employee_name))})">✅ Approve</button>
-                            <button class="btn btn-sm icon-btn-deny"    style="flex:1;font-size:0.83rem;padding:0.35rem 0.5rem;border-radius:6px;" onclick="openOTReview(${r.request_id}, ${JSON.stringify(escapeHtml(r.employee_name))}, '${r.request_date}', ${r.extended_hours}, ${JSON.stringify(escapeHtml(r.reason || ''))})">❌ Deny</button>
-                        </div>` : ''}
-                    </div>`).join('');
+                // Build rows with proper DOM construction to avoid
+                // JSON.stringify double-quotes breaking onclick="..." attributes.
+                listEl.innerHTML = '';
+                rows.forEach(r => {
+                    const card = document.createElement('div');
+                    card.style.cssText = 'padding:0.85rem 1.1rem;border-bottom:1px solid #f0f0f0;';
+
+                    // Header row: name + status badge
+                    const header = document.createElement('div');
+                    header.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;flex-wrap:wrap;';
+                    const nameBlock = document.createElement('div');
+                    const nameEl = document.createElement('div');
+                    nameEl.style.cssText = 'font-weight:700;font-size:0.95rem;';
+                    nameEl.textContent = r.employee_name;
+                    const metaEl = document.createElement('div');
+                    metaEl.style.cssText = 'color:#888;font-size:0.82rem;';
+                    const hrs = parseFloat(r.extended_hours).toFixed(1);
+                    metaEl.innerHTML = `${r.request_date} · <strong>${hrs} hr${r.extended_hours != 1 ? 's' : ''} OT</strong>`;
+                    nameBlock.appendChild(nameEl);
+                    nameBlock.appendChild(metaEl);
+                    const badge2 = document.createElement('span');
+                    badge2.style.cssText = `padding:2px 10px;border-radius:20px;font-size:0.8rem;font-weight:600;white-space:nowrap;${statusStyle(r.status)}`;
+                    badge2.textContent = statusLabel(r.status);
+                    header.appendChild(nameBlock);
+                    header.appendChild(badge2);
+                    card.appendChild(header);
+
+                    // Optional reason
+                    if (r.reason) {
+                        const reasonEl = document.createElement('div');
+                        reasonEl.style.cssText = 'margin-top:0.35rem;font-size:0.87rem;color:#444;';
+                        reasonEl.textContent = r.reason;
+                        card.appendChild(reasonEl);
+                    }
+
+                    // Optional admin note
+                    if (r.admin_note) {
+                        const noteEl2 = document.createElement('div');
+                        noteEl2.style.cssText = 'margin-top:0.3rem;font-size:0.83rem;color:#777;font-style:italic;';
+                        noteEl2.textContent = 'Note: ' + r.admin_note;
+                        card.appendChild(noteEl2);
+                    }
+
+                    // Action buttons for pending requests
+                    if (r.status === 'pending') {
+                        const btnRow = document.createElement('div');
+                        btnRow.style.cssText = 'margin-top:0.6rem;display:flex;gap:0.5rem;';
+
+                        const approveBtn2 = document.createElement('button');
+                        approveBtn2.className = 'btn btn-sm icon-btn-approve';
+                        approveBtn2.style.cssText = 'flex:1;font-size:0.83rem;padding:0.35rem 0.5rem;border-radius:6px;';
+                        approveBtn2.textContent = '✅ Approve';
+                        approveBtn2.addEventListener('click', () => quickOTAction(r.request_id, 'approve', r.employee_name));
+
+                        const denyBtn2 = document.createElement('button');
+                        denyBtn2.className = 'btn btn-sm icon-btn-deny';
+                        denyBtn2.style.cssText = 'flex:1;font-size:0.83rem;padding:0.35rem 0.5rem;border-radius:6px;';
+                        denyBtn2.textContent = '❌ Deny';
+                        denyBtn2.addEventListener('click', () => openOTReview(r.request_id, r.employee_name, r.request_date, r.extended_hours, r.reason || ''));
+
+                        btnRow.appendChild(approveBtn2);
+                        btnRow.appendChild(denyBtn2);
+                        card.appendChild(btnRow);
+                    }
+
+                    listEl.appendChild(card);
+                });
             } catch(e) {
                 listEl.innerHTML = '<div style="padding:1rem;color:#c62828;">Error loading requests.</div>';
             }
@@ -2675,6 +2810,144 @@ function autoVerifyLoop() {
 
     // Expose so the table rows can call it
     window.openManualClockout = openOverride;
+})();
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   DEDUCTION EDIT MODAL
+   ═══════════════════════════════════════════════════════════ */
+(function () {
+    const modal   = document.getElementById('deductionEditModal');
+    const attIdEl = document.getElementById('deductEditAttId');
+    const amtEl   = document.getElementById('deductEditAmount');
+    const waiveEl = document.getElementById('deductEditWaive');
+    const errEl   = document.getElementById('deductEditError');
+    const saveBtn = document.getElementById('saveDeductionBtn');
+
+    window.openDeductionEdit = function (attId, currentAmount, currentWaived) {
+        attIdEl.value  = attId;
+        amtEl.value    = parseFloat(currentAmount || 0).toFixed(2);
+        waiveEl.checked = !!currentWaived;
+        errEl.style.display = 'none';
+        modal.classList.add('open');
+    };
+
+    saveBtn && saveBtn.addEventListener('click', async () => {
+        const attId   = parseInt(attIdEl.value);
+        const amount  = parseFloat(amtEl.value);
+        const waived  = waiveEl.checked;
+
+        if (isNaN(amount) || amount < 0) {
+            errEl.textContent = 'Deduction amount must be a positive number.';
+            errEl.style.display = 'block';
+            return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving…';
+        errEl.style.display = 'none';
+
+        try {
+            const res  = await fetch('/api/attendance/edit_deduction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ attendance_id: attId, late_deduction: amount, deduction_waived: waived })
+            });
+            const data = await res.json();
+            if (data.success) {
+                modal.classList.remove('open');
+                if (typeof loadAttendance === 'function') loadAttendance();
+                if (typeof showToast     === 'function') showToast('Deduction updated.', 'success');
+            } else {
+                errEl.textContent = data.message || 'Failed to save.';
+                errEl.style.display = 'block';
+            }
+        } catch (e) {
+            errEl.textContent = 'Network error — please try again.';
+            errEl.style.display = 'block';
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 Save';
+        }
+    });
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   LATE DEDUCTION SETTINGS MODAL
+   ═══════════════════════════════════════════════════════════ */
+(function () {
+    const modal      = document.getElementById('lateDeductionSettingsModal');
+    const openBtn    = document.getElementById('openLDSettings');
+    const saveBtn    = document.getElementById('saveLDSettingsBtn');
+    const graceEl    = document.getElementById('ldGraceMinutes');
+    const amtEl      = document.getElementById('ldDeductionAmount');
+    const errEl      = document.getElementById('ldSettingsError');
+    const successEl  = document.getElementById('ldSettingsSuccess');
+
+    async function loadLDSettings() {
+        try {
+            const res  = await fetch('/api/settings/late_deduction');
+            const data = await res.json();
+            if (data.success) {
+                graceEl.value = data.settings.grace_minutes;
+                amtEl.value   = parseFloat(data.settings.deduction_amount).toFixed(2);
+            }
+        } catch (e) {
+            console.warn('Could not load late deduction settings:', e);
+        }
+    }
+
+    openBtn && openBtn.addEventListener('click', () => {
+        errEl.style.display     = 'none';
+        successEl.style.display = 'none';
+        loadLDSettings();
+        modal.classList.add('open');
+    });
+
+    saveBtn && saveBtn.addEventListener('click', async () => {
+        const grace  = parseInt(graceEl.value);
+        const amount = parseFloat(amtEl.value);
+
+        errEl.style.display     = 'none';
+        successEl.style.display = 'none';
+
+        if (isNaN(grace) || grace < 0 || grace > 120) {
+            errEl.textContent = 'Grace period must be 0–120 minutes.';
+            errEl.style.display = 'block';
+            return;
+        }
+        if (isNaN(amount) || amount < 0) {
+            errEl.textContent = 'Deduction amount must be ≥ 0.';
+            errEl.style.display = 'block';
+            return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving…';
+
+        try {
+            const res  = await fetch('/api/settings/late_deduction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ grace_minutes: grace, deduction_amount: amount })
+            });
+            const data = await res.json();
+            if (data.success) {
+                successEl.textContent = `✅ Saved — grace: ${grace}m, deduction: ₱${amount.toFixed(2)}`;
+                successEl.style.display = 'block';
+            } else {
+                errEl.textContent = data.message || 'Failed to save.';
+                errEl.style.display = 'block';
+            }
+        } catch (e) {
+            errEl.textContent = 'Network error — please try again.';
+            errEl.style.display = 'block';
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 Save Settings';
+        }
+    });
 })();
 </script>
 

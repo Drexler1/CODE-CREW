@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Books & Blooms Café — Admin Settings</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -1265,14 +1266,14 @@
                             <strong>Reset All Settings</strong>
                             <span>Revert all system configurations back to factory defaults. Every customization will be permanently lost.</span>
                         </div>
-                        <button class="btn btn-danger btn-sm" onclick="confirmDanger('reset all settings')">Reset</button>
+                        <button class="btn btn-danger btn-sm" onclick="openDangerModal('reset_settings')">⚠️ Reset Settings</button>
                     </div>
                     <div class="danger-item">
                         <div class="danger-item-info">
                             <strong>Clear Transaction History</strong>
                             <span>Permanently delete all sales records, receipts, and transaction logs from the database.</span>
                         </div>
-                        <button class="btn btn-danger btn-sm" onclick="confirmDanger('clear transaction history')">Clear</button>
+                        <button class="btn btn-danger btn-sm" onclick="openDangerModal('clear_transactions')">🗑️ Clear History</button>
                     </div>
                 </div>
             </div>
@@ -1280,6 +1281,77 @@
 
     </div><!-- /main -->
 </div><!-- /layout -->
+
+<!-- ══ DANGER CONFIRM MODAL ══ -->
+<div id="dangerModalOverlay"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65);
+            z-index:9999; align-items:center; justify-content:center;
+            backdrop-filter:blur(2px);">
+    <div style="
+        background:#fff; border-radius:14px; padding:2rem 2rem 1.75rem; max-width:430px;
+        width:calc(100% - 2rem); box-shadow:0 24px 70px rgba(0,0,0,0.4);
+        border-top:5px solid #dc3545; font-family:inherit;
+        animation:dangerSlideIn .22s cubic-bezier(.34,1.56,.64,1);">
+
+        <!-- Header -->
+        <div style="text-align:center; margin-bottom:1rem;">
+            <div style="font-size:2.4rem; line-height:1; margin-bottom:0.6rem;">⚠️</div>
+            <h3 id="dangerModalTitle"
+                style="color:#c0392b; margin:0 0 0.5rem; font-size:1.15rem; font-weight:700;"></h3>
+            <p id="dangerModalDesc"
+               style="color:#666; font-size:0.875rem; margin:0; line-height:1.55;"></p>
+        </div>
+
+        <!-- Divider -->
+        <hr style="border:none; border-top:1px solid #f0e0e0; margin:1.1rem 0;">
+
+        <!-- Confirm word input -->
+        <p style="font-size:0.82rem; color:#888; margin:0 0 0.4rem;">
+            Type <strong id="dangerConfirmWord"
+                style="color:#c0392b; font-family:monospace; font-size:0.9rem;
+                       background:#fff0f0; padding:1px 5px; border-radius:4px;"></strong> to confirm:
+        </p>
+        <input id="dangerConfirmInput" type="text" autocomplete="off"
+            placeholder="Type here…"
+            style="width:100%; padding:0.6rem 0.8rem; border:1.5px solid #ffcdd2;
+                   border-radius:8px; font-size:0.92rem; outline:none; margin-bottom:1.25rem;
+                   font-family:monospace; letter-spacing:1.5px; box-sizing:border-box;
+                   transition:border-color .2s;"
+            oninput="checkDangerInput()"
+            onkeydown="if(event.key==='Enter' && !document.getElementById('dangerConfirmBtn').disabled) executeDangerAction()">
+
+        <!-- Action buttons -->
+        <div style="display:flex; gap:0.75rem; justify-content:flex-end; align-items:center;">
+            <button onclick="closeDangerModal()"
+                style="padding:0.55rem 1.2rem; border-radius:7px; border:1.5px solid #ddd;
+                       background:#f5f5f5; color:#555; cursor:pointer; font-size:0.88rem;
+                       font-family:inherit; font-weight:600; transition:all .18s;"
+                onmouseover="this.style.background='#e8e8e8'"
+                onmouseout="this.style.background='#f5f5f5'">
+                Cancel
+            </button>
+            <button id="dangerConfirmBtn"
+                style="padding:0.55rem 1.4rem; border-radius:7px; border:none;
+                       background:#ccc; color:#fff; font-size:0.88rem; font-weight:700;
+                       font-family:inherit; transition:all .2s; display:flex;
+                       align-items:center; gap:6px;"
+                disabled onclick="executeDangerAction()">
+                <span id="dangerConfirmBtnIcon">🗑️</span>
+                <span id="dangerConfirmBtnText">Confirm</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes dangerSlideIn {
+    from { opacity:0; transform:translateY(-18px) scale(0.97); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+}
+#dangerConfirmInput:focus { border-color:#dc3545; box-shadow:0 0 0 3px rgba(220,53,69,0.12); }
+#dangerConfirmBtn:not(:disabled):hover { background:#c82333 !important; transform:translateY(-1px); box-shadow:0 4px 12px rgba(220,53,69,0.4); }
+#dangerConfirmBtn:disabled { cursor:not-allowed; pointer-events:none; opacity:0.65; }
+</style>
 
 <!-- ══ TOAST ══ -->
 <div class="toast" id="toast">✅ Settings saved successfully!</div>
@@ -1345,28 +1417,7 @@
     });
 
     /* ── PASSWORD STRENGTH ── */
-    document.getElementById('newPass').addEventListener('input', function () {
-        const v = this.value;
-        const bar = document.getElementById('strengthBar');
-        const lbl = document.getElementById('strengthLabel');
-        let score = 0;
-        if (v.length >= 8)             score++;
-        if (/[A-Z]/.test(v))           score++;
-        if (/[0-9]/.test(v))           score++;
-        if (/[^A-Za-z0-9]/.test(v))    score++;
-        const levels = [
-            { w: '0%',   c: '#ccc',    l: 'Type a password above' },
-            { w: '25%',  c: '#dc3545', l: 'Weak — too easy to guess' },
-            { w: '50%',  c: '#ff9800', l: 'Fair — could be stronger' },
-            { w: '75%',  c: '#4caf50', l: 'Good — almost there!' },
-            { w: '100%', c: '#2e7d32', l: '🔒 Strong password!' },
-        ];
-        const lvl = v.length === 0 ? levels[0] : (levels[score] || levels[1]);
-        bar.style.width      = lvl.w;
-        bar.style.background = lvl.c;
-        lbl.textContent      = lvl.l;
-        lbl.style.color      = lvl.c;
-    });
+    /* strength bar is driven by updateCpStrength() via oninput on #cpNew — no duplicate listener needed */
 
     /* ── SAVE / RESET (generic) ── */
     function saveSettings(btn) {
@@ -1388,11 +1439,98 @@
            .forEach(el => el.value = '');
     }
 
-    function confirmDanger(action) {
-        if (confirm('Are you sure you want to ' + action + '?\n\nThis cannot be undone.')) {
-            showToast('⚠️ Done: ' + action);
+    /* ════════════════════════════════════════════════════════════
+       DANGER ZONE
+    ════════════════════════════════════════════════════════════ */
+    const _dangerConfig = {
+        reset_settings: {
+            title:       'Reset All Settings',
+            desc:        'This will wipe all email configurations and revert late-deduction settings to factory defaults. There is no undo.',
+            confirmWord: 'RESET',
+            endpoint:    '/api/danger/reset_settings',
+            icon:        '⚙️',
+        },
+        clear_transactions: {
+            title:       'Clear Transaction History',
+            desc:        'This will permanently delete every sales record, receipt, and transaction item from the database. There is no undo.',
+            confirmWord: 'DELETE',
+            endpoint:    '/api/danger/clear_transactions',
+            icon:        '🗑️',
+        },
+    };
+    let _activeDangerKey = null;
+
+    function openDangerModal(key) {
+        const cfg = _dangerConfig[key];
+        if (!cfg) return;
+        _activeDangerKey = key;
+        document.getElementById('dangerModalTitle').textContent    = cfg.title;
+        document.getElementById('dangerModalDesc').textContent     = cfg.desc;
+        document.getElementById('dangerConfirmWord').textContent   = cfg.confirmWord;
+        document.getElementById('dangerConfirmInput').value        = '';
+        document.getElementById('dangerConfirmBtnIcon').textContent = cfg.icon;
+        document.getElementById('dangerConfirmBtnText').textContent = 'Confirm';
+        const btn = document.getElementById('dangerConfirmBtn');
+        btn.disabled          = true;
+        btn.style.background  = '#ccc';
+        // Use flex so the overlay centers correctly
+        document.getElementById('dangerModalOverlay').style.display = 'flex';
+        setTimeout(() => document.getElementById('dangerConfirmInput').focus(), 80);
+    }
+
+    function closeDangerModal() {
+        document.getElementById('dangerModalOverlay').style.display = 'none';
+        _activeDangerKey = null;
+    }
+
+    function checkDangerInput() {
+        const cfg = _dangerConfig[_activeDangerKey];
+        if (!cfg) return; // guard: modal not open
+        const val   = document.getElementById('dangerConfirmInput').value.trim().toUpperCase();
+        const btn   = document.getElementById('dangerConfirmBtn');
+        const match = val === cfg.confirmWord;
+        btn.disabled         = !match;
+        btn.style.background = match ? '#dc3545' : '#ccc';
+    }
+
+    async function executeDangerAction() {
+        const cfg = _dangerConfig[_activeDangerKey];
+        if (!cfg) return;
+        const btn = document.getElementById('dangerConfirmBtn');
+        // Prevent double-submit
+        if (btn.disabled) return;
+        document.getElementById('dangerConfirmBtnIcon').textContent = '⏳';
+        document.getElementById('dangerConfirmBtnText').textContent = 'Working…';
+        btn.disabled         = true;
+        btn.style.background = '#ccc';
+        try {
+            const res  = await fetch(cfg.endpoint, {
+                method:  'POST',
+                headers: { 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+            });
+            const data = await res.json();
+            closeDangerModal();
+            showToast(data.success ? '✅ ' + data.message : '❌ ' + data.message,
+                      data.success ? 'success' : 'error');
+        } catch (err) {
+            // Re-enable so user can retry without closing and reopening
+            document.getElementById('dangerConfirmBtnIcon').textContent = cfg.icon;
+            document.getElementById('dangerConfirmBtnText').textContent = 'Confirm';
+            btn.disabled         = false;
+            btn.style.background = '#dc3545';
+            showToast('❌ Request failed — check your connection.', 'error');
         }
     }
+
+    // Close modal on overlay click
+    document.getElementById('dangerModalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeDangerModal();
+    });
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeDangerModal();
+    });
 
     /* ── TOAST ── */
     function showToast(msg, type = 'success') {
@@ -1462,7 +1600,7 @@
             toggleLowStockPanel();
 
             // Status indicator
-            const configured = s.smtp_host && s.smtp_user && s.smtp_password && s.alert_recipient;
+            const configured = s.smtp_host && s.smtp_user && s.has_password && s.alert_recipient;
             setSmtpStatus(
                 configured ? 'ok' : 'warn',
                 configured
@@ -1866,12 +2004,12 @@
     });
 
     async function saveAdminPassword() {
-        const cur     = document.getElementById('cpCurrent').value.trim();
-        const nw      = document.getElementById('cpNew').value.trim();
-        const confirm = document.getElementById('cpConfirm').value.trim();
+        const cur     = document.getElementById('cpCurrent').value;
+        const nw      = document.getElementById('cpNew').value;
+        const confirm = document.getElementById('cpConfirm').value;
         const btn     = document.getElementById('cpSaveBtn');
 
-        if (!cur || !nw || !confirm) { showToast('❌ Please fill in all password fields.', 'error'); return; }
+        if (!cur.trim() || !nw.trim() || !confirm.trim()) { showToast('❌ Please fill in all password fields.', 'error'); return; }
         if (nw !== confirm)           { showToast('❌ New passwords do not match.', 'error');          return; }
         if (nw.length < 8)            { showToast('❌ New password must be at least 8 characters.', 'error'); return; }
 

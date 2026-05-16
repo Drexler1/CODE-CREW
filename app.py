@@ -2637,21 +2637,61 @@ def log_attendance():
                 jsonify({"success": False, "message": "Already clocked in today"}),
                 400,
             )
+
+        # ── Late-deduction logic ─────────────────────────────────────────────
+        # Look up the configured shift start time for this shift_type so we can
+        # compare it against the actual clock-in time (NOW()).
+        late_minutes   = 0
+        late_deduction = 0.00
+        try:
+            cur.execute(
+                "SELECT start_time FROM shift_config WHERE label=%s LIMIT 1",
+                (shift_type,),
+            )
+            shift_row = cur.fetchone()
+            cfg = _get_late_deduction_settings()
+            if shift_row and shift_row.get("start_time"):
+                now_time  = datetime.now()
+                # Build shift-start datetime using today's date
+                start_str = shift_row["start_time"]           # "HH:MM"
+                sh, sm    = map(int, start_str.split(":"))
+                shift_start = now_time.replace(hour=sh, minute=sm, second=0, microsecond=0)
+                diff = int((now_time - shift_start).total_seconds() / 60)
+                if diff > cfg["grace_minutes"]:
+                    late_minutes   = diff
+                    late_deduction = cfg["deduction_amount"]
+                    app.logger.info(
+                        f"[late_deduction] Employee {employee_id} is {diff}m late "
+                        f"(grace={cfg['grace_minutes']}m) → ₱{late_deduction:.2f} deduction"
+                    )
+        except Exception as ld_exc:
+            app.logger.warning(f"[late_deduction] Could not compute late penalty: {ld_exc}")
+
         cur.execute(
-            "INSERT INTO attendance (employee_id, shift_type, clock_in, attendance_date) VALUES (%s, %s, NOW(), CURDATE())",
-            (employee_id, shift_type),
+            """INSERT INTO attendance
+               (employee_id, shift_type, clock_in, attendance_date,
+                late_minutes, late_deduction, deduction_waived)
+               VALUES (%s, %s, NOW(), CURDATE(), %s, %s, 0)""",
+            (employee_id, shift_type, late_minutes, late_deduction),
         )
         mysql.connection.commit()
         cur.close()
-        return jsonify(
-            {
-                "success": True,
-                "message": "Clock-in recorded ✅",
-                "employee": emp,
-                "action": "clock_in",
-                "shift_type": shift_type,
-            }
-        )
+
+        resp = {
+            "success": True,
+            "message": "Clock-in recorded ✅",
+            "employee": emp,
+            "action": "clock_in",
+            "shift_type": shift_type,
+        }
+        if late_minutes > 0:
+            resp["late_minutes"]   = late_minutes
+            resp["late_deduction"] = late_deduction
+            resp["message"]        = (
+                f"Clock-in recorded ✅ — you are {late_minutes}m late. "
+                f"₱{late_deduction:.2f} deduction applied."
+            )
+        return jsonify(resp)
 
     elif action == "clock_out":
         if not record:
@@ -2817,7 +2857,10 @@ def api_attendance():
                            * COALESCE(e.hourly_rate, 0), 2)
                 ELSE NULL END
             )                                                      AS daily_pay,
-            COALESCE(NULLIF(a.hourly_rate_snapshot,0), e.hourly_rate, 0) AS hourly_rate
+            COALESCE(NULLIF(a.hourly_rate_snapshot,0), e.hourly_rate, 0) AS hourly_rate,
+            COALESCE(a.late_minutes,     0)  AS late_minutes,
+            COALESCE(a.late_deduction,   0)  AS late_deduction,
+            COALESCE(a.deduction_waived, 0)  AS deduction_waived
         FROM attendance a
         JOIN employees e ON e.employee_id = a.employee_id
         WHERE a.attendance_date = %s
@@ -2951,10 +2994,10 @@ def api_get_email_settings():
         cur.close()
         if not row:
             return jsonify({"success": False, "message": "No settings found"}), 404
+        # Determine if a real password is saved BEFORE masking it
+        row["has_password"] = bool(row.get("smtp_password"))
         # Never return the raw SMTP password to the browser
         row["smtp_password"] = "••••••••" if row.get("smtp_password") else ""
-        row["has_password"] = bool(row.get("smtp_password") or
-                                   row["smtp_password"] == "••••••••")
         return jsonify({"success": True, "settings": row})
     except Exception as exc:
         app.logger.error(f"[email_settings] GET: {exc}")
@@ -3367,6 +3410,101 @@ def api_send_low_stock_alert():
 
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║                          DANGER ZONE ROUTES                                 ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+@app.route("/api/danger/reset_settings", methods=["POST"])
+@csrf.exempt
+def api_danger_reset_settings():
+    """
+    Revert all system configurations back to factory defaults.
+    Clears email_alert_settings and resets app_settings keys to their
+    seeded default values.  Admin-only.
+    """
+    if not is_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+
+    try:
+        cur = mysql.connection.cursor()
+
+        # ── 1. Wipe email alert settings ──────────────────────────────────────
+        cur.execute("DELETE FROM email_alert_settings")
+
+        # ── 2. Reset app_settings keys to defaults ────────────────────────────
+        defaults = {
+            "late_grace_minutes":    "10",
+            "late_deduction_amount": "3.00",
+        }
+        for key, value in defaults.items():
+            cur.execute(
+                """
+                INSERT INTO app_settings (setting_key, setting_value)
+                VALUES (%s, %s)
+                ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
+                """,
+                (key, value),
+            )
+
+        mysql.connection.commit()
+        cur.close()
+
+        app.logger.warning(
+            f"[danger] reset_settings executed by admin "
+            f"employee_id={session.get('employee_id')}"
+        )
+        return jsonify({
+            "success": True,
+            "message": "All settings have been reset to factory defaults.",
+        })
+
+    except Exception as exc:
+        app.logger.error(f"[danger] reset_settings failed: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+@app.route("/api/danger/clear_transactions", methods=["POST"])
+@csrf.exempt
+def api_danger_clear_transactions():
+    """
+    Permanently delete all completed sales records, transaction items,
+    and receipts from the database.  Voided transactions are also removed.
+    Admin-only.  Returns the count of deleted transactions.
+    """
+    if not is_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+
+    try:
+        cur = mysql.connection.cursor()
+
+        # Count before deletion so we can report back
+        cur.execute("SELECT COUNT(*) AS cnt FROM transactions")
+        row = cur.fetchone()
+        count = int(row[0] if row else 0)
+
+        # Delete items first (FK child), then parent transactions
+        cur.execute("DELETE FROM transaction_items")
+        cur.execute("DELETE FROM transactions")
+
+        mysql.connection.commit()
+        cur.close()
+
+        app.logger.warning(
+            f"[danger] clear_transactions executed by admin "
+            f"employee_id={session.get('employee_id')} — {count} transactions deleted"
+        )
+        return jsonify({
+            "success": True,
+            "message": f"{count} transaction record(s) permanently deleted.",
+            "deleted_count": count,
+        })
+
+    except Exception as exc:
+        app.logger.error(f"[danger] clear_transactions failed: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+# ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                         CASHIER DASHBOARD                                   ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
@@ -3733,7 +3871,13 @@ def api_my_attendance():
                 CASE WHEN a.clock_in IS NOT NULL AND a.clock_out IS NOT NULL
                 THEN ROUND(TIMESTAMPDIFF(MINUTE,a.clock_in,a.clock_out)/60.0
                            * COALESCE(e.hourly_rate,0), 2)
-                ELSE NULL END) AS daily_pay
+                ELSE NULL END) AS daily_pay,
+            COALESCE(a.late_minutes,     0) AS late_minutes,
+            COALESCE(a.late_deduction,   0) AS late_deduction,
+            COALESCE(a.deduction_waived, 0) AS deduction_waived,
+            (SELECT ot.status FROM overtime_requests ot
+             WHERE ot.attendance_id = a.attendance_id
+             ORDER BY ot.created_at DESC LIMIT 1) AS ot_status
         FROM attendance a
         JOIN employees e ON e.employee_id = a.employee_id
         WHERE a.employee_id = %s
@@ -4193,6 +4337,12 @@ def run_auto_migration():
     except Exception as exc:
         app.logger.error(f"[migration] Step 17 (overtime_requests table) failed: {exc}")
 
+    # ── STEP 18: late-deduction schema (attendance columns + app_settings) ────
+    try:
+        _ensure_late_deduction_schema()
+    except Exception as exc:
+        app.logger.error(f"[migration] Step 18 (late_deduction schema) failed: {exc}")
+
     app.logger.info("[migration] run_auto_migration complete.")
 
 
@@ -4651,7 +4801,10 @@ def api_payroll_period():
             ROUND(SUM(COALESCE(NULLIF(a.daily_earnings,0),
                 CASE WHEN a.clock_out IS NOT NULL
                 THEN (TIMESTAMPDIFF(MINUTE,a.clock_in,a.clock_out)/60.0)*e.hourly_rate
-                ELSE 0 END)),2)                                              AS total_pay
+                ELSE 0 END))
+                - COALESCE(SUM(CASE WHEN COALESCE(a.deduction_waived,0)=0
+                               THEN COALESCE(a.late_deduction,0) ELSE 0 END),0)
+            ,2)                                                              AS total_pay
         FROM employees e
         LEFT JOIN attendance a
             ON a.employee_id = e.employee_id
@@ -4815,7 +4968,10 @@ def api_payroll_salary_detail():
                 CASE WHEN a.clock_out IS NOT NULL
                 THEN ROUND((TIMESTAMPDIFF(MINUTE, a.clock_in, a.clock_out) / 60.0) *
                            COALESCE(NULLIF(a.hourly_rate_snapshot, 0), %s, 0), 2)
-                ELSE 0 END)                                         AS daily_pay
+                ELSE 0 END)                                         AS daily_pay,
+            COALESCE(a.late_minutes,     0)                         AS late_minutes,
+            COALESCE(a.late_deduction,   0)                         AS late_deduction,
+            COALESCE(a.deduction_waived, 0)                         AS deduction_waived
         FROM attendance a
         WHERE a.employee_id = %s
           AND a.attendance_date BETWEEN %s AND %s
@@ -4839,6 +4995,9 @@ def api_payroll_salary_detail():
             "hours_worked": float(row["hours_worked"] or 0),
             "hourly_rate": float(row["hourly_rate"] or 0),
             "daily_pay": float(row["daily_pay"] or 0),
+            "late_minutes":     int(row.get("late_minutes",     0) or 0),
+            "late_deduction":   float(row.get("late_deduction",   0) or 0),
+            "deduction_waived": bool(row.get("deduction_waived",  0)),
         }
 
     # ── Build full calendar grid (every day in the period) ───────────────────
@@ -4859,11 +5018,15 @@ def api_payroll_salary_detail():
                     "hours_worked": 0.0,
                     "hourly_rate": base_rate,
                     "daily_pay": 0.0,
+                    "late_minutes":     0,
+                    "late_deduction":   0.0,
+                    "deduction_waived": False,
                 }
             )
         current += _td(days=1)
 
-    total_income = round(sum(d["daily_pay"] for d in days), 2)
+    total_deductions = round(sum(d["late_deduction"] for d in days if not d["deduction_waived"]), 2)
+    total_income = round(sum(d["daily_pay"] for d in days) - total_deductions, 2)
     total_hours = round(sum(d["hours_worked"] for d in days), 2)
     days_worked = sum(1 for d in days if d["daily_pay"] > 0)
 
@@ -4878,6 +5041,7 @@ def api_payroll_salary_detail():
             "period_end": str(pe),
             "total_income": total_income,
             "total_hours": total_hours,
+            "total_deductions": total_deductions,
             "days_worked": days_worked,
             "days": days,
         }
@@ -4923,7 +5087,10 @@ def api_payroll_generate():
             ROUND(SUM(COALESCE(NULLIF(a.daily_earnings,0),
                 CASE WHEN a.clock_out IS NOT NULL
                 THEN (TIMESTAMPDIFF(MINUTE,a.clock_in,a.clock_out)/60.0)*e.hourly_rate
-                ELSE 0 END)),2)                                              AS total_pay
+                ELSE 0 END))
+                - COALESCE(SUM(CASE WHEN COALESCE(a.deduction_waived,0)=0
+                               THEN COALESCE(a.late_deduction,0) ELSE 0 END),0)
+            ,2)                                                              AS total_pay
         FROM employees e
         LEFT JOIN attendance a
             ON a.employee_id = e.employee_id
@@ -5132,7 +5299,10 @@ def api_payroll_period_summary():
                                         e.hourly_rate, 0)
                         ELSE 0
                     END
-                )), 2)                                                AS gross_pay
+                ))
+                - COALESCE(SUM(CASE WHEN COALESCE(a.deduction_waived,0)=0
+                               THEN COALESCE(a.late_deduction,0) ELSE 0 END),0)
+                , 2)                                                  AS gross_pay
             FROM employees e
             LEFT JOIN attendance a
                 ON  a.employee_id    = e.employee_id
@@ -6261,7 +6431,7 @@ def _get_low_stock_items(limit=20):
                 "status_label":     "Out of Stock" if is_out else "Low Stock",
                 # Legacy fields kept for backwards compatibility
                 "category":         row["category_or_type"],
-                "status_class":     "low" if is_out else "medium",
+                "status_class":     "out" if is_out else "low",
             }
         )
 
@@ -8452,30 +8622,60 @@ def api_admin_change_password():
     if len(new_pw) < 8:
         return jsonify({"success": False, "message": "New password must be at least 8 characters."}), 400
 
-    admin_id = session.get("admin_id") or session.get("user_id")
+    # Determine which table/ID to use based on role
+    role = session.get("role")
+    admin_id = session.get("admin_id")
+    employee_id = session.get("employee_id")
+
     try:
         cur = mysql.connection.cursor(DictCursor)
-        cur.execute(
-            "SELECT admin_id, password, password_hash FROM admins WHERE admin_id = %s",
-            (admin_id,),
-        )
-        admin = cur.fetchone()
-        if not admin:
-            cur.close()
-            return jsonify({"success": False, "message": "Admin account not found."}), 404
 
-        if not _check_login_password(current_pw, admin):
-            cur.close()
-            return jsonify({"success": False, "message": "Current password is incorrect."}), 403
+        if role == "admin" and admin_id:
+            # Classic admin account stored in the admins table
+            cur.execute(
+                "SELECT admin_id, password, password_hash FROM admins WHERE admin_id = %s",
+                (admin_id,),
+            )
+            admin = cur.fetchone()
+            if not admin:
+                cur.close()
+                return jsonify({"success": False, "message": "Admin account not found."}), 404
 
-        new_hash = hash_password(new_pw)
-        cur.execute(
-            "UPDATE admins SET password_hash = %s WHERE admin_id = %s",
-            (new_hash, admin_id),
-        )
+            if not _check_login_password(current_pw, admin):
+                cur.close()
+                return jsonify({"success": False, "message": "Current password is incorrect."}), 403
+
+            new_hash = hash_password(new_pw)
+            cur.execute(
+                "UPDATE admins SET password_hash = %s WHERE admin_id = %s",
+                (new_hash, admin_id),
+            )
+        elif role == "manager" and employee_id and session.get("is_admin"):
+            # Manager promoted to admin — stored in the employees table
+            cur.execute(
+                "SELECT employee_id, password, password_hash FROM employees WHERE employee_id = %s",
+                (employee_id,),
+            )
+            admin = cur.fetchone()
+            if not admin:
+                cur.close()
+                return jsonify({"success": False, "message": "Employee account not found."}), 404
+
+            if not _check_login_password(current_pw, admin):
+                cur.close()
+                return jsonify({"success": False, "message": "Current password is incorrect."}), 403
+
+            new_hash = hash_password(new_pw)
+            cur.execute(
+                "UPDATE employees SET password_hash = %s WHERE employee_id = %s",
+                (new_hash, employee_id),
+            )
+        else:
+            return jsonify({"success": False, "message": "Cannot determine account to update."}), 400
+
         mysql.connection.commit()
         cur.close()
-        app.logger.info(f"[admin] Password changed for admin #{admin_id}")
+        app.logger.info(f"[admin] Password changed for {role} (admin_id={admin_id}, employee_id={employee_id})")
         return jsonify({"success": True, "message": "Password updated successfully."})
 
     except Exception as exc:
@@ -9032,6 +9232,184 @@ def api_attendance_manual_clockout():
 
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║                  LATE DEDUCTION SYSTEM                                      ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+def _ensure_late_deduction_schema():
+    """
+    Idempotent DDL bootstrap for the late-deduction feature.
+
+    1. Adds three columns to `attendance`:
+         late_minutes      INT DEFAULT 0       — minutes past shift start at clock-in
+         late_deduction    DECIMAL(10,2) DEFAULT 0.00 — peso amount deducted
+         deduction_waived  TINYINT(1) DEFAULT 0       — 1 when OT approval waives it
+
+    2. Creates `app_settings` key-value table (if absent) and seeds the default
+       late-deduction configuration keys:
+         late_grace_minutes      — grace period before penalty applies (default 10)
+         late_deduction_amount   — flat deduction per late occurrence  (default 3.00)
+    """
+    try:
+        conn = mysql.connection
+        cur  = conn.cursor()
+
+        # ── attendance columns ─────────────────────────────────────────────────
+        for col, defn in [
+            ("late_minutes",     "INT           NOT NULL DEFAULT 0"),
+            ("late_deduction",   "DECIMAL(10,2) NOT NULL DEFAULT 0.00"),
+            ("deduction_waived", "TINYINT(1)    NOT NULL DEFAULT 0"),
+        ]:
+            try:
+                cur.execute(f"ALTER TABLE `attendance` ADD COLUMN `{col}` {defn}")
+                conn.commit()
+                app.logger.info(f"[late_deduction] Added attendance.{col}")
+            except Exception:
+                pass  # column already exists
+
+        # ── app_settings table ─────────────────────────────────────────────────
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS `app_settings` (
+                `setting_key`   VARCHAR(100) NOT NULL PRIMARY KEY,
+                `setting_value` VARCHAR(500) NOT NULL DEFAULT '',
+                `updated_at`    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                             ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """)
+        conn.commit()
+
+        # Seed defaults (INSERT IGNORE so existing values are preserved)
+        cur.execute("""
+            INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES
+                ('late_grace_minutes',    '10'),
+                ('late_deduction_amount', '3.00')
+        """)
+        conn.commit()
+        cur.close()
+        app.logger.info("[late_deduction] schema ensured")
+    except Exception as exc:
+        app.logger.error(f"[late_deduction] _ensure_late_deduction_schema: {exc}")
+
+
+def _get_late_deduction_settings() -> dict:
+    """Return {'grace_minutes': int, 'deduction_amount': float} from app_settings."""
+    try:
+        cur = mysql.connection.cursor(DictCursor)
+        cur.execute(
+            "SELECT setting_key, setting_value FROM app_settings "
+            "WHERE setting_key IN ('late_grace_minutes','late_deduction_amount')"
+        )
+        rows = {r["setting_key"]: r["setting_value"] for r in cur.fetchall()}
+        cur.close()
+        return {
+            "grace_minutes":    int(rows.get("late_grace_minutes",    10)),
+            "deduction_amount": float(rows.get("late_deduction_amount", 3.00)),
+        }
+    except Exception:
+        return {"grace_minutes": 10, "deduction_amount": 3.00}
+
+
+# ── Late-deduction settings API (admin only) ──────────────────────────────────
+
+@app.route("/api/settings/late_deduction", methods=["GET"])
+def api_get_late_deduction_settings():
+    """Return current late-deduction configuration."""
+    if not is_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    cfg = _get_late_deduction_settings()
+    return jsonify({"success": True, "settings": cfg})
+
+
+@app.route("/api/settings/late_deduction", methods=["POST"])
+@csrf.exempt
+def api_set_late_deduction_settings():
+    """Admin: update grace period and/or deduction amount."""
+    if not is_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    data = request.get_json(silent=True) or {}
+    updates = {}
+
+    if "grace_minutes" in data:
+        try:
+            gm = int(data["grace_minutes"])
+            if not (0 <= gm <= 120):
+                raise ValueError
+            updates["late_grace_minutes"] = str(gm)
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "message": "grace_minutes must be 0–120"}), 400
+
+    if "deduction_amount" in data:
+        try:
+            da = float(data["deduction_amount"])
+            if da < 0:
+                raise ValueError
+            updates["late_deduction_amount"] = f"{da:.2f}"
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "message": "deduction_amount must be >= 0"}), 400
+
+    if not updates:
+        return jsonify({"success": False, "message": "No valid fields provided"}), 400
+
+    cur = mysql.connection.cursor()
+    for key, val in updates.items():
+        cur.execute(
+            "INSERT INTO app_settings (setting_key, setting_value) VALUES (%s, %s) "
+            "ON DUPLICATE KEY UPDATE setting_value = %s",
+            (key, val, val),
+        )
+    mysql.connection.commit()
+    cur.close()
+    app.logger.info(f"[late_deduction] Settings updated: {updates}")
+    return jsonify({"success": True, "message": "Late deduction settings updated"})
+
+
+@app.route("/api/attendance/edit_deduction", methods=["POST"])
+@csrf.exempt
+def api_edit_attendance_deduction():
+    """
+    Admin: manually override the late_deduction amount (or waive it) on a
+    specific attendance row.
+
+    POST JSON:
+        { "attendance_id": int, "late_deduction": float, "deduction_waived": bool }
+    """
+    if not is_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    data = request.get_json(silent=True) or {}
+    att_id = data.get("attendance_id")
+    if not att_id:
+        return jsonify({"success": False, "message": "attendance_id required"}), 400
+
+    try:
+        new_deduction = float(data.get("late_deduction", 0))
+        if new_deduction < 0:
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "late_deduction must be >= 0"}), 400
+
+    waived = 1 if data.get("deduction_waived") else 0
+
+    cur = mysql.connection.cursor(DictCursor)
+    cur.execute("SELECT attendance_id FROM attendance WHERE attendance_id=%s LIMIT 1", (att_id,))
+    if not cur.fetchone():
+        cur.close()
+        return jsonify({"success": False, "message": "Attendance record not found"}), 404
+
+    cur.execute(
+        "UPDATE attendance SET late_deduction=%s, deduction_waived=%s WHERE attendance_id=%s",
+        (new_deduction, waived, att_id),
+    )
+    mysql.connection.commit()
+    cur.close()
+    app.logger.info(
+        f"[late_deduction] Admin manually set deduction=₱{new_deduction:.2f} "
+        f"waived={bool(waived)} on attendance#{att_id}"
+    )
+    return jsonify({"success": True, "message": "Deduction updated"})
+
+
+# ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                      OVERTIME REQUEST SYSTEM                                ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
@@ -9260,6 +9638,22 @@ def api_overtime_review(request_id):
            WHERE request_id=%s""",
         (new_status, reviewer, admin_note, request_id),
     )
+
+    # ── When approved: waive the late deduction on the linked attendance row ──
+    if new_status == "approved" and req_row.get("attendance_id"):
+        try:
+            cur.execute(
+                "UPDATE attendance SET deduction_waived=1, late_deduction=0.00 "
+                "WHERE attendance_id=%s",
+                (req_row["attendance_id"],),
+            )
+            app.logger.info(
+                f"[late_deduction] Waived late deduction on attendance#{req_row['attendance_id']} "
+                f"(OT request #{request_id} approved by {reviewer})"
+            )
+        except Exception as waive_exc:
+            app.logger.warning(f"[late_deduction] Could not waive deduction: {waive_exc}")
+
     mysql.connection.commit()
     cur.close()
     app.logger.info(
@@ -9267,6 +9661,326 @@ def api_overtime_review(request_id):
         f"(emp#{req_row['employee_id']} {req_row['extended_hours']}h)"
     )
     return jsonify({"success": True, "message": f"Request {new_status} successfully", "new_status": new_status})
+
+
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║              CASHIER INVENTORY / SUPPLY MONITOR MODULE                       ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+def _is_cashier():
+    """Return True only when a cashier is logged in via the employee session."""
+    return (
+        "employee_id" in session
+        and session.get("role") == "cashier"
+    )
+
+
+@app.route("/cashier/inventory")
+def cashier_inventory():
+    """Render the cashier Supply Monitor page."""
+    if not _is_cashier():
+        return redirect(url_for("cashier_login"))
+    return render_template("cashier/cashier_inventory.html")
+
+
+@app.route("/api/cashier/me", methods=["GET"])
+def api_cashier_me():
+    """Return the current cashier's display name and role."""
+    if not _is_cashier():
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    try:
+        cur = mysql.connection.cursor(DictCursor)
+        cur.execute(
+            "SELECT employee_id, full_name, username, role "
+            "FROM employees WHERE employee_id = %s LIMIT 1",
+            (session["employee_id"],),
+        )
+        row = cur.fetchone()
+        cur.close()
+        if not row:
+            return jsonify({"success": False, "message": "Employee not found"}), 404
+        full_name = aes_decrypt(row["full_name"]) if row.get("full_name") else ""
+        username  = aes_decrypt(row["username"])  if row.get("username")  else ""
+        return jsonify({
+            "success": True,
+            "user": {
+                "employee_id": row["employee_id"],
+                "full_name":   full_name or username,
+                "username":    username,
+                "role":        row["role"],
+            }
+        })
+    except Exception as exc:
+        app.logger.error(f"[cashier_inv] api_cashier_me: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+@app.route("/api/cashier/inv/items", methods=["GET"])
+def api_cashier_inv_items():
+    """
+    Cashier-safe read-only item list.
+    Returns id, name, type, stock, unit, reorder_point, note, status, updated_at.
+    Cost and price fields are intentionally excluded.
+    """
+    if not _is_cashier():
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    try:
+        cur = mysql.connection.cursor(DictCursor)
+        cur.execute(
+            """
+            SELECT id, name, type, stock, unit, reorder_point, note,
+                   DATE_FORMAT(updated_at, '%%b %%d, %%Y %%h:%%i %%p') AS updated_at
+            FROM   inv_items
+            WHERE  is_active = 1
+            ORDER  BY type, name
+            """
+        )
+        rows = cur.fetchall()
+        cur.close()
+        items = []
+        for r in rows:
+            stock   = float(r["stock"])
+            reorder = float(r["reorder_point"])
+            if stock <= 0:
+                status = "out"
+            elif stock <= reorder:
+                status = "low"
+            else:
+                status = "ok"
+            items.append({
+                "id":            r["id"],
+                "name":          r["name"],
+                "type":          r["type"],
+                "stock":         stock,
+                "unit":          r["unit"],
+                "reorder_point": reorder,
+                "note":          r["note"] or "",
+                "status":        status,
+                "updated_at":    r["updated_at"],
+            })
+        return jsonify({"success": True, "items": items, "total": len(items)})
+    except Exception as exc:
+        app.logger.error(f"[cashier_inv] api_cashier_inv_items: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+@app.route("/api/cashier/inv/consume", methods=["POST"])
+@csrf.exempt
+def api_cashier_inv_consume():
+    """
+    Cashier logs how much of a supply was used and/or damaged during a shift.
+
+    Body JSON:
+        id          – inv_items.id  (required)
+        used_qty    – float >= 0    (units actually used/consumed)
+        damaged_qty – float >= 0    (units wasted/damaged/spoiled)
+        note        – string        (optional reason, max 200 chars)
+
+    Both used_qty and damaged_qty may be 0, but their sum must be > 0.
+    Stock is decremented by (used_qty + damaged_qty).
+    Two separate inv_log rows are written: one tagged [Used], one tagged [Damaged].
+    """
+    if not _is_cashier():
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    data    = request.get_json(silent=True) or {}
+    item_id = data.get("id")
+    try:
+        used_qty    = float(data.get("used_qty",    0) or 0)
+        damaged_qty = float(data.get("damaged_qty", 0) or 0)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "Invalid quantities"}), 400
+    if not item_id:
+        return jsonify({"success": False, "message": "id is required"}), 400
+    if used_qty < 0 or damaged_qty < 0:
+        return jsonify({"success": False, "message": "Quantities cannot be negative"}), 400
+    total = used_qty + damaged_qty
+    if total <= 0:
+        return jsonify({"success": False, "message": "Total consumed must be greater than 0"}), 400
+    note       = (data.get("note") or "").strip()[:200] or None
+    created_by = (
+        aes_decrypt(session.get("full_name", "")) or
+        aes_decrypt(session.get("username",  "")) or
+        "Cashier"
+    )
+    try:
+        cur = mysql.connection.cursor(DictCursor)
+        cur.execute(
+            "SELECT id, name, stock, unit FROM inv_items WHERE id = %s AND is_active = 1",
+            (item_id,),
+        )
+        item = cur.fetchone()
+        if not item:
+            cur.close()
+            return jsonify({"success": False, "message": "Item not found"}), 404
+        current_stock = float(item["stock"])
+        if total > current_stock:
+            cur.close()
+            return jsonify({
+                "success": False,
+                "message": (
+                    f"Cannot consume {total} {item['unit']} — "
+                    f"only {current_stock} {item['unit']} in stock."
+                )
+            }), 400
+        new_stock = round(current_stock - total, 4)
+        cur.execute("UPDATE inv_items SET stock = %s WHERE id = %s", (new_stock, item_id))
+        if used_qty > 0:
+            _log_inv_change(
+                cur,
+                item_id=item["id"],
+                item_name=item["name"],
+                unit=item["unit"],
+                delta=-used_qty,
+                stock_after=new_stock,
+                source="manual",
+                note=f"[Used] {note}" if note else "[Used] Consumed by staff",
+                created_by=created_by,
+            )
+        if damaged_qty > 0:
+            _log_inv_change(
+                cur,
+                item_id=item["id"],
+                item_name=item["name"],
+                unit=item["unit"],
+                delta=-damaged_qty,
+                stock_after=new_stock,
+                source="manual",
+                note=f"[Damaged] {note}" if note else "[Damaged] Waste/spoilage",
+                created_by=created_by,
+            )
+        mysql.connection.commit()
+        cur.close()
+        app.logger.info(
+            f"[cashier_inv] {created_by} consumed {total} {item['unit']} "
+            f"of '{item['name']}' (used={used_qty}, damaged={damaged_qty}) "
+            f"→ remaining {new_stock}"
+        )
+        return jsonify({
+            "success":     True,
+            "new_stock":   new_stock,
+            "used_qty":    used_qty,
+            "damaged_qty": damaged_qty,
+            "message": (
+                f"Logged: {total} {item['unit']} removed from {item['name']} "
+                f"({used_qty} used, {damaged_qty} damaged). "
+                f"Remaining: {new_stock} {item['unit']}."
+            ),
+        })
+    except Exception as exc:
+        app.logger.error(f"[cashier_inv] consume item#{item_id}: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+@app.route("/api/cashier/inv/restock", methods=["POST"])
+@csrf.exempt
+def api_cashier_inv_restock():
+    """
+    Cashier logs a restock event (delivery received, transfer from storage, etc.).
+
+    Body JSON:
+        id   – inv_items.id  (required)
+        qty  – float > 0     (units added to stock)
+        note – string        (optional, max 200 chars)
+
+    Stock is incremented by qty.
+    One inv_log row is written, tagged [Restock].
+    """
+    if not _is_cashier():
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    data    = request.get_json(silent=True) or {}
+    item_id = data.get("id")
+    try:
+        qty = float(data.get("qty", 0) or 0)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "Invalid quantity"}), 400
+    if not item_id:
+        return jsonify({"success": False, "message": "id is required"}), 400
+    if qty <= 0:
+        return jsonify({"success": False, "message": "Quantity must be greater than 0"}), 400
+    note       = (data.get("note") or "").strip()[:200] or None
+    created_by = (
+        aes_decrypt(session.get("full_name", "")) or
+        aes_decrypt(session.get("username",  "")) or
+        "Cashier"
+    )
+    try:
+        cur = mysql.connection.cursor(DictCursor)
+        cur.execute(
+            "SELECT id, name, stock, unit FROM inv_items WHERE id = %s AND is_active = 1",
+            (item_id,),
+        )
+        item = cur.fetchone()
+        if not item:
+            cur.close()
+            return jsonify({"success": False, "message": "Item not found"}), 404
+        new_stock = round(float(item["stock"]) + qty, 4)
+        cur.execute("UPDATE inv_items SET stock = %s WHERE id = %s", (new_stock, item_id))
+        _log_inv_change(
+            cur,
+            item_id=item["id"],
+            item_name=item["name"],
+            unit=item["unit"],
+            delta=qty,
+            stock_after=new_stock,
+            source="manual",
+            note=f"[Restock] {note}" if note else "[Restock] Stock received by staff",
+            created_by=created_by,
+        )
+        mysql.connection.commit()
+        cur.close()
+        app.logger.info(
+            f"[cashier_inv] {created_by} restocked '{item['name']}' "
+            f"+{qty} {item['unit']} → total {new_stock}"
+        )
+        return jsonify({
+            "success":   True,
+            "new_stock": new_stock,
+            "qty":       qty,
+            "message": (
+                f"Restocked {item['name']}: +{qty} {item['unit']} added. "
+                f"New total: {new_stock} {item['unit']}."
+            ),
+        })
+    except Exception as exc:
+        app.logger.error(f"[cashier_inv] restock item#{item_id}: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+@app.route("/api/cashier/inv/log", methods=["GET"])
+def api_cashier_inv_log():
+    """
+    Return recent inv_log entries for the cashier activity log view.
+    Query params: limit (int, max 100, default 40)
+    """
+    if not _is_cashier():
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    try:
+        limit = min(int(request.args.get("limit", 40) or 40), 100)
+    except (TypeError, ValueError):
+        limit = 40
+    try:
+        cur = mysql.connection.cursor(DictCursor)
+        cur.execute(
+            """
+            SELECT log_id, item_name, unit, delta, stock_after, source,
+                   note, created_by,
+                   DATE_FORMAT(created_at, '%%b %%d, %%Y %%h:%%i %%p') AS created_at
+            FROM   inv_log
+            ORDER  BY log_id DESC
+            LIMIT  %s
+            """,
+            (limit,),
+        )
+        rows = cur.fetchall()
+        cur.close()
+        for row in rows:
+            row["delta"]       = float(row["delta"])
+            row["stock_after"] = float(row["stock_after"])
+        return jsonify({"success": True, "log": rows})
+    except Exception as exc:
+        app.logger.error(f"[cashier_inv] api_cashier_inv_log: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
 
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗

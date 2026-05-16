@@ -1933,13 +1933,14 @@
                       <th>Clock-Out</th>
                       <th>Hours Worked</th>
                       <th>Rate / hr</th>
+                      <th>Late Deduction</th>
                       <th>Daily Pay</th>
                     </tr>
                   </thead>
                   <tbody id="dailyTableBody">
                     <tr>
                       <td
-                        colspan="8"
+                        colspan="9"
                         style="text-align: center; padding: 2rem; color: #bbb"
                       >
                         Loading…
@@ -2543,6 +2544,10 @@
             (s, r) => s + (r.daily_pay || 0),
             0,
           );
+          const totalDeductions = data.records.reduce(
+            (s, r) => s + (parseFloat(r.late_deduction || 0)),
+            0,
+          );
 
           tbody.innerHTML =
             data.records
@@ -2555,6 +2560,13 @@
                   r.daily_pay !== null
                     ? `<span class="td-pay positive">${fmt(r.daily_pay)}</span>`
                     : `<span style="color:#bbb;font-style:italic;font-size:0.82rem;">Pending clock-out</span>`;
+                const deductVal = parseFloat(r.late_deduction || 0);
+                const waived    = !!r.deduction_waived;
+                const deductHtml = deductVal > 0
+                    ? waived
+                        ? `<span style="color:#388e3c;font-size:0.82rem;">Waived</span>`
+                        : `<span style="color:#c62828;font-weight:600;">−${fmt(deductVal)}</span>`
+                    : `<span style="color:#aaa;">—</span>`;
                 return `
             <tr>
                 <td class="td-name">${esc(r.full_name)}<div class="td-sub">ID #${r.employee_id}</div></td>
@@ -2564,6 +2576,7 @@
                 <td>${r.clock_out || "—"}</td>
                 <td>${hoursHtml}</td>
                 <td>${fmt(r.hourly_rate)}/hr</td>
+                <td>${deductHtml}</td>
                 <td>${payHtml}</td>
             </tr>`;
               })
@@ -2571,7 +2584,8 @@
             `
             <tr class="total-row">
                 <td colspan="7"><strong>DAILY TOTAL</strong></td>
-                <td class="td-pay grand-total">${fmt(totalPay)}</td>
+                <td class="td-pay" style="color:#c62828;">−${fmt(totalDeductions)}</td>
+                <td class="td-pay grand-total">${fmt(totalPay - totalDeductions)}</td>
             </tr>`;
         } catch (ex) {
           console.error("[loadDaily]", ex);
@@ -2982,10 +2996,13 @@
       }
 
       function renderSalaryResults(emp, data, ps, pe) {
-        const totalIncome = data.days.reduce(
-          (s, d) => s + (d.daily_pay || 0),
-          0,
-        );
+        // Use server-computed totals if available (they already account for deductions)
+        const totalDeductions = data.total_deductions != null
+          ? data.total_deductions
+          : data.days.reduce((s, d) => s + (d.deduction_waived ? 0 : parseFloat(d.late_deduction || 0)), 0);
+        const totalIncome = data.total_income != null
+          ? data.total_income
+          : data.days.reduce((s, d) => s + (d.daily_pay || 0), 0) - totalDeductions;
         const totalHours = data.days.reduce(
           (s, d) => s + (d.hours_worked || 0),
           0,
@@ -3012,14 +3029,27 @@
               day: "numeric",
             });
             const hasWork = d.hours_worked > 0;
+            const deductVal = parseFloat(d.late_deduction || 0);
+            const waived    = !!d.deduction_waived;
+            const lateMin   = parseInt(d.late_minutes || 0);
+            const deductHtml = deductVal > 0
+              ? waived
+                ? `<div style="font-size:0.72rem;color:#388e3c;margin-top:2px;">Late ${lateMin}m · Waived ✅</div>`
+                : `<div style="font-size:0.72rem;color:#c62828;margin-top:2px;">Late ${lateMin}m · −${fmt(deductVal)}</div>`
+              : '';
             return `
         <div class="salary-day-card${hasWork ? "" : " no-work"}">
             <div class="salary-day-date">${dayName}</div>
             <div class="salary-day-pay${hasWork ? "" : " zero"}">${hasWork ? fmt(d.daily_pay) : "—"}</div>
             <div class="salary-day-hours">${hasWork ? parseFloat(d.hours_worked).toFixed(2) + " hrs" : "No record"}</div>
+            ${deductHtml}
         </div>`;
           })
           .join("");
+
+        const deductSummary = totalDeductions > 0
+          ? `<div style="font-size:0.82rem;color:#c62828;margin-top:2px;">Late deductions: −${fmt(totalDeductions)}</div>`
+          : '';
 
         document.getElementById("salaryResults").innerHTML = `
         <div class="salary-result-header">
@@ -3029,6 +3059,7 @@
                 <p>${esc(emp.role)} · ₱${parseFloat(emp.hourly_rate).toFixed(2)}/hr
                 · ${daysWorked} day${daysWorked !== 1 ? "s" : ""} worked
                 · ${totalHours.toFixed(2)} hrs total</p>
+                ${deductSummary}
             </div>
             <div class="emp-total">
                 <div class="total-label">15-Day Total</div>

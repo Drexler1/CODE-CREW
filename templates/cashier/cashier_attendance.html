@@ -1584,6 +1584,7 @@
                 <li><a href="{{ url_for('cashier_dashboard') }}">📠 POS</a></li>
                 <li><a href="{{ url_for('cashier_transactions') }}">📊 My Transactions</a></li>
                 <li><a href="{{ url_for('cashier_attendance') }}">📅 Attendance</a></li>
+                <li><a href="{{ url_for('cashier_inventory') }}">📦 Supply Monitor</a></li>
             </ul>
         </nav>
 
@@ -1672,11 +1673,13 @@
                                         <th>Clock-Out</th>
                                         <th>Hours</th>
                                         <th>Full Shift</th>
+                                        <th>Late</th>
+                                        <th>Deduction</th>
                                     </tr>
                                 </thead>
                                 <tbody id="attendanceTableBody">
                                     <tr>
-                                        <td colspan="7">
+                                        <td colspan="9">
                                             <div class="empty-state">
                                                 <div class="empty-icon">📋</div>
                                                 <p>No records found.</p>
@@ -1733,7 +1736,7 @@
                                         <span class="hours-row-val green" id="summaryHours">—</span>
                                     </div>
                                     <div class="hours-row">
-                                        <span class="hours-row-label">Full Shifts (≥ 8h)</span>
+                                        <span class="hours-row-label">Full Shifts (≥ 10)</span>
                                         <span class="hours-row-val" id="summaryFull">—</span>
                                     </div>
                                 </div>
@@ -2048,7 +2051,15 @@
             }
         }
         window.showStep = showStep;
-        window.nextStep = () => { if (state.currentStep < 4) showStep(state.currentStep + 1); };
+        window.nextStep = () => {
+            if (state.currentStep === 1) {
+                if (!hf.action?.value) { showToast('Please select Clock In or Clock Out.', 'error'); return; }
+            }
+            if (state.currentStep === 2) {
+                if (!hf.shiftName?.value) { showToast('Please select a shift before continuing.', 'error'); return; }
+            }
+            if (state.currentStep < 4) showStep(state.currentStep + 1);
+        };
         window.prevStep = () => { if (state.currentStep > 1) showStep(state.currentStep - 1); };
 
         window.selectAction = (action, el) => {
@@ -2123,6 +2134,27 @@
                 if (badge) {
                     badge.className = `confirm-type-badge ${isClockIn ? 'clock-in' : 'clock-out'}`;
                     badge.textContent = isClockIn ? '🟢 Clock In' : '🔴 Clock Out';
+                }
+
+                // Show late-deduction banner if applicable
+                let lateBanner = document.getElementById('lateDeductBanner');
+                if (!lateBanner) {
+                    lateBanner = document.createElement('div');
+                    lateBanner.id = 'lateDeductBanner';
+                    lateBanner.style.cssText = 'margin-top:1rem;padding:0.75rem 1rem;border-radius:8px;font-size:0.9rem;display:none;';
+                    const confirmCard = document.querySelector('#panelStep4 .confirm-card') || document.getElementById('panelStep4');
+                    if (confirmCard) confirmCard.appendChild(lateBanner);
+                }
+                if (isClockIn && data.late_minutes > 0) {
+                    lateBanner.style.display = 'block';
+                    lateBanner.style.background = '#fff3e0';
+                    lateBanner.style.border = '1px solid #ffb74d';
+                    lateBanner.style.color = '#e65100';
+                    lateBanner.innerHTML = `⚠️ You clocked in <strong>${data.late_minutes} minute(s)</strong> past your shift start.<br>
+                        A <strong>₱${parseFloat(data.late_deduction || 0).toFixed(2)} deduction</strong> has been applied.<br>
+                        <span style="font-size:0.82rem;color:#795548;">Submit an overtime request to have this waived.</span>`;
+                } else {
+                    lateBanner.style.display = 'none';
                 }
                 showStep(4);
                 showToast('✅ Attendance recorded!', 'success');
@@ -2213,7 +2245,7 @@
 
                 if (!body) return;
                 if (records.length === 0) {
-                    body.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><p>No attendance records found for this period.</p></div></td></tr>`;
+                    body.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📋</div><p>No attendance records found for this period.</p></div></td></tr>`;
                     return;
                 }
 
@@ -2225,6 +2257,23 @@
                     const dateStr = r.attendance_date
                         ? new Date(r.attendance_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                         : '—';
+
+                    const lateMin  = parseInt(r.late_minutes || 0);
+                    const deduction = parseFloat(r.late_deduction || 0);
+                    const waived    = !!r.deduction_waived;
+                    const otStatus  = r.ot_status || null;
+
+                    let deductCell = '—';
+                    if (deduction > 0) {
+                        if (waived) {
+                            deductCell = `<span style="color:#388e3c;font-size:0.82rem;font-weight:600;">Waived ✅</span>`;
+                        } else if (otStatus === 'pending') {
+                            deductCell = `<span style="color:#c62828;font-weight:600;">−₱${deduction.toFixed(2)}</span>
+                                <span style="display:block;font-size:0.75rem;color:#e65100;">OT pending (waive on approval)</span>`;
+                        } else {
+                            deductCell = `<span style="color:#c62828;font-weight:600;">−₱${deduction.toFixed(2)}</span>`;
+                        }
+                    }
 
                     body.insertAdjacentHTML('beforeend', `
                     <tr>
@@ -2239,6 +2288,10 @@
                         <td>${fulfill
                             ? '<span class="badge badge-present">✅ Yes</span>'
                             : '<span class="badge" style="background:#ffebee;color:#c62828;">No</span>'}</td>
+                        <td>${lateMin > 0
+                            ? `<span class="badge" style="background:#fff3e0;color:#e65100;">${lateMin}m late</span>`
+                            : '<span class="badge badge-present">On time</span>'}</td>
+                        <td>${deductCell}</td>
                     </tr>`);
                 });
 
