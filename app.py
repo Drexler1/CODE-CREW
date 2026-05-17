@@ -2659,10 +2659,12 @@ def log_attendance():
                 diff = int((now_time - shift_start).total_seconds() / 60)
                 if diff > cfg["grace_minutes"]:
                     late_minutes   = diff
-                    late_deduction = cfg["deduction_amount"]
+                    late_deduction = round(cfg["per_minute_rate"] * diff, 2)
                     app.logger.info(
                         f"[late_deduction] Employee {employee_id} is {diff}m late "
-                        f"(grace={cfg['grace_minutes']}m) → ₱{late_deduction:.2f} deduction"
+                        f"(grace={cfg['grace_minutes']}m, "
+                        f"rate=₱{cfg['per_minute_rate']}/min) "
+                        f"→ ₱{cfg['per_minute_rate']} × {diff}m = ₱{late_deduction:.2f}"
                     )
         except Exception as ld_exc:
             app.logger.warning(f"[late_deduction] Could not compute late penalty: {ld_exc}")
@@ -3433,8 +3435,8 @@ def api_danger_reset_settings():
 
         # ── 2. Reset app_settings keys to defaults ────────────────────────────
         defaults = {
-            "late_grace_minutes":    "10",
-            "late_deduction_amount": "3.00",
+            "late_grace_minutes":  "10",
+            "late_per_minute_rate": "0.75",
         }
         for key, value in defaults.items():
             cur.execute(
@@ -9267,8 +9269,9 @@ def _ensure_late_deduction_schema():
 
     2. Creates `app_settings` key-value table (if absent) and seeds the default
        late-deduction configuration keys:
-         late_grace_minutes      — grace period before penalty applies (default 10)
-         late_deduction_amount   — flat deduction per late occurrence  (default 3.00)
+         late_grace_minutes        — grace period before penalty applies (default 10)
+         late_per_minute_rate      — fixed ₱/min rate set by admin (default 0.75)
+                                     formula: late_deduction = per_minute_rate × late_minutes
     """
     try:
         conn = mysql.connection
@@ -9301,8 +9304,8 @@ def _ensure_late_deduction_schema():
         # Seed defaults (INSERT IGNORE so existing values are preserved)
         cur.execute("""
             INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES
-                ('late_grace_minutes',    '10'),
-                ('late_deduction_amount', '3.00')
+                ('late_grace_minutes',   '10'),
+                ('late_per_minute_rate', '0.75')
         """)
         conn.commit()
         cur.close()
@@ -9312,21 +9315,28 @@ def _ensure_late_deduction_schema():
 
 
 def _get_late_deduction_settings() -> dict:
-    """Return {'grace_minutes': int, 'deduction_amount': float} from app_settings."""
+    """
+    Return {grace_minutes: int, per_minute_rate: float} from app_settings.
+
+    Formula applied at every clock-in:
+        late_deduction = round(per_minute_rate * late_minutes, 2)
+
+    Example: per_minute_rate=0.75, 49 min late → ₱0.75 × 49 = ₱36.75
+    """
     try:
         cur = mysql.connection.cursor(DictCursor)
         cur.execute(
             "SELECT setting_key, setting_value FROM app_settings "
-            "WHERE setting_key IN ('late_grace_minutes','late_deduction_amount')"
+            "WHERE setting_key IN ('late_grace_minutes', 'late_per_minute_rate')"
         )
         rows = {r["setting_key"]: r["setting_value"] for r in cur.fetchall()}
         cur.close()
         return {
-            "grace_minutes":    int(rows.get("late_grace_minutes",    10)),
-            "deduction_amount": float(rows.get("late_deduction_amount", 3.00)),
+            "grace_minutes":    int(rows.get("late_grace_minutes",   10)),
+            "per_minute_rate":  float(rows.get("late_per_minute_rate", 0.75)),
         }
     except Exception:
-        return {"grace_minutes": 10, "deduction_amount": 3.00}
+        return {"grace_minutes": 10, "per_minute_rate": 0.75}
 
 
 # ── Late-deduction settings API (admin only) ──────────────────────────────────
@@ -9359,14 +9369,14 @@ def api_set_late_deduction_settings():
         except (TypeError, ValueError):
             return jsonify({"success": False, "message": "grace_minutes must be 0–120"}), 400
 
-    if "deduction_amount" in data:
+    if "per_minute_rate" in data:
         try:
-            da = float(data["deduction_amount"])
-            if da < 0:
+            pmr = float(data["per_minute_rate"])
+            if pmr < 0:
                 raise ValueError
-            updates["late_deduction_amount"] = f"{da:.2f}"
+            updates["late_per_minute_rate"] = f"{pmr:.4f}"
         except (TypeError, ValueError):
-            return jsonify({"success": False, "message": "deduction_amount must be >= 0"}), 400
+            return jsonify({"success": False, "message": "per_minute_rate must be >= 0"}), 400
 
     if not updates:
         return jsonify({"success": False, "message": "No valid fields provided"}), 400

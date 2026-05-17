@@ -617,6 +617,29 @@
         border-color: var(--gold);
       }
 
+      /* ── Deduction Config tab ─────────────────────────────────────── */
+      .dc-card-body        { padding: 1.75rem 1.5rem; display: flex; flex-direction: column; gap: 1.6rem; }
+      .dc-row              { display: flex; align-items: flex-start; gap: 2rem; flex-wrap: wrap; }
+      .dc-field            { display: flex; flex-direction: column; gap: .35rem; }
+      .dc-label            { font-size: .82rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: .05em; }
+      .dc-input-wrap       { display: flex; align-items: center; gap: .5rem; }
+      .dc-prefix           { font-size: 1.15rem; font-weight: 700; color: var(--gold); }
+      .dc-input            { width: 110px; padding: .5rem .65rem; border: 1.5px solid #ddd;
+                             border-radius: 8px; font-size: 1.05rem; font-family: inherit;
+                             text-align: center; transition: border-color .15s; }
+      .dc-input:focus      { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(184,151,42,.12); }
+      .dc-hint             { font-size: .8rem; color: #999; line-height: 1.45; }
+      .dc-formula-banner   { background: rgba(184,151,42,.08); border: 1.5px solid rgba(184,151,42,.25);
+                             border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+      .dc-formula-text     { font-size: .88rem; color: #444; line-height: 1.6; }
+      .dc-formula-text code{ background: #fff; border: 1px solid #e0e0e0; border-radius: 4px;
+                             padding: .1rem .35rem; font-size: .85rem; color: #333; }
+      .dc-example          { font-size: .88rem; color: #555; }
+      .dc-example strong   { color: #c62828; }
+      .dc-save-row         { display: flex; align-items: center; gap: 1rem; }
+      .dc-status           { font-size: .87rem; font-weight: 600; }
+      /* ───────────────────────────────────────────────────────────────── */
+
       .save-rate-btn {
         background: var(--gold);
         border: none;
@@ -1853,6 +1876,7 @@
             </button>
             <button class="tab-btn" data-tab="daily">📅 Daily Earnings</button>
             <button class="tab-btn" data-tab="rates">⚙️ Hourly Rates</button>
+            <button class="tab-btn" data-tab="deduction-config">🛡️ Deduction Config</button>
           </div>
 
           <!-- ─── TAB: PAY PERIOD ─── -->
@@ -1897,7 +1921,7 @@
                   <tbody id="periodTableBody">
                     <tr>
                       <td
-                        colspan="6"
+                        colspan="8"
                         style="text-align: center; padding: 2rem; color: #bbb"
                       >
                         Select a pay period above to load data.
@@ -1993,6 +2017,76 @@
               </div>
             </div>
           </div>
+
+          <!-- ─── TAB: DEDUCTION CONFIG ─── -->
+          <div class="tab-panel" id="tabDeductionConfig">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <h3>Late Deduction Configuration</h3>
+                  <div class="card-sub">
+                    Set the per-minute deduction rate and grace period.
+                    The system multiplies your rate by the employee's total minutes late at every clock-in.
+                  </div>
+                </div>
+                <button class="btn btn-outline btn-sm" id="refreshDeductionConfigBtn">↺ Refresh</button>
+              </div>
+
+              <div class="dc-card-body">
+
+                <!-- Two input fields side by side -->
+                <div class="dc-row">
+
+                  <!-- Per-minute rate -->
+                  <div class="dc-field">
+                    <span class="dc-label">Per-Minute Deduction Rate</span>
+                    <div class="dc-input-wrap">
+                      <span class="dc-prefix">₱</span>
+                      <input type="number" id="perMinuteRateInput" class="dc-input"
+                             min="0" step="0.01" placeholder="0.75" />
+                      <span style="font-size:.85rem;color:#888;">/ min</span>
+                    </div>
+                    <div class="dc-hint">Fixed peso amount deducted per minute of tardiness.</div>
+                  </div>
+
+                  <!-- Grace period -->
+                  <div class="dc-field">
+                    <span class="dc-label">Grace Period</span>
+                    <div class="dc-input-wrap">
+                      <input type="number" id="graceMinsInput" class="dc-input"
+                             min="0" max="120" step="1" placeholder="10" />
+                      <span style="font-size:.85rem;color:#888;">minutes</span>
+                    </div>
+                    <div class="dc-hint">Late clock-ins within this window are not penalised.</div>
+                  </div>
+
+                </div>
+
+                <!-- Formula banner -->
+                <div class="dc-formula-banner">
+                  <span style="font-size:1.5rem;">🧮</span>
+                  <div class="dc-formula-text">
+                    <strong>Formula applied at every clock-in:</strong><br/>
+                    <code>Late Deduction = Per-Minute Rate × Minutes Late</code><br/>
+                    <span class="dc-example" id="dcFormulaExample">
+                      e.g. ₱0.75 × 49 min = <strong>₱36.75</strong>
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Save -->
+                <div class="dc-save-row">
+                  <button class="btn btn-primary" id="saveDeductionConfigBtn" style="min-width:160px;">
+                    💾 Save Settings
+                  </button>
+                  <span class="dc-status" id="deductionSaveStatus"></span>
+                </div>
+
+              </div>
+            </div>
+          </div>
+          <!-- /tabDeductionConfig -->
+
         </div>
         <!-- /container -->
       </div>
@@ -2170,11 +2264,13 @@
             .forEach((el) => el.classList.remove("active"));
           btn.classList.add("active");
           const key = btn.dataset.tab;
-          document
-            .getElementById("tab" + key.charAt(0).toUpperCase() + key.slice(1))
-            .classList.add("active");
-          if (key === "rates") loadRates();
-          if (key === "daily") loadDaily();
+          const panelId = key === "deduction-config"
+            ? "tabDeductionConfig"
+            : "tab" + key.charAt(0).toUpperCase() + key.slice(1);
+          document.getElementById(panelId).classList.add("active");
+          if (key === "rates")            loadRates();
+          if (key === "daily")            loadDaily();
+          if (key === "deduction-config") loadDeductionConfig();
         });
       });
 
@@ -2265,7 +2361,7 @@
         document.getElementById("periodRangeLabel").textContent =
           `${start} → ${end}`;
         document.getElementById("periodTableBody").innerHTML =
-          '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#bbb;">Loading…</td></tr>';
+          '<tr><td colspan="8" style="text-align:center;padding:2rem;color:#bbb;">Loading…</td></tr>';
 
         try {
           const res = await fetch(
@@ -2290,7 +2386,7 @@
 
           const tbody = document.getElementById("periodTableBody");
           if (!data.records.length) {
-            tbody.innerHTML = `<tr><td colspan="6">
+            tbody.innerHTML = `<tr><td colspan="8">
                 <div class="empty-state"><div class="empty-icon">📊</div>
                 <p>No attendance records in this period.</p></div></td></tr>`;
             return;
@@ -2306,7 +2402,7 @@
                 <td>${r.days_worked} day${r.days_worked !== 1 ? "s" : ""}</td>
                 <td><span class="hours-badge">${fmtH(r.total_hours)}</span></td>
                 <td>${fmt(r.hourly_rate)}</td>
-                <td class="td-pay">${fmt(r.gross_earnings ?? r.gross_pay)}</td>
+                <td class="td-pay">${fmt(r.gross_earnings != null ? r.gross_earnings : r.gross_pay)}</td>
                 <td class="td-pay" style="color:${parseFloat(r.total_deductions||0)>0?'#c62828':'#aaa'}">
                   ${parseFloat(r.total_deductions||0)>0 ? '−'+fmt(r.total_deductions) : '—'}
                 </td>
@@ -2319,7 +2415,7 @@
                 <td colspan="3"><strong>TOTAL (${data.records.length} employees)</strong></td>
                 <td><span class="hours-badge">${fmtH(totalHrs.toFixed(2))}</span></td>
                 <td>—</td>
-                <td class="td-pay">${fmt(data.records.reduce((s,r)=>s+parseFloat(r.gross_earnings??r.gross_pay||0),0))}</td>
+                <td class="td-pay">${fmt(data.records.reduce((s,r)=>s+parseFloat((r.gross_earnings != null ? r.gross_earnings : r.gross_pay) || 0),0))}</td>
                 <td class="td-pay" style="color:#c62828">${(() => { const t=data.records.reduce((s,r)=>s+parseFloat(r.total_deductions||0),0); return t>0?'−'+fmt(t):'—'; })()}</td>
                 <td class="td-pay grand-total">${fmt(data.total_payroll)}</td>
             </tr>`;
@@ -2703,6 +2799,78 @@
       document
         .getElementById("refreshRatesBtn")
         .addEventListener("click", loadRates);
+
+      // ══════════════════════════════════════════════════════════════════
+      //  DEDUCTION CONFIG  — /api/settings/late_deduction
+      //  Formula: late_deduction = per_minute_rate × minutes_late
+      // ══════════════════════════════════════════════════════════════════
+      let _dcLoaded = false;
+
+      async function loadDeductionConfig() {
+        if (_dcLoaded) return;
+        try {
+          const res  = await fetch("/api/settings/late_deduction");
+          const data = await res.json();
+          if (!data.success) throw new Error(data.message);
+          const s = data.settings;
+          document.getElementById("perMinuteRateInput").value = parseFloat(s.per_minute_rate ?? 0.75).toFixed(2);
+          document.getElementById("graceMinsInput").value     = s.grace_minutes ?? 10;
+          updateFormulaExample();
+          _dcLoaded = true;
+        } catch (ex) {
+          console.error("[deductionConfig] load failed:", ex);
+        }
+      }
+
+      function updateFormulaExample() {
+        const rate  = parseFloat(document.getElementById("perMinuteRateInput").value) || 0;
+        const grace = parseInt(document.getElementById("graceMinsInput").value)       || 0;
+        const exMin = 49;
+        const result = (rate * exMin).toFixed(2);
+        document.getElementById("dcFormulaExample").innerHTML =
+          `e.g. ₱${rate.toFixed(2)} &times; ${exMin} min = <strong>₱${result}</strong>`
+          + (grace > 0 ? ` &nbsp;·&nbsp; <span style="color:#777;font-size:.82rem;">grace: ${grace} min</span>` : "");
+      }
+
+      ["perMinuteRateInput", "graceMinsInput"].forEach(id => {
+        document.getElementById(id)?.addEventListener("input", updateFormulaExample);
+      });
+
+      document.getElementById("saveDeductionConfigBtn")?.addEventListener("click", async () => {
+        const rate   = parseFloat(document.getElementById("perMinuteRateInput").value);
+        const grace  = parseInt(document.getElementById("graceMinsInput").value);
+        const status = document.getElementById("deductionSaveStatus");
+
+        if (isNaN(rate)  || rate  < 0)        { status.style.color="#c62828"; status.textContent="⚠ Enter a valid per-minute rate."; return; }
+        if (isNaN(grace) || grace < 0 || grace > 120) { status.style.color="#c62828"; status.textContent="⚠ Grace must be 0–120 minutes."; return; }
+
+        status.style.color="#888"; status.textContent="Saving…";
+        try {
+          const res  = await fetch("/api/settings/late_deduction", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ per_minute_rate: rate, grace_minutes: grace }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            status.style.color="#388e3c";
+            status.textContent="✅ Settings saved.";
+            _dcLoaded = false;
+          } else {
+            status.style.color="#c62828";
+            status.textContent="❌ " + (data.message || "Save failed.");
+          }
+        } catch {
+          status.style.color="#c62828"; status.textContent="❌ Network error.";
+        }
+        setTimeout(() => { status.textContent = ""; }, 4000);
+      });
+
+      document.getElementById("refreshDeductionConfigBtn")?.addEventListener("click", () => {
+        _dcLoaded = false;
+        loadDeductionConfig();
+      });
+
 
       // ══════════════════════════════════════════════════════════════════
       //  GENERATE PAYSLIPS MODAL  — /api/payroll/generate
