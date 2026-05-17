@@ -1822,6 +1822,7 @@
 
                 <!-- Hidden: cashier's own employee_id, set on page load -->
                 <input type="hidden" id="lockedEmployeeId" value="{{ employee.employee_id if employee else '' }}">
+                <input type="hidden" id="lockedEmpName" value="{{ employee.full_name or 'Cashier' }}">
 
                 <!-- Step 1: Clock In / Out -->
                 <div class="step-panel active" id="panelStep1">
@@ -1980,7 +1981,7 @@
 
             /* ── Locked employee identity ── */
             const LOCKED_EMP_ID = document.getElementById('lockedEmployeeId')?.value || '';
-            const LOCKED_EMP_NAME = {{ (employee.full_name or 'Cashier') | tojson }};
+            const LOCKED_EMP_NAME = document.getElementById('lockedEmpName')?.value || 'Cashier';
         const LOCKED_INITIALS = LOCKED_EMP_NAME.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
         // Populate identity banner
@@ -2579,7 +2580,7 @@
             loadOTRequests();
         })();
 
-}); // end DOMContentLoaded
+        }); // end DOMContentLoaded
 
         /* ══════════════════════════════════════════
            FACE VERIFICATION — identical flow to staff_attendance

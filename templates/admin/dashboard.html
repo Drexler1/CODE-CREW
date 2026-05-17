@@ -978,7 +978,7 @@
                         {% if sales_chart_data %}
                         <div class="chart-bars">
                             {% for point in sales_chart_data %}
-                            <div class="bar" style="height: {{ point.height_pct }}%;">
+                            <div class="bar" style="--bar-h: {{ point.height_pct }}%; height: var(--bar-h);">
                                 <div class="bar-value">₱{{ point.label }}</div>
                                 <div class="bar-label">{{ point.day }}</div>
                             </div>
