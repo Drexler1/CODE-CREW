@@ -1356,14 +1356,14 @@
 
 <!-- ═══ LATE DEDUCTION SETTINGS MODAL ═══ -->
 <div class="modal-overlay" id="lateDeductionSettingsModal">
-    <div class="modal" style="max-width:400px;">
+    <div class="modal" style="max-width:440px;">
         <div class="modal-header">
             <h2>⚙️ Late Deduction <span>Settings</span></h2>
             <button class="modal-close" onclick="document.getElementById('lateDeductionSettingsModal').classList.remove('open')">✕</button>
         </div>
         <div class="modal-body" style="padding:1.5rem;">
             <p style="color:#666;font-size:0.9rem;margin-bottom:1.2rem;">
-                Configure the grace period and flat deduction applied to late arrivals.
+                Configure the grace period and per-minute deduction rate for late arrivals.
                 These settings apply to all shifts globally.
             </p>
             <div style="margin-bottom:1rem;">
@@ -1373,12 +1373,32 @@
                     placeholder="10">
                 <small style="color:#888;font-size:0.8rem;">Employees within this many minutes of shift start will not be penalised.</small>
             </div>
-            <div style="margin-bottom:1rem;">
-                <label style="font-weight:600;display:block;margin-bottom:0.35rem;">💸 Deduction Amount (₱ per occurrence)</label>
-                <input type="number" id="ldDeductionAmount" min="0" step="0.01"
+            <div style="margin-bottom:0.75rem;">
+                <label style="font-weight:600;display:block;margin-bottom:0.35rem;">💸 Per-Minute Deduction Rate (₱/min)</label>
+                <input type="number" id="ldPerMinuteRate" min="0" step="0.0001"
                     style="width:100%;box-sizing:border-box;padding:0.6rem 0.75rem;border:1px solid #ddd;border-radius:8px;font-size:0.95rem;"
-                    placeholder="3.00">
-                <small style="color:#888;font-size:0.8rem;">Flat peso amount deducted when an employee exceeds the grace period. Set to 0 to disable.</small>
+                    placeholder="0.75">
+                <small style="color:#888;font-size:0.8rem;">
+                    Set this manually based on the employee's hourly rate ÷ 60.<br>
+                    e.g. ₱45/hr ÷ 60 = <strong>₱0.75/min</strong>. Deduction = rate × minutes late.
+                </small>
+            </div>
+            <!-- Helper calculator -->
+            <div style="background:#f5f9ff;border:1px solid #c5d9f1;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;">
+                <label style="font-weight:600;font-size:0.85rem;color:#1565c0;display:block;margin-bottom:0.4rem;">🔢 Rate Calculator</label>
+                <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                    <span style="font-size:0.88rem;color:#444;">Hourly rate ₱</span>
+                    <input type="number" id="ldHourlyRateCalc" min="0" step="0.01" placeholder="e.g. 45"
+                        style="width:90px;padding:0.35rem 0.5rem;border:1px solid #bcd;border-radius:6px;font-size:0.88rem;"
+                        oninput="
+                            const v = parseFloat(this.value);
+                            const r = isNaN(v)||v<=0 ? '' : (v/60).toFixed(4);
+                            document.getElementById('ldCalcResult').textContent = r ? '→ ₱'+r+'/min' : '';
+                            if(r) document.getElementById('ldPerMinuteRate').value = r;
+                        ">
+                    <span id="ldCalcResult" style="font-size:0.88rem;color:#1565c0;font-weight:600;"></span>
+                </div>
+                <small style="color:#888;font-size:0.78rem;">Typing here auto-fills the rate above.</small>
             </div>
             <div id="ldSettingsError"   style="display:none;background:#fff3f3;border:1px solid #ffcdd2;color:#c62828;padding:0.6rem 0.85rem;border-radius:8px;font-size:0.9rem;margin-bottom:0.5rem;"></div>
             <div id="ldSettingsSuccess" style="display:none;background:#f1f8e9;border:1px solid #aed581;color:#33691e;padding:0.6rem 0.85rem;border-radius:8px;font-size:0.9rem;margin-bottom:0.5rem;"></div>
@@ -2881,7 +2901,7 @@ function autoVerifyLoop() {
     const openBtn    = document.getElementById('openLDSettings');
     const saveBtn    = document.getElementById('saveLDSettingsBtn');
     const graceEl    = document.getElementById('ldGraceMinutes');
-    const amtEl      = document.getElementById('ldDeductionAmount');
+    const rateEl     = document.getElementById('ldPerMinuteRate');
     const errEl      = document.getElementById('ldSettingsError');
     const successEl  = document.getElementById('ldSettingsSuccess');
 
@@ -2891,7 +2911,7 @@ function autoVerifyLoop() {
             const data = await res.json();
             if (data.success) {
                 graceEl.value = data.settings.grace_minutes;
-                amtEl.value   = parseFloat(data.settings.deduction_amount).toFixed(2);
+                rateEl.value  = parseFloat(data.settings.per_minute_rate).toFixed(4);
             }
         } catch (e) {
             console.warn('Could not load late deduction settings:', e);
@@ -2906,8 +2926,8 @@ function autoVerifyLoop() {
     });
 
     saveBtn && saveBtn.addEventListener('click', async () => {
-        const grace  = parseInt(graceEl.value);
-        const amount = parseFloat(amtEl.value);
+        const grace = parseInt(graceEl.value);
+        const rate  = parseFloat(rateEl.value);
 
         errEl.style.display     = 'none';
         successEl.style.display = 'none';
@@ -2917,8 +2937,8 @@ function autoVerifyLoop() {
             errEl.style.display = 'block';
             return;
         }
-        if (isNaN(amount) || amount < 0) {
-            errEl.textContent = 'Deduction amount must be ≥ 0.';
+        if (isNaN(rate) || rate < 0) {
+            errEl.textContent = 'Per-minute rate must be ≥ 0.';
             errEl.style.display = 'block';
             return;
         }
@@ -2930,11 +2950,11 @@ function autoVerifyLoop() {
             const res  = await fetch('/api/settings/late_deduction', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ grace_minutes: grace, deduction_amount: amount })
+                body: JSON.stringify({ grace_minutes: grace, per_minute_rate: rate })
             });
             const data = await res.json();
             if (data.success) {
-                successEl.textContent = `✅ Saved — grace: ${grace}m, deduction: ₱${amount.toFixed(2)}`;
+                successEl.textContent = `✅ Saved — grace: ${grace}m, rate: ₱${rate.toFixed(4)}/min`;
                 successEl.style.display = 'block';
             } else {
                 errEl.textContent = data.message || 'Failed to save.';
