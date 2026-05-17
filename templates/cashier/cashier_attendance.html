@@ -1512,6 +1512,39 @@
             }
         }
 
+        /* Hamburger — hidden on desktop, shown on mobile */
+        .hamburger-btn {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border: 1px solid rgba(201,169,97,0.4);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 8px;
+            flex-shrink: 0;
+        }
+
+        .hamburger-btn span {
+            display: block;
+            width: 100%;
+            height: 2px;
+            background: var(--gold);
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        /* Nav close button — hidden by default */
+        .nav-close-btn {
+            display: none;
+        }
+
+        /* ══════════════════════════════════════════
+           TABLET — max 1100px
+        ══════════════════════════════════════════ */
         @media (max-width: 1100px) {
             .main-grid {
                 grid-template-columns: 1fr;
@@ -1523,17 +1556,25 @@
             }
         }
 
-        @media (max-width: 768px) {
+        /* ══════════════════════════════════════════
+           TABLET — max 1024px
+        ══════════════════════════════════════════ */
+        @media (max-width: 1024px) {
             .container {
-                padding: 1rem;
+                padding: 1.5rem;
             }
 
             .summary-cards {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 1rem;
             }
 
-            header {
-                padding: 0 1rem;
+            .controls-bar {
+                gap: 0.65rem;
+            }
+
+            .ctrl-divider {
+                display: none;
             }
 
             .date-time {
@@ -1541,9 +1582,299 @@
             }
         }
 
-        @media (max-width: 480px) {
+        /* ══════════════════════════════════════════
+           MOBILE — max 768px
+        ══════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            /* Header */
+            header {
+                padding: 0.85rem 1rem;
+                gap: 0.75rem;
+            }
+
+            .logo-icon {
+                width: 42px;
+                height: 42px;
+                font-size: 22px;
+            }
+
+            .logo-text h1 {
+                font-size: 1.3rem;
+            }
+
+            .logo-subtitle {
+                font-size: 0.6rem;
+                letter-spacing: 3px;
+            }
+
+            .header-actions {
+                gap: 0.65rem;
+            }
+
+            .date-time {
+                display: none;
+            }
+
+            .user-info {
+                padding: 0.5rem 0.75rem;
+                gap: 0.5rem;
+            }
+
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 0.85rem;
+            }
+
+            .user-details h3 {
+                font-size: 0.82rem;
+            }
+
+            .user-details p {
+                font-size: 0.72rem;
+            }
+
+            .logout-btn {
+                padding: 0.4rem 0.75rem;
+                font-size: 0.78rem;
+            }
+
+            /* Hamburger */
+            .hamburger-btn {
+                display: flex;
+            }
+
+            /* Nav — slide-in drawer */
+            nav {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: var(--dark-gray);
+                border-bottom: none;
+                z-index: 999;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                overflow-y: auto;
+                padding-top: 4rem;
+            }
+
+            nav.mobile-open {
+                transform: translateX(0);
+            }
+
+            nav ul {
+                flex-direction: column;
+                overflow-x: visible;
+            }
+
+            nav li {
+                flex-shrink: unset;
+                border-bottom: 1px solid rgba(201,169,97,0.1);
+            }
+
+            nav a {
+                padding: 1.1rem 1.75rem;
+                font-size: 1rem;
+                border-bottom: none;
+                border-left: 4px solid transparent;
+            }
+
+            nav a.active {
+                border-left-color: var(--gold);
+                border-bottom-color: transparent;
+                background: rgba(201,169,97,0.12);
+            }
+
+            .nav-close-btn {
+                display: flex !important;
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                width: 36px;
+                height: 36px;
+                background: rgba(255,255,255,0.08);
+                border: 1px solid rgba(255,255,255,0.15);
+                border-radius: 8px;
+                color: var(--gold);
+                font-size: 1.1rem;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+            }
+
+            /* Container & spacing */
+            .container {
+                padding: 1rem;
+            }
+
+            /* Page header */
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+                margin-bottom: 1.25rem;
+            }
+
+            .page-title {
+                font-size: 1.85rem;
+            }
+
+            .page-subtitle {
+                font-size: 0.88rem;
+            }
+
+            .header-btns {
+                width: 100%;
+            }
+
+            .header-btns .btn {
+                flex: 1;
+                justify-content: center;
+                font-size: 0.8rem;
+                padding: 0.55rem 0.75rem;
+            }
+
+            /* Summary cards — 2 columns */
             .summary-cards {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+                margin-bottom: 1.25rem;
+            }
+
+            .stat-card {
+                padding: 1.1rem;
+                min-height: 130px;
+            }
+
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+                margin-bottom: 0.65rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .stat-label {
+                font-size: 0.68rem;
+            }
+
+            .stat-sub {
+                font-size: 0.7rem;
+            }
+
+            /* Section titles */
+            .section-title {
+                font-size: 1.3rem;
+                margin-bottom: 0.85rem;
+            }
+
+            /* Controls bar — vertical stack */
+            .controls-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.6rem;
+                padding: 0.85rem 1rem;
+            }
+
+            .ctrl-label {
+                font-size: 0.75rem;
+                margin-bottom: -0.2rem;
+            }
+
+            .ctrl-input,
+            .ctrl-select {
+                width: 100%;
+                font-size: 0.9rem;
+                padding: 0.6rem 0.85rem;
+            }
+
+            .ctrl-divider {
+                display: none;
+            }
+
+            /* Table card header */
+            .table-card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+                padding: 0.85rem 1rem;
+            }
+
+            .table-card-header > div:last-child {
+                width: 100%;
+            }
+
+            .table-card-header > div:last-child .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            /* Toast */
+            #toastContainer {
+                top: auto;
+                bottom: 1rem;
+                right: 1rem;
+                left: 1rem;
+            }
+
+            .toast {
+                max-width: 100%;
+            }
+
+            /* Table footer */
+            .table-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+                padding: 0.75rem 1rem;
+            }
+
+            .table-footer > div {
+                display: flex;
+                gap: 0.5rem;
+            }
+
+            .table-footer .btn {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+
+        /* ══════════════════════════════════════════
+           SMALL MOBILE — max 480px
+        ══════════════════════════════════════════ */
+        @media (max-width: 480px) {
+            .logo-text h1 {
+                font-size: 1.1rem;
+            }
+
+            .logo-subtitle {
+                display: none;
+            }
+
+            .user-details {
+                display: none;
+            }
+
+            .summary-cards {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stat-card {
+                min-height: 110px;
+            }
+
+            .stat-value {
+                font-size: 1.3rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
             }
         }
     </style>
@@ -1562,6 +1893,9 @@
                     <div class="logo-subtitle">CAFÉ</div>
                 </div>
             </div>
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
             <div class="header-actions">
                 <div class="date-time">
                     <div class="date" id="currentDate"></div>
@@ -1579,7 +1913,8 @@
         </header>
 
         <!-- NAV -->
-        <nav>
+        <nav id="mainNav">
+            <button class="nav-close-btn" id="navCloseBtn" style="display:none;">✕</button>
             <ul>
                 <li><a href="{{ url_for('cashier_dashboard') }}">📠 POS</a></li>
                 <li><a href="{{ url_for('cashier_transactions') }}">📊 My Transactions</a></li>
@@ -2668,6 +3003,33 @@
                 verifyIdentity();
             }, 500);
         }
+
+        // ── Mobile nav toggle ──
+        (function() {
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const navCloseBtn  = document.getElementById('navCloseBtn');
+            const mainNav      = document.getElementById('mainNav');
+
+            function openNav() {
+                mainNav.classList.add('mobile-open');
+                if (navCloseBtn) navCloseBtn.style.display = 'flex';
+            }
+            function closeNav() {
+                mainNav.classList.remove('mobile-open');
+                if (navCloseBtn) navCloseBtn.style.display = 'none';
+            }
+
+            if (hamburgerBtn) hamburgerBtn.addEventListener('click', openNav);
+            if (navCloseBtn)  navCloseBtn.addEventListener('click', closeNav);
+
+            // Close on outside click
+            document.addEventListener('click', function(e) {
+                if (mainNav && mainNav.classList.contains('mobile-open') &&
+                    !mainNav.contains(e.target) && e.target !== hamburgerBtn) {
+                    closeNav();
+                }
+            });
+        })();
     </script>
 
 </body>
