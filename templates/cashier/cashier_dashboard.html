@@ -41,6 +41,18 @@
             color: var(--black);
         }
 
+        /* Mobile: allow the page to scroll naturally */
+        @media (max-width: 768px) {
+            html, body {
+                overflow: auto;
+                height: auto;
+            }
+            .app-shell {
+                height: auto;
+                min-height: 100svh;
+            }
+        }
+
         .app-shell {
             display: flex;
             flex-direction: column;
@@ -255,11 +267,20 @@
 
         .main-content {
             display: grid;
-            grid-template-columns: 1.2fr 460px;
+            grid-template-columns: 1.2fr 500px;
             gap: 1.5rem;
             padding: 1.5rem;
-            flex: 1;
+            flex: 1 1 0;
             min-height: 0;
+            overflow: hidden;
+            /* Both columns fill the same grid row height */
+            align-items: stretch;
+        }
+
+        @media (min-width: 1400px) {
+            .main-content {
+                grid-template-columns: 1.4fr 560px;
+            }
         }
 
         /* Products Section */
@@ -273,6 +294,8 @@
             flex-direction: column;
             min-height: 0;
             overflow: hidden;
+            /* Fill the grid track without exceeding it */
+            max-height: 100%;
         }
 
         .search-bar {
@@ -436,7 +459,9 @@
             display: flex;
             flex-direction: column;
             border: 1px solid #e0e0e0;
+            /* Flex-based height: fill the grid track, never overflow it */
             min-height: 0;
+            max-height: 100%;
             overflow: hidden;
         }
 
@@ -470,9 +495,12 @@
         }
 
         .cart-items {
-            flex: 1;
+            flex: 1 1 0;         /* grow to fill, shrink as needed, base at 0 */
+            min-height: 0;       /* critical: lets flex item shrink below content height */
             overflow-y: auto;
+            overflow-x: hidden;
             margin-bottom: 0.75rem;
+            -webkit-overflow-scrolling: touch;
         }
 
         .cart-items::-webkit-scrollbar {
@@ -485,14 +513,17 @@
         }
 
         .cart-item {
-            display: flex;
-            gap: 0.7rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            grid-template-rows: auto auto;
+            column-gap: 0.7rem;
+            row-gap: 0.3rem;
             padding: 0.7rem;
             background: var(--light-gray);
             border-radius: 8px;
             margin-bottom: 0.5rem;
             border: 2px solid transparent;
-            transition: all 0.15s;
+            transition: border-color 0.15s, background 0.15s;
         }
 
         .cart-item:hover {
@@ -500,45 +531,64 @@
             background: white;
         }
 
+        /* Hide the image thumbnail — not needed at POS speed */
         .cart-item-image {
-            width: 48px;
-            height: 48px;
-            background: white;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.7rem;
-            flex-shrink: 0;
-            border: 1px solid #e0e0e0;
-            overflow: hidden;
+            display: none;
         }
 
+        /* Top-left: item name + size badge */
         .cart-item-details {
-            flex: 1;
+            grid-column: 1;
+            grid-row: 1;
             min-width: 0;
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
         }
 
         .cart-item-name {
             font-weight: 700;
             font-size: 0.82rem;
-            margin-bottom: 0.2rem;
+            color: var(--black);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            line-height: 1.3;
         }
 
+        /* Top-right: line total price */
         .cart-item-price {
+            grid-column: 2;
+            grid-row: 1;
             color: var(--gold);
             font-weight: 800;
             font-size: 0.95rem;
-            margin-bottom: 0.3rem;
+            white-space: nowrap;
+            text-align: right;
+            align-self: center;
         }
 
+        /* Bottom-left: qty controls */
         .cart-item-controls {
+            grid-column: 1;
+            grid-row: 2;
             display: flex;
             gap: 0.4rem;
             align-items: center;
+        }
+
+        .cart-item-remove {
+            grid-column: 2;
+            grid-row: 2;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .cart-item-unit-price {
+            font-size: 0.78rem;
+            color: #888;
+            font-weight: 500;
         }
 
         .qty-btn {
@@ -620,6 +670,11 @@
             border-top: 2px solid #e0e0e0;
             padding-top: 0.85rem;
             flex-shrink: 0;
+            /* Safety valve: if window is very short, scroll summary contents */
+            overflow-y: auto;
+            min-height: 0;
+            /* Prevent summary from squashing the item list on short viewports */
+            max-height: 55%;
         }
 
         .summary-row {
@@ -1325,6 +1380,559 @@
                 size: 80mm auto;
             }
         }
+
+        /* Hamburger — hidden on desktop, shown on mobile */
+        /* ── Hamburger (mobile) ── */
+        .hamburger-btn {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            width: 40px;
+            height: 40px;
+            background: var(--dark-gray);
+            border: 1px solid rgba(201,169,97,0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .hamburger-btn span {
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: var(--gold);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        .mobile-nav-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 98;
+        }
+
+        .nav-close-btn {
+            display: none;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            color: var(--gold);
+            font-size: 1.1rem;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* ══════════════════════════════════════════
+           POS TAB SWITCHER (mobile only)
+           Hidden by default; shown ≤768px
+        ══════════════════════════════════════════ */
+        .pos-tab-bar {
+            display: none;
+        }
+
+        /* ══════════════════════════════════════════
+           TABLET — max 1024px
+        ══════════════════════════════════════════ */
+        @media (max-width: 1024px) {
+            :root {
+                --header-h: 64px;
+            }
+
+            .container {
+                padding: 1.5rem;
+            }
+
+            .summary-cards {
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 1rem;
+            }
+
+            .controls-bar {
+                gap: 0.65rem;
+            }
+
+            .ctrl-divider {
+                display: none;
+            }
+
+            .date-time {
+                display: none;
+            }
+
+            /* Tablet POS: stack menu above cart in a single column */
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: minmax(0, 1fr) auto;
+                gap: 1rem;
+                padding: 1rem;
+                overflow-y: auto;
+                height: calc(100vh - var(--header-h) - var(--nav-h));
+            }
+
+            .products-section {
+                min-height: 360px;
+                max-height: 52vh;
+                height: auto;        /* override desktop 100% so max-height can work */
+            }
+
+            .cart-section {
+                height: auto;        /* natural height — summary always fully visible */
+                max-height: none;
+                overflow: hidden;    /* keep flex containment */
+            }
+
+            .cart-items {
+                max-height: 200px;
+            }
+        }
+
+        /* ══════════════════════════════════════════
+           MOBILE — max 768px
+        ══════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            :root {
+                --header-h: 60px;
+                --nav-h: 0px;
+            }
+
+            /* ── Header ── */
+            header {
+                padding: 0 1rem;
+                height: var(--header-h);
+                gap: 0.6rem;
+            }
+
+            .logo-icon {
+                width: 38px;
+                height: 38px;
+                font-size: 20px;
+            }
+
+            .logo-text h1 {
+                font-size: 1.2rem;
+            }
+
+            .logo-subtitle {
+                font-size: 0.55rem;
+                letter-spacing: 2.5px;
+            }
+
+            .header-actions {
+                gap: 0.5rem;
+            }
+
+            .date-time {
+                display: none;
+            }
+
+            .user-info {
+                padding: 0.45rem 0.65rem;
+                gap: 0.45rem;
+            }
+
+            .user-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 0.8rem;
+            }
+
+            .user-details h3 {
+                font-size: 0.8rem;
+            }
+
+            .user-details p {
+                font-size: 0.68rem;
+            }
+
+            .logout-btn {
+                padding: 0.38rem 0.65rem;
+                font-size: 0.76rem;
+            }
+
+            /* ── Hamburger ── */
+            .hamburger-btn {
+                display: flex;
+            }
+
+            /* ── Nav: slide-in drawer ── */
+            nav {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: var(--dark-gray);
+                border-bottom: none;
+                z-index: 999;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                overflow-y: auto;
+                padding-top: 4rem;
+            }
+
+            nav.mobile-open {
+                transform: translateX(0);
+            }
+
+            nav ul {
+                flex-direction: column;
+                overflow-x: visible;
+            }
+
+            nav li {
+                flex-shrink: unset;
+                border-bottom: 1px solid rgba(201, 169, 97, 0.1);
+            }
+
+            nav a {
+                padding: 1.1rem 1.75rem;
+                font-size: 1rem;
+                border-bottom: none;
+                border-left: 4px solid transparent;
+            }
+
+            nav a.active {
+                border-left-color: var(--gold);
+                border-bottom-color: transparent;
+                background: rgba(201, 169, 97, 0.12);
+            }
+
+            .nav-close-btn {
+                display: flex !important;
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                width: 36px;
+                height: 36px;
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                border-radius: 8px;
+                color: var(--gold);
+                font-size: 1.1rem;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+            }
+
+            /* ── Page layout: full height, flex column ── */
+            .page-content {
+                overflow: visible;
+                display: flex;
+                flex-direction: column;
+            }
+
+            #view-pos {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+                overflow: visible;
+            }
+
+            /* ── POS tab bar ── */
+            .pos-tab-bar {
+                display: flex;
+                flex-shrink: 0;
+                background: var(--dark-gray);
+                border-bottom: 2px solid var(--gold);
+            }
+
+            .pos-tab-btn {
+                flex: 1;
+                padding: 0.7rem 0.5rem;
+                border: none;
+                background: transparent;
+                color: #aaa;
+                font-family: 'DM Sans', sans-serif;
+                font-size: 0.88rem;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.2s;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.4rem;
+            }
+
+            .pos-tab-btn.active {
+                color: var(--gold);
+                background: rgba(201, 169, 97, 0.1);
+            }
+
+            .pos-tab-btn.active::after {
+                content: '';
+                position: absolute;
+                bottom: -2px;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: var(--gold);
+            }
+
+            .pos-tab-badge {
+                background: var(--gold);
+                color: var(--black);
+                border-radius: 10px;
+                padding: 0 6px;
+                font-size: 0.72rem;
+                font-weight: 800;
+                min-width: 20px;
+                text-align: center;
+                line-height: 18px;
+                display: inline-block;
+            }
+
+            /* ── POS main grid: single column, each panel fills viewport ── */
+            .main-content {
+                display: block;
+                padding: 0;
+                gap: 0;
+                flex: 1;
+                overflow: hidden;
+            }
+
+            .products-section,
+            .cart-section {
+                display: none;
+                flex-direction: column;  /* explicit — needed when display:flex is restored */
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+                padding: 0.85rem;
+                height: calc(100svh - var(--header-h) - 46px);
+                /* 46px = tab bar height */
+                overflow: hidden;
+            }
+
+            .products-section.pos-active,
+            .cart-section.pos-active {
+                display: flex;
+            }
+
+            /* Cart panel: items scroll, summary always visible at bottom */
+            .cart-section .cart-items {
+                flex: 1;
+                min-height: 0;
+                max-height: none;
+                overflow-y: auto;
+            }
+
+            .cart-section .cart-summary {
+                flex-shrink: 0;
+                overflow-y: auto;        /* scroll if window is very short */
+            }
+
+            /* Products panel inner scroll */
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            }
+
+            /* Summary rows: slightly smaller text */
+            .summary-row {
+                font-size: 0.85rem;
+            }
+
+            .summary-row.total-row {
+                font-size: 1.3rem;
+            }
+
+            /* Discount buttons: 2×2 grid on narrow screens */
+            .disc-type-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.4rem;
+            }
+
+            /* Toast: pin to bottom on mobile */
+            #toastContainer {
+                top: auto;
+                bottom: 1rem;
+                right: 1rem;
+                left: 1rem;
+            }
+
+            .toast {
+                max-width: 100%;
+                min-width: unset;
+            }
+
+            /* Other shared responsive rules */
+            .container { padding: 1rem; }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+                margin-bottom: 1.25rem;
+            }
+
+            .page-title { font-size: 1.85rem; }
+            .page-subtitle { font-size: 0.88rem; }
+
+            .header-btns { width: 100%; }
+
+            .header-btns .btn {
+                flex: 1;
+                justify-content: center;
+                font-size: 0.8rem;
+                padding: 0.55rem 0.75rem;
+            }
+
+            .summary-cards {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+                margin-bottom: 1.25rem;
+            }
+
+            .stat-card { padding: 1.1rem; min-height: 130px; }
+            .stat-icon { width: 40px; height: 40px; font-size: 1.2rem; margin-bottom: 0.65rem; }
+            .stat-value { font-size: 1.5rem; }
+            .stat-label { font-size: 0.68rem; }
+            .stat-sub { font-size: 0.7rem; }
+
+            .section-title { font-size: 1.3rem; margin-bottom: 0.85rem; }
+
+            .controls-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.6rem;
+                padding: 0.85rem 1rem;
+            }
+
+            .ctrl-label { font-size: 0.75rem; margin-bottom: -0.2rem; }
+
+            .ctrl-input, .ctrl-select {
+                width: 100%;
+                font-size: 0.9rem;
+                padding: 0.6rem 0.85rem;
+            }
+
+            .ctrl-divider { display: none; }
+
+            .table-card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+                padding: 0.85rem 1rem;
+            }
+
+            .table-card-header > div:last-child { width: 100%; }
+
+            .table-card-header > div:last-child .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .table-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+                padding: 0.75rem 1rem;
+            }
+
+            .table-footer > div { display: flex; gap: 0.5rem; }
+            .table-footer .btn { flex: 1; justify-content: center; }
+        }
+
+        /* ══════════════════════════════════════════
+           SMALL MOBILE — max 480px
+        ══════════════════════════════════════════ */
+        @media (max-width: 480px) {
+            :root {
+                --header-h: 56px;
+            }
+
+            header {
+                padding: 0 0.75rem;
+            }
+
+            .logo-icon {
+                width: 34px;
+                height: 34px;
+                font-size: 18px;
+            }
+
+            .logo-text h1 {
+                font-size: 1.05rem;
+            }
+
+            .logo-subtitle {
+                display: none;
+            }
+
+            .user-details {
+                display: none;
+            }
+
+            .summary-cards {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stat-card { min-height: 110px; }
+            .stat-value { font-size: 1.3rem; }
+            .page-title { font-size: 1.5rem; }
+
+            .products-section,
+            .cart-section {
+                height: calc(100svh - var(--header-h) - 44px);
+                padding: 0.7rem;
+            }
+
+            /* Ensure cart summary buttons remain reachable on small screens */
+            .cart-section .cart-summary {
+                max-height: 55vh;
+                overflow-y: auto;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+                gap: 0.6rem;
+            }
+
+            .product-image {
+                height: 75px;
+            }
+
+            .product-name {
+                font-size: 0.78rem;
+            }
+
+            .product-price {
+                font-size: 0.92rem;
+            }
+
+            /* Payment modal: full-screen on very small phones */
+            .modal {
+                max-width: 100% !important;
+                border-radius: 14px 14px 0 0;
+                margin-top: auto;
+                align-self: flex-end;
+            }
+
+            .modal-overlay {
+                align-items: flex-end;
+                padding: 0;
+            }
+
+            .modal-body {
+                max-height: 70svh;
+            }
+        }
     </style>
 </head>
 
@@ -1332,6 +1940,7 @@
     <div class="app-shell">
 
         <!-- HEADER -->
+    <div class="mobile-nav-overlay" id="navOverlay"></div>
         <header>
             <div class="logo">
                 <div class="logo-icon">📚</div>
@@ -1340,6 +1949,9 @@
                     <div class="logo-subtitle">CAFÉ</div>
                 </div>
             </div>
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
             <div class="header-actions">
                 <div class="date-time">
                     <div class="date" id="currentDate"></div>
@@ -1357,7 +1969,8 @@
         </header>
 
         <!-- NAV (cashier-only links) -->
-        <nav>
+        <nav id="mainNav">
+            <button class="nav-close-btn" id="navCloseBtn">✕</button>
             <ul>
                 <li><a href="{{ url_for('cashier_dashboard') }}" class="active">📠 POS</a></li>
                 <li><a href="{{ url_for('cashier_transactions') }}">📊 My Transactions</a></li>
@@ -1369,10 +1982,19 @@
         <!-- CONTENT -->
         <div class="page-content">
             <div id="view-pos">
+                <!-- MOBILE TAB BAR: Menu ↔ Cart switcher (hidden on desktop/tablet) -->
+                <div class="pos-tab-bar" id="posTabBar">
+                    <button class="pos-tab-btn active" id="tabMenuBtn" onclick="switchPosTab('menu')">
+                        🍽️ Menu
+                    </button>
+                    <button class="pos-tab-btn" id="tabCartBtn" onclick="switchPosTab('cart')">
+                        🛒 Cart <span class="pos-tab-badge" id="tabCartBadge">0</span>
+                    </button>
+                </div>
                 <div class="main-content">
 
                     <!-- PRODUCTS PANEL -->
-                    <div class="products-section">
+                    <div class="products-section pos-active" id="productsPanel">
                         <div class="search-bar">
                             <input type="text" id="searchInput" placeholder="Search menu…">
                         </div>
@@ -1385,7 +2007,7 @@
                     </div>
 
                     <!-- CART PANEL -->
-                    <div class="cart-section">
+                    <div class="cart-section" id="cartPanel">
                         <div class="cart-header">
                             <h2>Order</h2>
                             <div class="cart-count" id="cartCount">0</div>
@@ -1639,30 +2261,49 @@
         }
 
         function _applyCupStockToModal() {
+            const grid = document.querySelector('.size-picker-grid');
+            const hint = document.querySelector('.size-product-hint');
+            let anyAvailable = false;
+
             document.querySelectorAll('.size-btn').forEach(btn => {
                 const size = btn.dataset.size;
-                const stock = _cupStockCache[size] ?? null;
-                // Update or create the stock label inside the button
-                let stockEl = btn.querySelector('.size-stock');
-                if (!stockEl) {
-                    stockEl = document.createElement('span');
-                    stockEl.className = 'size-stock';
-                    btn.appendChild(stockEl);
-                }
-                if (stock === null) {
-                    stockEl.textContent = '';
-                    btn.disabled = false;
+                // null  → size not in inv_items at all → hide the button
+                // 0     → size exists but out of stock → show disabled
+                // n > 0 → size available               → show enabled
+                if (!(size in _cupStockCache)) {
+                    // This cup size has no record in inventory — don't offer it
+                    btn.style.display = 'none';
+                    btn.disabled = true;
                     btn.classList.remove('out-of-stock');
-                } else if (stock <= 0) {
-                    stockEl.textContent = 'Out of stock';
+                } else if (_cupStockCache[size] <= 0) {
+                    btn.style.display = '';
                     btn.disabled = true;
                     btn.classList.add('out-of-stock');
                 } else {
-                    stockEl.textContent = stock + ' left';
+                    btn.style.display = '';
                     btn.disabled = false;
                     btn.classList.remove('out-of-stock');
+                    anyAvailable = true;
                 }
             });
+
+            // Show/hide the "no sizes available" message
+            let noSizesMsg = document.getElementById('noSizesMsg');
+            if (!noSizesMsg) {
+                noSizesMsg = document.createElement('p');
+                noSizesMsg.id = 'noSizesMsg';
+                noSizesMsg.style.cssText = 'text-align:center;color:#999;font-size:0.85rem;margin-top:1rem;';
+                noSizesMsg.textContent = 'No cup sizes are currently available in inventory.';
+                grid.after(noSizesMsg);
+            }
+            noSizesMsg.style.display = anyAvailable ? 'none' : 'block';
+
+            // Update the hint text based on stock state
+            if (hint) {
+                hint.textContent = anyAvailable
+                    ? 'Select a cup size to add to order'
+                    : 'All cup sizes are unavailable';
+            }
         }
 
         function addToCart(productId) {
@@ -1673,10 +2314,16 @@
                 _pendingSizeProduct = product;
                 document.getElementById('sizeProductName').textContent = product.name;
                 document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
-                // Apply cached stock immediately, then refresh in background
-                _applyCupStockToModal();
-                _refreshCupStock().then(_applyCupStockToModal);
-                openModal('sizeModal');
+                // Always refresh cup stock before opening so sizes reflect live inventory,
+                // then apply and open. If the fetch is fast the modal opens after it; if it
+                // errors the cached data (from page-load prefetch) is used instead.
+                _refreshCupStock().then(() => {
+                    _applyCupStockToModal();
+                    openModal('sizeModal');
+                }).catch(() => {
+                    _applyCupStockToModal();
+                    openModal('sizeModal');
+                });
             } else {
                 _pushToCart(product, null);
             }
@@ -1692,6 +2339,8 @@
                 cart.push({ ...product, quantity: 1, cup_size: cupSize, _key: key });
             }
             updateCart();
+            // On mobile: switch to Cart tab so cashier sees the updated order
+            if (window.innerWidth <= 768) switchPosTab('cart');
         }
 
         // Size picker button handler
@@ -1715,32 +2364,63 @@
             }
         });
 
+        /* ── MOBILE POS TAB SWITCHER ─────────────────────────────────────────
+           switchPosTab('menu'|'cart') shows the requested panel on mobile.
+           On desktop/tablet the tab bar is hidden (display:none) and both
+           panels are always visible via the grid, so this is a no-op there.
+        ─────────────────────────────────────────────────────────────────── */
+        let _currentPosTab = 'menu';
+
+        function switchPosTab(tab) {
+            _currentPosTab = tab;
+            const productsPanel = document.getElementById('productsPanel');
+            const cartPanel     = document.getElementById('cartPanel');
+            const tabMenuBtn    = document.getElementById('tabMenuBtn');
+            const tabCartBtn    = document.getElementById('tabCartBtn');
+            if (!productsPanel || !cartPanel) return;
+
+            if (tab === 'menu') {
+                productsPanel.classList.add('pos-active');
+                cartPanel.classList.remove('pos-active');
+                tabMenuBtn?.classList.add('active');
+                tabCartBtn?.classList.remove('active');
+            } else {
+                cartPanel.classList.add('pos-active');
+                productsPanel.classList.remove('pos-active');
+                tabCartBtn?.classList.add('active');
+                tabMenuBtn?.classList.remove('active');
+            }
+        }
+
         function updateCart() {
             const cartItems = document.getElementById('cartItems');
             const cartCount = document.getElementById('cartCount');
             const totalQty = cart.reduce((s, i) => s + i.quantity, 0);
             cartCount.textContent = totalQty;
 
+            // Sync mobile tab badge
+            const tabBadge = document.getElementById('tabCartBadge');
+            if (tabBadge) tabBadge.textContent = totalQty;
+
             if (!cart.length) {
                 cartItems.innerHTML = `<div class="empty-cart"><div class="empty-cart-icon">🛒</div><p>No items yet</p><p style="font-size:0.78rem;color:#bbb;margin-top:0.3rem;">Tap a product to add it</p></div>`;
             } else {
                 cartItems.innerHTML = cart.map((item, idx) => {
-                    const imgHtml = item.image_url
-                        ? `<img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"><span style="font-size:1.6rem;display:none;">${item.icon || '☕'}</span>`
-                        : `<span style="font-size:1.6rem;">${item.icon || '☕'}</span>`;
                     const sizeBadge = item.cup_size
                         ? `<span class="cart-item-size-badge">${item.cup_size}</span>` : '';
                     return `<div class="cart-item">
-                    <div class="cart-item-image">${imgHtml}</div>
                     <div class="cart-item-details">
                         <div class="cart-item-name">${item.name}${sizeBadge}</div>
-                        <div class="cart-item-price">₱${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
-                        <div class="cart-item-controls">
-                            <button class="qty-btn" onclick="changeQty(${idx},-1)">−</button>
-                            <span class="qty-display">${item.quantity}</span>
-                            <button class="qty-btn" onclick="changeQty(${idx},1)">+</button>
-                            <button class="remove-btn" onclick="removeFromCart(${idx})" title="Remove">✕</button>
-                        </div>
+                        <span class="cart-item-unit-price">@ \u20b1${parseFloat(item.price).toFixed(2)} each</span>
+                    </div>
+                    <div class="cart-item-price">\u20b1${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
+                    <div class="cart-item-controls">
+                        <button class="qty-btn" onclick="changeQty(${idx},-1)">\u2212</button>
+                        <span class="qty-display">${item.quantity}</span>
+                        <button class="qty-btn" onclick="changeQty(${idx},1)">+</button>
+                    </div>
+                    <div class="cart-item-remove">
+                        <button class="remove-btn" onclick="removeFromCart(${idx})" title="Remove">\u2715</button>
                     </div>
                 </div>`;
                 }).join('');
@@ -2060,6 +2740,8 @@
             document.getElementById('manualDiscountWrap').style.display = 'none';
             document.getElementById('discountInput').value = '0';
             closeModal('receiptModal');
+            // Return to menu on mobile so cashier is ready for next order
+            if (window.innerWidth <= 768) switchPosTab('menu');
         });
 
         /* PRINT RECEIPT
@@ -2118,8 +2800,44 @@
 
         /* INIT */
         loadProducts();             // immediate REST fetch on page load
+        _refreshCupStock();         // warm the cup-stock cache before first modal open
         _connectCashierSSE();       // then stream live updates via SSE
         setInterval(loadProducts, 10000); // 10 s safety-net poll (covers SSE gaps)
+
+        // ── Mobile nav toggle ──
+        (function() {
+            const hamburger = document.getElementById('hamburgerBtn');
+            const nav       = document.getElementById('mainNav');
+            const overlay   = document.getElementById('navOverlay');
+            const closeBtn  = document.getElementById('navCloseBtn');
+
+            if (!hamburger || !nav) return;
+
+            function openNav() {
+                nav.classList.add('mobile-open');
+                hamburger.classList.add('open');
+                if (overlay) overlay.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeNav() {
+                nav.classList.remove('mobile-open');
+                hamburger.classList.remove('open');
+                if (overlay) overlay.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+
+            hamburger.addEventListener('click', () =>
+                nav.classList.contains('mobile-open') ? closeNav() : openNav()
+            );
+            if (closeBtn) closeBtn.addEventListener('click', closeNav);
+            if (overlay)  overlay.addEventListener('click', closeNav);
+
+            nav.querySelectorAll('a').forEach(a =>
+                a.addEventListener('click', () => { if (window.innerWidth <= 768) closeNav(); })
+            );
+            window.addEventListener('resize', () => { if (window.innerWidth > 768) closeNav(); });
+        })();
     </script>
 </body>
 

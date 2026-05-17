@@ -1513,33 +1513,59 @@
         }
 
         /* Hamburger — hidden on desktop, shown on mobile */
+        /* ── Hamburger (mobile) ── */
         .hamburger-btn {
             display: none;
             flex-direction: column;
             justify-content: center;
+            align-items: center;
             gap: 5px;
             width: 40px;
             height: 40px;
-            background: transparent;
-            border: 1px solid rgba(201,169,97,0.4);
+            background: var(--dark-gray);
+            border: 1px solid rgba(201,169,97,0.3);
             border-radius: 8px;
             cursor: pointer;
-            padding: 8px;
+            padding: 0;
             flex-shrink: 0;
         }
 
         .hamburger-btn span {
             display: block;
-            width: 100%;
+            width: 20px;
             height: 2px;
             background: var(--gold);
             border-radius: 2px;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
         }
 
-        /* Nav close button — hidden by default */
+        .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        .mobile-nav-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 98;
+        }
+
         .nav-close-btn {
             display: none;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            color: var(--gold);
+            font-size: 1.1rem;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
         }
 
         /* ══════════════════════════════════════════
@@ -1885,6 +1911,7 @@
     <div class="app-shell">
 
         <!-- HEADER -->
+    <div class="mobile-nav-overlay" id="navOverlay"></div>
         <header>
             <div class="logo">
                 <div class="logo-icon">📚</div>
@@ -1914,7 +1941,7 @@
 
         <!-- NAV -->
         <nav id="mainNav">
-            <button class="nav-close-btn" id="navCloseBtn" style="display:none;">✕</button>
+            <button class="nav-close-btn" id="navCloseBtn">✕</button>
             <ul>
                 <li><a href="{{ url_for('cashier_dashboard') }}">📠 POS</a></li>
                 <li><a href="{{ url_for('cashier_transactions') }}">📊 My Transactions</a></li>
@@ -3006,29 +3033,37 @@
 
         // ── Mobile nav toggle ──
         (function() {
-            const hamburgerBtn = document.getElementById('hamburgerBtn');
-            const navCloseBtn  = document.getElementById('navCloseBtn');
-            const mainNav      = document.getElementById('mainNav');
+            const hamburger = document.getElementById('hamburgerBtn');
+            const nav       = document.getElementById('mainNav');
+            const overlay   = document.getElementById('navOverlay');
+            const closeBtn  = document.getElementById('navCloseBtn');
+
+            if (!hamburger || !nav) return;
 
             function openNav() {
-                mainNav.classList.add('mobile-open');
-                if (navCloseBtn) navCloseBtn.style.display = 'flex';
+                nav.classList.add('mobile-open');
+                hamburger.classList.add('open');
+                if (overlay) overlay.style.display = 'block';
+                document.body.style.overflow = 'hidden';
             }
+
             function closeNav() {
-                mainNav.classList.remove('mobile-open');
-                if (navCloseBtn) navCloseBtn.style.display = 'none';
+                nav.classList.remove('mobile-open');
+                hamburger.classList.remove('open');
+                if (overlay) overlay.style.display = 'none';
+                document.body.style.overflow = '';
             }
 
-            if (hamburgerBtn) hamburgerBtn.addEventListener('click', openNav);
-            if (navCloseBtn)  navCloseBtn.addEventListener('click', closeNav);
+            hamburger.addEventListener('click', () =>
+                nav.classList.contains('mobile-open') ? closeNav() : openNav()
+            );
+            if (closeBtn) closeBtn.addEventListener('click', closeNav);
+            if (overlay)  overlay.addEventListener('click', closeNav);
 
-            // Close on outside click
-            document.addEventListener('click', function(e) {
-                if (mainNav && mainNav.classList.contains('mobile-open') &&
-                    !mainNav.contains(e.target) && e.target !== hamburgerBtn) {
-                    closeNav();
-                }
-            });
+            nav.querySelectorAll('a').forEach(a =>
+                a.addEventListener('click', () => { if (window.innerWidth <= 768) closeNav(); })
+            );
+            window.addEventListener('resize', () => { if (window.innerWidth > 768) closeNav(); });
         })();
     </script>
 

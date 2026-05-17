@@ -1066,6 +1066,12 @@
                 <div class="chart-card">
                     <div class="chart-header">
                         <h3 class="chart-title">Top Selling Products</h3>
+                        <div class="chart-filter" id="topProductsFilter">
+                            <button class="filter-btn" data-range="today">Today</button>
+                            <button class="filter-btn" data-range="week">This Week</button>
+                            <button class="filter-btn" data-range="month">This Month</button>
+                            <button class="filter-btn active" data-range="all">All Time</button>
+                        </div>
                     </div>
                     <div class="table-container">
                         <table>
@@ -1077,7 +1083,7 @@
                                     <th>Revenue</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="topProductsBody">
                                 {% if top_products %}
                                 {% for product in top_products %}
                                 <tr>
@@ -1192,6 +1198,81 @@
             // Run once on load then every 90 seconds
             refreshLowStock();
             setInterval(refreshLowStock, 90_000);
+        </script>
+
+        <script>
+            // ── Top Products Date Filter ──────────────────────────────────────
+            (function () {
+                function getDateRange(range) {
+                    const now = new Date();
+                    const pad = n => String(n).padStart(2, '0');
+                    const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+                    const today = fmt(now);
+                    if (range === 'today') return { start: today, end: today };
+                    if (range === 'week') {
+                        const mon = new Date(now);
+                        mon.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
+                        return { start: fmt(mon), end: today };
+                    }
+                    if (range === 'month') {
+                        const first = new Date(now.getFullYear(), now.getMonth(), 1);
+                        return { start: fmt(first), end: today };
+                    }
+                    return null;
+                }
+
+                function renderTopProducts(products) {
+                    const tbody = document.getElementById('topProductsBody');
+                    if (!tbody) return;
+                    if (!products || products.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="4">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📊</div>
+                                <p>No sales data for this period</p>
+                            </div></td></tr>`;
+                        return;
+                    }
+                    tbody.innerHTML = products.map(p => `
+                        <tr>
+                            <td data-label="Product"><strong>${p.name}</strong></td>
+                            <td data-label="Category">${p.category}</td>
+                            <td data-label="Sold">${p.units_sold}</td>
+                            <td data-label="Revenue">₱${parseFloat(p.revenue).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                        </tr>`).join('');
+                }
+
+                async function loadTopProducts(range) {
+                    const tbody = document.getElementById('topProductsBody');
+                    if (tbody) {
+                        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:#999;">
+                            <span style="font-size:1.3rem;">⏳</span><br>Loading...</td></tr>`;
+                    }
+                    try {
+                        const dr = getDateRange(range);
+                        let url = '/api/sales/top_products?limit=10';
+                        if (dr) url += `&start=${dr.start}&end=${dr.end}`;
+                        const res  = await fetch(url);
+                        const data = await res.json();
+                        if (data.success) renderTopProducts(data.products);
+                        else throw new Error(data.message);
+                    } catch (e) {
+                        const tbody = document.getElementById('topProductsBody');
+                        if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:#dc3545;">
+                            Failed to load data. Please try again.</td></tr>`;
+                    }
+                }
+
+                const filterGroup = document.getElementById('topProductsFilter');
+                if (filterGroup) {
+                    filterGroup.addEventListener('click', function (e) {
+                        const btn = e.target.closest('.filter-btn');
+                        if (!btn) return;
+                        filterGroup.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        loadTopProducts(btn.dataset.range);
+                    });
+                }
+            })();
         </script>
 
         <script>

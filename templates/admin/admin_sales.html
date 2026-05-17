@@ -2350,7 +2350,7 @@
         </div>
 
         <!-- ── Transactions Table ── -->
-        <div class="table-card">
+        <div class="table-card" id="txnTableCard">
             <div class="table-card-header">
                 <div>
                     <h3>Transaction History</h3>
@@ -2569,9 +2569,13 @@
 
         /* ── Summary cards ── */
         function updateSummaryCards() {
-            // Use filtered if populated, otherwise fall back to allTxns so cards
-            // show correct totals on initial load before any filter is applied.
-            const source = filtered.length ? filtered : allTxns;
+            // Use filtered array if applyFilters has run, otherwise allTxns on initial load.
+            // Check if any filter is active; if not, use allTxns.
+            const cashier = document.getElementById('filterCashier').value;
+            const payment = document.getElementById('filterPayment').value;
+            const search  = document.getElementById('filterSearch').value;
+            const hasFilter = cashier || payment || search;
+            const source = hasFilter ? filtered : allTxns;
             const total = source.reduce((s, t) => s + t.total_amount, 0);
             const count = source.length;
             const avg = count ? total / count : 0;
@@ -2763,8 +2767,8 @@
                 </div>
             </div>
             <div class="cashier-card-footer">
-                <button class="btn btn-outline btn-sm" onclick="filterByCashier('${c.name}')">🔍 View Txns</button>
-                <button class="btn btn-primary btn-sm" onclick="printShiftReport('${c.name}')">🖨️ Print Report</button>
+                <button class="btn btn-outline btn-sm view-txns-btn" data-cashier="${c.name}">🔍 View Txns</button>
+                <button class="btn btn-primary btn-sm print-shift-btn" data-cashier="${c.name}">🖨️ Print Report</button>
             </div>
         </div>`;
             }).join('');
@@ -2774,8 +2778,16 @@
         function filterByCashier(name) {
             document.getElementById('filterCashier').value = name;
             applyFilters();
-            document.querySelector('.table-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('txnTableCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+
+        /* ── Event delegation for View Txns buttons (avoids apostrophe-in-onclick bug) ── */
+        document.getElementById('cashierGrid').addEventListener('click', function(e) {
+            const viewBtn = e.target.closest('.view-txns-btn');
+            if (viewBtn) filterByCashier(viewBtn.dataset.cashier);
+            const printBtn = e.target.closest('.print-shift-btn');
+            if (printBtn) printShiftReport(printBtn.dataset.cashier);
+        });
 
         /* ── View receipt modal ── */
         async function viewReceipt(txnId) {

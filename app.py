@@ -5848,14 +5848,10 @@ def api_pos_checkout():
                 cup_size = None  # reject garbage values
 
             # ── Stock validation ────────────────────────────────────────────
-            # Step 1: Always check products.stock regardless of cup_eligible.
-            # This prevents negative stock for ALL products, including drinks
-            # that may be sold without a cup size (e.g. bottled, takeaway pack).
-            if prod["stock"] < qty:
-                stock_errors.append(
-                    f"'{prod['name']}' only has {max(0, prod['stock'])} pcs left"
-                )
-                continue
+            # Product-level stock counts are NOT validated at checkout.
+            # Products act as a menu display only — they are always available
+            # for ordering regardless of their stock value.
+            # Only physical cup packaging (inv_items) is validated below.
 
             # Step 2: If this is a cup-eligible drink AND a cup size was chosen,
             # also validate the physical cup packaging from inv_items.
@@ -6006,14 +6002,10 @@ def api_pos_checkout():
             ],
         )
 
-        # ── Deduct product stock ────────────────────────────────────────────────
-        # GREATEST(0, ...) is a DB-level safety net against race conditions
-        # where two concurrent checkouts both pass the pre-check above.
-        for li in line_items:
-            cur.execute(
-                "UPDATE products SET stock = GREATEST(0, stock - %s) WHERE product_id = %s",
-                (li["quantity"], li["product_id"]),
-            )
+        # ── Product stock deduction intentionally skipped ──────────────────────
+        # Products function as a menu catalogue only. Stock counts on products
+        # are not decremented on sale. Cup packaging (inv_items) is still
+        # deducted below for drinks that use physical cups.
 
         # ── Auto-deduct cup packaging from inv_items (same transaction) ─────────
         # Runs synchronously inside the open transaction so the packaging deduction
@@ -6162,7 +6154,10 @@ def api_pos_transactions():
             SELECT t.transaction_id, t.cashier_id, t.cashier_name,
                    t.subtotal, t.discount_amount, t.tax_amount, t.total_amount,
                    t.amount_tendered, t.change_amount,
-                   t.payment_method, t.note, t.created_at,
+                   t.payment_method, t.note, t.status, t.created_at,
+                   COALESCE(t.discount_type, 'none')                        AS discount_type,
+                   COALESCE(t.net_sales, ROUND(t.total_amount / 1.12, 2))   AS net_sales,
+                   COALESCE(t.vat_amount, ROUND(t.total_amount / 1.12 * 0.12, 2)) AS vat_amount,
                    COUNT(ti.item_id) AS item_count,
                    e.role            AS cashier_role,
                    e.contact_number  AS cashier_contact_enc
@@ -6199,6 +6194,10 @@ def api_pos_transactions():
                     "change_amount": float(r["change_amount"]),
                     "payment_method": r["payment_method"],
                     "note": r["note"] or "",
+                    "status": r.get("status") or "completed",
+                    "discount_type": r.get("discount_type") or "none",
+                    "net_sales": float(r.get("net_sales") or 0),
+                    "vat_amount": float(r.get("vat_amount") or 0),
                     "item_count": int(r["item_count"]),
                     "created_at": str(r["created_at"]),
                 }
@@ -6383,40 +6382,21 @@ def api_sales_cashflow():
 
 def _get_low_stock_items(limit=20):
     """
-    Return a unified list of dicts for items at or below their reorder point,
-    covering BOTH finished products (products table) AND ingredients/packaging
-    (inv_items table).
+    Return a list of dicts for ingredients/packaging (inv_items) at or below
+    their reorder point. Finished products (products table) are intentionally
+    excluded — their stock is not managed the same way and should not trigger
+    low-stock alerts on the dashboard.
 
     Each dict: {
         name, category_or_type, stock, unit, reorder_point,
-        status ('out'|'low'), status_label, source ('product'|'ingredient'|'packaging')
+        status ('out'|'low'), status_label, source ('ingredient'|'packaging')
     }
     Results are sorted: out-of-stock first, then by ascending stock, then name.
-    The combined list is capped at `limit` rows.
+    The list is capped at `limit` rows.
     """
     cur = mysql.connection.cursor(DictCursor)
 
-    # ── 1. Finished products ───────────────────────────────────────────────────
-    cur.execute(
-        """
-        SELECT p.name,
-               COALESCE(c.name, 'Uncategorised') AS category_or_type,
-               p.stock,
-               p.unit,
-               p.reorder_point,
-               'product' AS source
-        FROM   products p
-        LEFT JOIN categories c ON c.category_id = p.category_id
-        WHERE  p.is_active = 1
-          AND  p.stock <= p.reorder_point
-        ORDER  BY p.stock ASC, p.name ASC
-        LIMIT  %s
-        """,
-        (limit,),
-    )
-    product_rows = cur.fetchall()
-
-    # ── 2. Ingredients & packaging (inv_items) ─────────────────────────────────
+    # ── Ingredients & packaging (inv_items) only ───────────────────────────────
     cur.execute(
         """
         SELECT name,
@@ -6436,9 +6416,9 @@ def _get_low_stock_items(limit=20):
     inv_rows = cur.fetchall()
     cur.close()
 
-    # ── 3. Merge, annotate, sort, cap ─────────────────────────────────────────
+    # ── Annotate, sort, cap ────────────────────────────────────────────────────
     items = []
-    for row in list(product_rows) + list(inv_rows):
+    for row in list(inv_rows):
         stock = float(row["stock"])
         reorder = float(row["reorder_point"])
         is_out = stock <= 0
@@ -7088,8 +7068,13 @@ def _deduct_cups_for_sale(transaction_id, items, cashier_name=""):
 
 @app.route("/api/inv_items", methods=["GET"])
 def api_inv_items_list():
-    """Return all active inventory items (ingredients + packaging)."""
-    if not is_admin():
+    """Return all active inventory items (ingredients + packaging).
+
+    GET is accessible to any authenticated session (cashier, manager, admin)
+    so the cashier POS size-picker can fetch live cup stock levels.
+    Mutating methods (POST, PUT, DELETE) remain admin/manager-only.
+    """
+    if "employee_id" not in session and "admin_id" not in session:
         return jsonify({"success": False, "message": "Unauthorized"}), 401
     try:
         cur = mysql.connection.cursor(DictCursor)

@@ -596,36 +596,60 @@
         }
 
         /* ── Hamburger (mobile) ── */
+        /* ── Hamburger (mobile) ── */
         .hamburger-btn {
-            display: none; flex-direction: column; justify-content: center;
-            align-items: center; gap: 5px; width: 40px; height: 40px;
-            background: var(--dark-gray); border: 1px solid rgba(201,169,97,0.3);
-            border-radius: 8px; cursor: pointer; padding: 0; flex-shrink: 0;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            width: 40px;
+            height: 40px;
+            background: var(--dark-gray);
+            border: 1px solid rgba(201,169,97,0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 0;
+            flex-shrink: 0;
         }
 
         .hamburger-btn span {
-            display: block; width: 20px; height: 2px;
-            background: var(--gold); border-radius: 2px; transition: all 0.3s;
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: var(--gold);
+            border-radius: 2px;
+            transition: all 0.3s ease;
         }
 
         .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
         .hamburger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
         .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-        .nav-close-btn {
-            display: none; position: absolute; top: 1rem; right: 1rem;
-            width: 36px; height: 36px; background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
-            color: var(--gold); font-size: 1.1rem;
-            align-items: center; justify-content: center; cursor: pointer;
-        }
-
         .mobile-nav-overlay {
-            display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.5); z-index: 98;
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 98;
         }
 
-        /* ── Responsive ── */
+        .nav-close-btn {
+            display: none;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            color: var(--gold);
+            font-size: 1.1rem;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
         @media (max-width: 1024px) {
             .container { padding: 1.5rem; }
             .date-time { display: none; }
@@ -689,8 +713,324 @@
             .supply-table td.num { text-align: right; }
             .form-row { grid-template-columns: 1fr; }
             .modal { max-width: calc(100vw - 2rem); margin: 1rem; }
+
+            .stat-label { font-size: 0.68rem; }
+            .stat-sub { font-size: 0.7rem; }
+            .section-title { font-size: 1.3rem; margin-bottom: 0.85rem; }
+            .controls-bar { flex-direction: column; align-items: stretch; gap: 0.6rem; padding: 0.85rem 1rem; }
+            .ctrl-label { font-size: 0.75rem; margin-bottom: -0.2rem; }
+            .ctrl-input, .ctrl-select { width: 100%; font-size: 0.9rem; padding: 0.6rem 0.85rem; }
+            .ctrl-divider { display: none; }
+            .table-card-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; padding: 0.85rem 1rem; }
+            .table-card-header > div:last-child { width: 100%; }
+            .table-card-header > div:last-child .btn { width: 100%; justify-content: center; }
+            #toastContainer { top: auto; bottom: 1rem; right: 1rem; left: 1rem; }
+            .toast { max-width: 100%; }
+            .table-footer { flex-direction: column; align-items: stretch; gap: 0.5rem; padding: 0.75rem 1rem; }
+            .table-footer > div { display: flex; gap: 0.5rem; }
+            .table-footer .btn { flex: 1; justify-content: center; }
         }
-    </style>
+
+        @media (max-width: 480px) {
+            .logo-text h1 { font-size: 1.1rem; }
+            .logo-subtitle { display: none; }
+            .user-details { display: none; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+            .stat-card { min-height: 110px; }
+            .stat-value { font-size: 1.3rem; }
+            .page-title { font-size: 1.5rem; }
+        }
+    
+        /* ══════════════════════════════════════════════════
+           ACTIVITY LOG — redesigned feed layout
+        ══════════════════════════════════════════════════ */
+        .al-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e8e8e8;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .al-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.1rem 1.5rem;
+            background: var(--black);
+            border-bottom: 2px solid var(--gold);
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .al-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .al-icon {
+            width: 42px; height: 42px;
+            background: rgba(201,169,97,0.15);
+            border: 1.5px solid rgba(201,169,97,0.4);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .al-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem; font-weight: 400;
+            color: white; letter-spacing: 0.3px;
+        }
+
+        .al-title span { color: var(--gold); }
+
+        .al-subtitle {
+            font-size: 0.72rem; color: #888;
+            margin-top: 2px; font-weight: 500;
+        }
+
+        .al-header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .al-filter-group {
+            display: flex;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(201,169,97,0.25);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .al-filter-btn {
+            padding: 0.38rem 0.85rem;
+            font-size: 0.75rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            border: none; background: none;
+            color: #999; cursor: pointer;
+            transition: all 0.2s;
+            border-right: 1px solid rgba(201,169,97,0.2);
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .al-filter-btn:last-child { border-right: none; }
+
+        .al-filter-btn:hover { color: var(--gold); background: rgba(201,169,97,0.08); }
+
+        .al-filter-btn.active {
+            background: var(--gold);
+            color: var(--black);
+        }
+
+        .al-reload-btn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.4rem 0.9rem;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(201,169,97,0.3);
+            border-radius: 8px;
+            color: #aaa; font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; font-family: 'DM Sans', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .al-reload-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+        .al-reload-icon { display: inline-block; transition: transform 0.4s; }
+        .al-reload-btn.spinning .al-reload-icon { animation: spinOnce 0.5s linear; }
+        @keyframes spinOnce { to { transform: rotate(360deg); } }
+
+        /* Search bar */
+        .al-search-bar {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 0.75rem 1.25rem;
+            background: #fafafa;
+            border-bottom: 1px solid #f0f0f0;
+            flex-wrap: wrap;
+        }
+
+        .al-search-icon { font-size: 0.95rem; color: #bbb; flex-shrink: 0; }
+
+        .al-search-input {
+            flex: 1; min-width: 180px;
+            padding: 0.45rem 0.75rem;
+            border: 1.5px solid #e0e0e0; border-radius: 8px;
+            font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+            background: white; transition: border-color 0.2s;
+        }
+
+        .al-search-input:focus { outline: none; border-color: var(--gold); }
+
+        .al-delta-select {
+            padding: 0.45rem 0.75rem;
+            border: 1.5px solid #e0e0e0; border-radius: 8px;
+            font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+            background: white; cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .al-delta-select:focus { outline: none; border-color: var(--gold); }
+
+        /* Feed body */
+        .al-body {
+            min-height: 200px;
+            max-height: 540px;
+            overflow-y: auto;
+        }
+
+        .al-body::-webkit-scrollbar { width: 5px; }
+        .al-body::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+
+        /* Loading */
+        .al-loading {
+            display: flex; align-items: center; justify-content: center;
+            gap: 0.75rem; padding: 3rem;
+            color: #aaa; font-size: 0.9rem;
+        }
+
+        .al-spinner {
+            width: 22px; height: 22px;
+            border: 3px solid #f0f0f0;
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Empty state */
+        .al-empty {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 3rem 2rem; text-align: center;
+        }
+
+        .al-empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .al-empty-title { font-weight: 700; color: #666; font-size: 1rem; margin-bottom: 0.3rem; }
+        .al-empty-sub { font-size: 0.82rem; color: #aaa; }
+
+        .al-date-label {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.6rem 1.25rem;
+            background: #f8f7f5;
+            border-bottom: 1px solid #eeece8;
+            border-top: 1px solid #eeece8;
+            position: sticky; top: 0; z-index: 2;
+        }
+
+        .al-date-label span {
+            font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            color: #888;
+        }
+
+        /* Entry row */
+        .al-entry {
+            display: flex; align-items: flex-start; gap: 0.85rem;
+            padding: 0.9rem 1.25rem;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background 0.15s;
+            animation: fadeInEntry 0.25s ease-out backwards;
+        }
+
+        @keyframes fadeInEntry {
+            from { opacity: 0; transform: translateX(-8px); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        .al-entry:hover { background: rgba(201,169,97,0.04); }
+        .al-entry:last-child { border-bottom: none; }
+
+        .al-entry-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; flex-shrink: 0; margin-top: 1px;
+        }
+
+        .al-entry-icon.pos { background: #e8f5e9; }
+        .al-entry-icon.neg { background: #fce4ec; }
+
+        .al-entry-body { flex: 1; min-width: 0; }
+
+        .al-entry-top {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 0.5rem; margin-bottom: 0.3rem; flex-wrap: wrap;
+        }
+
+        .al-entry-name {
+            font-weight: 700; font-size: 0.9rem; color: var(--black);
+        }
+
+        .al-entry-delta {
+            font-weight: 800; font-size: 0.9rem;
+            padding: 0.15rem 0.6rem; border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .al-entry-delta.pos { background: #e8f5e9; color: #2e7d32; }
+        .al-entry-delta.neg { background: #fce4ec; color: #c62828; }
+
+        .al-entry-meta {
+            display: flex; align-items: center; gap: 0.65rem;
+            flex-wrap: wrap;
+        }
+
+        .al-entry-note {
+            font-size: 0.78rem; color: #777;
+            max-width: 280px; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+            background: #f5f5f5; padding: 0.15rem 0.5rem; border-radius: 4px;
+        }
+
+        .al-entry-after {
+            font-size: 0.75rem; color: #999;
+        }
+
+        .al-entry-after strong { color: #555; }
+
+        .al-src-badge {
+            font-size: 0.65rem; font-weight: 800;
+            letter-spacing: 0.6px; text-transform: uppercase;
+            padding: 0.1rem 0.45rem; border-radius: 4px;
+        }
+
+        .al-src-badge.manual { background: #e8eaf6; color: #3949ab; }
+        .al-src-badge.sale   { background: #e8f5e9; color: #2e7d32; }
+
+        .al-entry-right {
+            text-align: right; flex-shrink: 0; min-width: 70px;
+        }
+
+        .al-entry-time {
+            font-size: 0.78rem; font-weight: 700; color: #555;
+        }
+
+        .al-entry-by {
+            font-size: 0.72rem; color: #aaa; margin-top: 2px;
+        }
+
+        /* Footer */
+        .al-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.65rem 1.25rem;
+            background: #fafafa;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .al-count {
+            font-size: 0.78rem; font-weight: 700; color: #666;
+        }
+
+        .al-footer-note {
+            font-size: 0.72rem; color: #bbb;
+        }
+
+        </style>
 </head>
 
 <body>
@@ -704,6 +1044,9 @@
                     <div class="logo-subtitle">CAFÉ</div>
                 </div>
             </div>
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
             <div class="header-actions">
                 <div class="date-time">
                     <div class="date" id="headerDate"></div>
@@ -722,6 +1065,7 @@
 
         <!-- ── Nav ── -->
         <nav id="mainNav">
+            <button class="nav-close-btn" id="navCloseBtn">✕</button>
             <ul>
                 <li><a href="{{ url_for('cashier_dashboard') }}">📠 POS</a></li>
                 <li><a href="{{ url_for('cashier_transactions') }}">📊 My Transactions</a></li>
@@ -833,28 +1177,44 @@
                 </div>
 
                 <!-- Activity Log -->
-                <div class="section-card">
-                    <div class="section-card-header">
-                        <h3>📝 Activity <span>Log</span></h3>
-                        <button class="btn btn-outline btn-sm" onclick="loadLog()">🔄 Reload</button>
+                <div class="al-card">
+                    <div class="al-header">
+                        <div class="al-header-left">
+                            <div class="al-icon">📋</div>
+                            <div>
+                                <div class="al-title">Activity <span>Log</span></div>
+                                <div class="al-subtitle">Real-time stock change history</div>
+                            </div>
+                        </div>
+                        <div class="al-header-right">
+                            <div class="al-filter-group">
+                                <button class="al-filter-btn active" data-filter="all">All</button>
+                                <button class="al-filter-btn" data-filter="manual">Manual</button>
+                                <button class="al-filter-btn" data-filter="sale">Sales</button>
+                            </div>
+                            <button class="al-reload-btn" onclick="loadLog()" id="logReloadBtn" title="Reload log">
+                                <span class="al-reload-icon">↻</span> Reload
+                            </button>
+                        </div>
                     </div>
-                    <div class="supply-table-wrap">
-                        <table class="log-table" id="logTable">
-                            <thead>
-                                <tr>
-                                    <th>When</th>
-                                    <th>Item</th>
-                                    <th>Change</th>
-                                    <th>After</th>
-                                    <th>Source</th>
-                                    <th>Note</th>
-                                    <th>By</th>
-                                </tr>
-                            </thead>
-                            <tbody id="logTableBody">
-                                <tr class="loading-row"><td colspan="7">Loading log…</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="al-search-bar">
+                        <span class="al-search-icon">🔍</span>
+                        <input type="text" id="logSearchInput" class="al-search-input" placeholder="Search item name, note, or staff…">
+                        <select id="logDeltaFilter" class="al-delta-select">
+                            <option value="">All Changes</option>
+                            <option value="positive">Restock (+)</option>
+                            <option value="negative">Used / Damaged (−)</option>
+                        </select>
+                    </div>
+                    <div class="al-body" id="logFeedContainer">
+                        <div class="al-loading">
+                            <div class="al-spinner"></div>
+                            <span>Loading activity…</span>
+                        </div>
+                    </div>
+                    <div class="al-footer">
+                        <span class="al-count" id="logEntryCount">—</span>
+                        <span class="al-footer-note">Showing last 40 entries</span>
                     </div>
                 </div>
 
@@ -1159,42 +1519,128 @@
         /* ═══════════════════════════════════════
            ACTIVITY LOG
         ═══════════════════════════════════════ */
+        let _allLogRows   = [];
+        let _logFilter    = 'all';   // 'all' | 'manual' | 'sale'
+
         async function loadLog() {
-            const tbody = document.getElementById('logTableBody');
-            tbody.innerHTML = '<tr class="loading-row"><td colspan="7">Loading…</td></tr>';
+            const container = document.getElementById('logFeedContainer');
+            container.innerHTML = `<div class="al-loading"><div class="al-spinner"></div><span>Loading activity…</span></div>`;
+            const btn = document.getElementById('logReloadBtn');
+            if (btn) { btn.classList.add('spinning'); }
             try {
                 const r = await fetch('/api/cashier/inv/log?limit=40');
                 const d = await r.json();
                 if (!d.success || !d.log.length) {
-                    tbody.innerHTML = `<tr><td colspan="7">
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📋</div>
-                            <h4>No activity yet</h4>
-                            <p>Log entries will appear here after stock changes are made.</p>
-                        </div>
-                    </td></tr>`;
+                    _allLogRows = [];
+                    container.innerHTML = `<div class="al-empty">
+                        <div class="al-empty-icon">📋</div>
+                        <div class="al-empty-title">No activity yet</div>
+                        <div class="al-empty-sub">Log entries appear here after stock changes are made.</div>
+                    </div>`;
+                    document.getElementById('logEntryCount').textContent = '0 entries';
                     return;
                 }
-                tbody.innerHTML = d.log.map(row => {
-                    const isPos  = row.delta >= 0;
-                    const delta  = isPos ? `+${fmtNum(row.delta)}` : fmtNum(row.delta);
-                    const cls    = isPos ? 'delta-positive' : 'delta-negative';
-                    const srcCls = row.source === 'sale' ? 'sale' : 'manual';
-                    return `
-                    <tr>
-                        <td style="white-space:nowrap;font-size:0.8rem;color:#777">${escHtml(row.created_at)}</td>
-                        <td style="font-weight:600">${escHtml(row.item_name)}</td>
-                        <td class="${cls}">${delta} ${escHtml(row.unit)}</td>
-                        <td style="font-variant-numeric:tabular-nums">${fmtNum(row.stock_after)} ${escHtml(row.unit)}</td>
-                        <td><span class="log-source ${srcCls}">${row.source}</span></td>
-                        <td class="log-note" title="${escHtml(row.note || '')}">${escHtml(row.note || '—')}</td>
-                        <td style="font-size:0.8rem;color:#666">${escHtml(row.created_by || '—')}</td>
-                    </tr>`;
-                }).join('');
+                _allLogRows = d.log;
+                renderLogFeed();
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">Failed to load log.</td></tr>`;
+                container.innerHTML = `<div class="al-empty">
+                    <div class="al-empty-icon">⚠️</div>
+                    <div class="al-empty-title">Failed to load</div>
+                    <div class="al-empty-sub">Check your connection and try reloading.</div>
+                </div>`;
+            } finally {
+                if (btn) { btn.classList.remove('spinning'); }
             }
         }
+
+        function renderLogFeed() {
+            const container  = document.getElementById('logFeedContainer');
+            const search     = (document.getElementById('logSearchInput')?.value || '').toLowerCase();
+            const deltaF     = document.getElementById('logDeltaFilter')?.value || '';
+
+            const filtered = _allLogRows.filter(row => {
+                if (_logFilter !== 'all' && row.source !== _logFilter) return false;
+                if (deltaF === 'positive' && row.delta < 0) return false;
+                if (deltaF === 'negative' && row.delta >= 0) return false;
+                if (search) {
+                    const hay = `${row.item_name} ${row.note || ''} ${row.created_by || ''}`.toLowerCase();
+                    if (!hay.includes(search)) return false;
+                }
+                return true;
+            });
+
+            document.getElementById('logEntryCount').textContent =
+                `${filtered.length} entr${filtered.length !== 1 ? 'ies' : 'y'}`;
+
+            if (!filtered.length) {
+                container.innerHTML = `<div class="al-empty">
+                    <div class="al-empty-icon">🔍</div>
+                    <div class="al-empty-title">No matching entries</div>
+                    <div class="al-empty-sub">Try adjusting your search or filter.</div>
+                </div>`;
+                return;
+            }
+
+            // Group by date
+            const groups = {};
+            filtered.forEach(row => {
+                const d = new Date(row.created_at);
+                const label = d.toLocaleDateString('en-PH', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+                if (!groups[label]) groups[label] = [];
+                groups[label].push(row);
+            });
+
+            container.innerHTML = Object.entries(groups).map(([date, rows]) => `
+                <div class="al-date-group">
+                    <div class="al-date-label"><span>${escHtml(date)}</span></div>
+                    ${rows.map(row => {
+                        const isPos   = row.delta >= 0;
+                        const delta   = isPos ? `+${fmtNum(row.delta)}` : fmtNum(row.delta);
+                        const srcCls  = row.source === 'sale' ? 'sale' : 'manual';
+                        const srcIcon = row.source === 'sale' ? '🛒' : (isPos ? '📦' : '📉');
+                        const timeStr = new Date(row.created_at).toLocaleTimeString('en-PH',
+                            { hour:'2-digit', minute:'2-digit' });
+                        return `
+                        <div class="al-entry ${isPos ? 'positive' : 'negative'}">
+                            <div class="al-entry-icon ${isPos ? 'pos' : 'neg'}">${srcIcon}</div>
+                            <div class="al-entry-body">
+                                <div class="al-entry-top">
+                                    <span class="al-entry-name">${escHtml(row.item_name)}</span>
+                                    <span class="al-entry-delta ${isPos ? 'pos' : 'neg'}">${delta} ${escHtml(row.unit)}</span>
+                                </div>
+                                <div class="al-entry-meta">
+                                    ${row.note ? `<span class="al-entry-note">${escHtml(row.note)}</span>` : ''}
+                                    <span class="al-entry-after">After: <strong>${fmtNum(row.stock_after)} ${escHtml(row.unit)}</strong></span>
+                                    <span class="al-src-badge ${srcCls}">${row.source.toUpperCase()}</span>
+                                </div>
+                            </div>
+                            <div class="al-entry-right">
+                                <div class="al-entry-time">${timeStr}</div>
+                                <div class="al-entry-by">${escHtml(row.created_by || '—')}</div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            `).join('');
+        }
+
+        // Filter pill clicks
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.al-filter-btn');
+            if (!btn) return;
+            document.querySelectorAll('.al-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            _logFilter = btn.dataset.filter;
+            renderLogFeed();
+        });
+
+        // Live search & delta filter
+        document.addEventListener('input', function(e) {
+            if (e.target.id === 'logSearchInput') renderLogFeed();
+        });
+        document.addEventListener('change', function(e) {
+            if (e.target.id === 'logDeltaFilter') renderLogFeed();
+        });
 
         /* ═══════════════════════════════════════
            MODALS
@@ -1467,6 +1913,7 @@
             renderStats();
             filterTable();
         }, 30000);
+
     </script>
 </body>
 

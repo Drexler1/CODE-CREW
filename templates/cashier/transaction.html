@@ -787,23 +787,159 @@
             }
         }
 
+        /* Hamburger — hidden on desktop, shown on mobile */
+        /* ── Hamburger (mobile) ── */
+        .hamburger-btn {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            width: 40px;
+            height: 40px;
+            background: var(--dark-gray);
+            border: 1px solid rgba(201,169,97,0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .hamburger-btn span {
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: var(--gold);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        .mobile-nav-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 98;
+        }
+
+        .nav-close-btn {
+            display: none;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            color: var(--gold);
+            font-size: 1.1rem;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* ══════════════════════════════════════════
+           TABLET — max 1024px
+        ══════════════════════════════════════════ */
+        @media (max-width: 1024px) {
+            .container { padding: 1.5rem; }
+            .summary-cards { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+            .controls-bar { gap: 0.65rem; }
+            .ctrl-divider { display: none; }
+            .date-time { display: none; }
+        }
+
+        /* ══════════════════════════════════════════
+           MOBILE — max 768px
+        ══════════════════════════════════════════ */
         @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
+            header { padding: 0.85rem 1rem; gap: 0.75rem; }
+            .logo-icon { width: 42px; height: 42px; font-size: 22px; }
+            .logo-text h1 { font-size: 1.3rem; }
+            .logo-subtitle { font-size: 0.6rem; letter-spacing: 3px; }
+            .header-actions { gap: 0.65rem; }
+            .date-time { display: none; }
+            .user-info { padding: 0.5rem 0.75rem; gap: 0.5rem; }
+            .user-avatar { width: 36px; height: 36px; font-size: 0.85rem; }
+            .user-details h3 { font-size: 0.82rem; }
+            .user-details p { font-size: 0.72rem; }
+            .logout-btn { padding: 0.4rem 0.75rem; font-size: 0.78rem; }
+
+            .hamburger-btn { display: flex; }
+
+            nav {
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: var(--dark-gray); border-bottom: none;
+                z-index: 999; transform: translateX(-100%);
+                transition: transform 0.3s ease; overflow-y: auto;
+                padding-top: 4rem;
+            }
+            nav.mobile-open { transform: translateX(0); }
+            nav ul { flex-direction: column; overflow-x: visible; }
+            nav li { flex-shrink: unset; border-bottom: 1px solid rgba(201,169,97,0.1); }
+            nav a { padding: 1.1rem 1.75rem; font-size: 1rem; border-bottom: none; border-left: 4px solid transparent; }
+            nav a.active { border-left-color: var(--gold); border-bottom-color: transparent; background: rgba(201,169,97,0.12); }
+
+            .nav-close-btn {
+                display: flex !important;
+                position: absolute; top: 1rem; right: 1rem;
+                width: 36px; height: 36px;
+                background: rgba(255,255,255,0.08);
+                border: 1px solid rgba(255,255,255,0.15);
+                border-radius: 8px; color: var(--gold);
+                font-size: 1.1rem; align-items: center;
+                justify-content: center; cursor: pointer;
             }
 
-            .summary-cards {
-                grid-template-columns: 1fr 1fr;
-            }
+            .container { padding: 1rem; }
+            .page-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; margin-bottom: 1.25rem; }
+            .page-title { font-size: 1.85rem; }
+            .page-subtitle { font-size: 0.88rem; }
+            .header-btns { width: 100%; }
+            .header-btns .btn { flex: 1; justify-content: center; font-size: 0.8rem; padding: 0.55rem 0.75rem; }
 
-            header {
-                padding: 0 1rem;
-            }
+            .summary-cards { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
+            .stat-card { padding: 1.1rem; min-height: 130px; }
+            .stat-icon { width: 40px; height: 40px; font-size: 1.2rem; margin-bottom: 0.65rem; }
+            .stat-value { font-size: 1.5rem; }
+            .stat-label { font-size: 0.68rem; }
+            .stat-sub { font-size: 0.7rem; }
 
-            .date-time {
-                text-align: right;
-                min-width: 150px;
-            }
+            .section-title { font-size: 1.3rem; margin-bottom: 0.85rem; }
+
+            .controls-bar { flex-direction: column; align-items: stretch; gap: 0.6rem; padding: 0.85rem 1rem; }
+            .ctrl-label { font-size: 0.75rem; margin-bottom: -0.2rem; }
+            .ctrl-input, .ctrl-select { width: 100%; font-size: 0.9rem; padding: 0.6rem 0.85rem; }
+            .ctrl-divider { display: none; }
+
+            .table-card-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; padding: 0.85rem 1rem; }
+            .table-card-header > div:last-child { width: 100%; }
+            .table-card-header > div:last-child .btn { width: 100%; justify-content: center; }
+
+            #toastContainer { top: auto; bottom: 1rem; right: 1rem; left: 1rem; }
+            .toast { max-width: 100%; }
+
+            .table-footer { flex-direction: column; align-items: stretch; gap: 0.5rem; padding: 0.75rem 1rem; }
+            .table-footer > div { display: flex; gap: 0.5rem; }
+            .table-footer .btn { flex: 1; justify-content: center; }
+        }
+
+        /* ══════════════════════════════════════════
+           SMALL MOBILE — max 480px
+        ══════════════════════════════════════════ */
+        @media (max-width: 480px) {
+            .logo-text h1 { font-size: 1.1rem; }
+            .logo-subtitle { display: none; }
+            .user-details { display: none; }
+            .summary-cards { grid-template-columns: 1fr 1fr; }
+            .stat-card { min-height: 110px; }
+            .stat-value { font-size: 1.3rem; }
+            .page-title { font-size: 1.5rem; }
         }
 
         /* ── Print: only show the receipt modal ── */
@@ -872,6 +1008,7 @@
     <div class="app-shell">
 
         <!-- HEADER -->
+    <div class="mobile-nav-overlay" id="navOverlay"></div>
         <header>
             <div class="logo">
                 <div class="logo-icon">📚</div>
@@ -880,6 +1017,9 @@
                     <div class="logo-subtitle">CAFÉ</div>
                 </div>
             </div>
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
             <div class="header-actions">
                 <div class="date-time">
                     <div class="date" id="currentDate"></div>
@@ -897,7 +1037,8 @@
         </header>
 
         <!-- NAV -->
-        <nav>
+        <nav id="mainNav">
+            <button class="nav-close-btn" id="navCloseBtn">✕</button>
             <ul>
                 <li><a href="{{ url_for('cashier_dashboard') }}">📠 POS</a></li>
                 <li><a href="{{ url_for('cashier_transactions') }}" class="active">📊 My Transactions</a></li>
@@ -945,11 +1086,11 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon purple">🔄</div>
+                        <div class="stat-icon purple">🏷️</div>
                         <div>
-                            <div class="stat-label">Refunds</div>
+                            <div class="stat-label">Discounted</div>
                             <div class="stat-value" id="statRefunds">—</div>
-                            <div class="stat-sub">this period</div>
+                            <div class="stat-sub">orders today</div>
                         </div>
                     </div>
                 </div>
@@ -1060,7 +1201,7 @@
             const dateVal = document.getElementById('dateFilter').value;
             tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:#999">⏳ Loading…</td></tr>`;
 
-            const qs = new URLSearchParams({ limit: 200 });
+            const qs = new URLSearchParams({ limit: 1000 });
             if (dateVal) qs.set('date', dateVal);
 
             try {
@@ -1070,15 +1211,18 @@
 
                 allTxns = d.transactions.map(t => ({
                     _raw: t,
-                    id:         t.transaction_id,
-                    cashier:    t.cashier_name,
-                    items:      t.item_count,
-                    payment:    t.payment_method,
-                    status:     t.status || 'completed',
-                    total:      parseFloat(t.total_amount) || 0,
-                    discount:   parseFloat(t.discount_amount) || 0,
-                    change:     parseFloat(t.change_amount) || 0,
-                    date:       t.created_at,
+                    id:           t.transaction_id,
+                    cashier:      t.cashier_name,
+                    items:        t.item_count,
+                    payment:      t.payment_method,
+                    status:       t.status || 'completed',
+                    total:        parseFloat(t.total_amount) || 0,
+                    discount:     parseFloat(t.discount_amount) || 0,
+                    discountType: t.discount_type || 'none',
+                    netSales:     parseFloat(t.net_sales) || 0,
+                    vatAmount:    parseFloat(t.vat_amount) || 0,
+                    change:       parseFloat(t.change_amount) || 0,
+                    date:         t.created_at,
                 }));
 
                 applyFilters();
@@ -1090,18 +1234,26 @@
 
         /* ── Summary cards ── */
         function updateSummaryCards() {
-            const today = new Date().toISOString().slice(0, 10);
-            const todayTxns = allTxns.filter(t => t.date.startsWith(today));
+            // Use PH local date (UTC+8) so transactions never fall on the wrong day
+            const nowPH   = new Date(Date.now() + 8 * 60 * 60 * 1000);
+            const todayPH = nowPH.toISOString().slice(0, 10); // "YYYY-MM-DD" in PH time
+
+            // "Today" = transactions whose server timestamp starts with today's PH date
+            const todayTxns  = allTxns.filter(t => t.date.slice(0, 10) === todayPH);
             const todaySales = todayTxns.reduce((s, t) => s + t.total, 0);
-            const discounted = allTxns.filter(t => t.discount > 0).length;
+            const todayAvg   = todayTxns.length
+                ? (todaySales / todayTxns.length)
+                : 0;
+            // Discounted transactions today (not "refunds" — correct label below)
+            const discountedToday = todayTxns.filter(t => t.discount > 0).length;
 
             document.getElementById('statToday').textContent =
                 `₱${todaySales.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             document.getElementById('statCount').textContent = todayTxns.length;
             document.getElementById('statAvg').textContent = todayTxns.length
-                ? `₱${Math.round(todaySales / todayTxns.length).toLocaleString()}`
+                ? `₱${todayAvg.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                 : '—';
-            document.getElementById('statRefunds').textContent = discounted;
+            document.getElementById('statRefunds').textContent = discountedToday;
         }
 
         /* ── Filters ── */
@@ -1307,6 +1459,41 @@
 
         /* ── Init ── */
         loadTransactions();
+
+        // ── Mobile nav toggle ──
+        (function() {
+            const hamburger = document.getElementById('hamburgerBtn');
+            const nav       = document.getElementById('mainNav');
+            const overlay   = document.getElementById('navOverlay');
+            const closeBtn  = document.getElementById('navCloseBtn');
+
+            if (!hamburger || !nav) return;
+
+            function openNav() {
+                nav.classList.add('mobile-open');
+                hamburger.classList.add('open');
+                if (overlay) overlay.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeNav() {
+                nav.classList.remove('mobile-open');
+                hamburger.classList.remove('open');
+                if (overlay) overlay.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+
+            hamburger.addEventListener('click', () =>
+                nav.classList.contains('mobile-open') ? closeNav() : openNav()
+            );
+            if (closeBtn) closeBtn.addEventListener('click', closeNav);
+            if (overlay)  overlay.addEventListener('click', closeNav);
+
+            nav.querySelectorAll('a').forEach(a =>
+                a.addEventListener('click', () => { if (window.innerWidth <= 768) closeNav(); })
+            );
+            window.addEventListener('resize', () => { if (window.innerWidth > 768) closeNav(); });
+        })();
     </script>
 </body>
 
