@@ -1889,7 +1889,9 @@
                       <th>Days Worked</th>
                       <th>Total Hours</th>
                       <th>Rate / hr</th>
-                      <th>Gross Pay</th>
+                      <th>Gross Earnings</th>
+                      <th>Late Deduction</th>
+                      <th>Net Pay</th>
                     </tr>
                   </thead>
                   <tbody id="periodTableBody">
@@ -2304,6 +2306,10 @@
                 <td>${r.days_worked} day${r.days_worked !== 1 ? "s" : ""}</td>
                 <td><span class="hours-badge">${fmtH(r.total_hours)}</span></td>
                 <td>${fmt(r.hourly_rate)}</td>
+                <td class="td-pay">${fmt(r.gross_earnings ?? r.gross_pay)}</td>
+                <td class="td-pay" style="color:${parseFloat(r.total_deductions||0)>0?'#c62828':'#aaa'}">
+                  ${parseFloat(r.total_deductions||0)>0 ? '−'+fmt(r.total_deductions) : '—'}
+                </td>
                 <td class="td-pay positive">${fmt(r.gross_pay)}</td>
             </tr>`,
               )
@@ -2313,6 +2319,8 @@
                 <td colspan="3"><strong>TOTAL (${data.records.length} employees)</strong></td>
                 <td><span class="hours-badge">${fmtH(totalHrs.toFixed(2))}</span></td>
                 <td>—</td>
+                <td class="td-pay">${fmt(data.records.reduce((s,r)=>s+parseFloat(r.gross_earnings??r.gross_pay||0),0))}</td>
+                <td class="td-pay" style="color:#c62828">${(() => { const t=data.records.reduce((s,r)=>s+parseFloat(r.total_deductions||0),0); return t>0?'−'+fmt(t):'—'; })()}</td>
                 <td class="td-pay grand-total">${fmt(data.total_payroll)}</td>
             </tr>`;
 
