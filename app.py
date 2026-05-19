@@ -1663,6 +1663,7 @@ def login():
 
         if auth_ok:
             # ── Successful login: clear the fail counter ──────────────────────
+            session.permanent = True   # honour PERMANENT_SESSION_LIFETIME (30 min)
             clear_failed_attempts(u_hash, lockout_role_key)
             return redirect(redirect_to)
 
