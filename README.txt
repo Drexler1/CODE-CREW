@@ -20,6 +20,3 @@ Features:
 - Inventory and product management
 - Sales and transaction tracking
 - Employee payroll and attendance
-
-Note:
-Customize the templates and static assets to match your store or business workflow.

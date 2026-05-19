@@ -15,7 +15,7 @@ from flask_mysqldb import MySQL
 from MySQLdb.cursors import DictCursor
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from deepface import DeepFace
-from datetime import datetime
+from datetime import datetime, timedelta
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 import base64, cv2, os, numpy as np, time, hashlib, bcrypt, json, secrets
@@ -36,6 +36,10 @@ csrf = CSRFProtect(app)
 
 # ── File upload size limit (5 MB) ───────────────────────────────────────────────
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
+
+# ── Session timeout (30 minutes) ────────────────────────────────────────────────
+# If a cashier walks away with the browser open, the session expires automatically.
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 
 _AES_RAW = os.environ.get("AES_SECRET_KEY", "change-this-aes-key-before-deploy!")
 AES_KEY = hashlib.sha256(_AES_RAW.encode()).digest()  # 32 bytes
