@@ -1639,6 +1639,45 @@
             flex-wrap: wrap;
         }
 
+        /* ── MPA view-mode tabs ── */
+        .mpa-view-tabs {
+            display: flex;
+            background: rgba(255,255,255,0.07);
+            border-radius: 8px;
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .mpa-view-tab {
+            padding: 0.38rem 0.9rem;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: #aaa;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .mpa-view-tab:hover {
+            color: var(--gold);
+            background: rgba(201,169,97,0.12);
+        }
+
+        .mpa-view-tab.active {
+            background: var(--gold);
+            color: var(--black);
+        }
+
+        .mpa-picker-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
         /* KPI Strip */
         .mpa-kpi-strip {
             display: grid;
@@ -2411,11 +2450,22 @@
             <!-- Module header -->
             <div class="mpa-header-card">
                 <div class="mpa-header-left">
-                    <h2>📦 Monthly Product Sales Analytics</h2>
-                    <p>Best Sellers · Barely Sold · Unit rankings & month-over-month trends</p>
+                    <h2>📦 Product Sales Analytics</h2>
+                    <p id="mpaHeaderSub">Best Sellers · Barely Sold · Unit rankings & trends</p>
                 </div>
                 <div class="mpa-controls">
-                    <input type="month" class="ctrl-input" id="mpaMonthPicker" style="min-width:155px;">
+                    <!-- View-mode tabs -->
+                    <div class="mpa-view-tabs" id="mpaViewTabs">
+                        <button class="mpa-view-tab" data-mode="weekly">Weekly</button>
+                        <button class="mpa-view-tab active" data-mode="monthly">Monthly</button>
+                        <button class="mpa-view-tab" data-mode="yearly">Yearly</button>
+                    </div>
+                    <!-- Dynamic pickers -->
+                    <div class="mpa-picker-wrap">
+                        <input type="week"  class="ctrl-input" id="mpaWeekPicker"  style="min-width:175px;display:none;">
+                        <input type="month" class="ctrl-input" id="mpaMonthPicker" style="min-width:155px;">
+                        <input type="number" class="ctrl-input" id="mpaYearPicker" placeholder="YYYY" min="2000" max="2099" style="min-width:100px;display:none;">
+                    </div>
                     <button class="btn btn-primary btn-sm" id="mpaLoadBtn">📊 Load Report</button>
                     <button class="btn btn-outline btn-sm" id="mpaExportBtn" style="display:none;">📥 Export CSV</button>
                 </div>
@@ -2425,7 +2475,7 @@
             <div id="mpaBody">
                 <div class="mpa-empty">
                     <div class="mpa-empty-icon">📦</div>
-                    <p>Select a month and click <strong>Load Report</strong> to view product analytics.</p>
+                    <p>Select a period and click <strong>Load Report</strong> to view product analytics.</p>
                 </div>
             </div>
 
@@ -3595,33 +3645,99 @@
         let mpaCurrentData   = null;   // full API response
         let mpaActiveTier    = 'all';  // all | best_seller | mid | barely_sold
 
-        // ── Initialise month picker to current month ─────────────────────────
+        // ── Initialise pickers to current period ─────────────────────────────
         (function () {
             const now = new Date();
-            const mm  = String(now.getMonth() + 1).padStart(2, '0');
-            document.getElementById('mpaMonthPicker').value = `${now.getFullYear()}-${mm}`;
+            const yyyy = now.getFullYear();
+            // Month picker
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('mpaMonthPicker').value = `${yyyy}-${mm}`;
+            // Year picker
+            document.getElementById('mpaYearPicker').value = yyyy;
+            // Week picker — ISO week string "YYYY-Www"
+            const jan4 = new Date(yyyy, 0, 4);
+            const startOfWeek1 = new Date(jan4);
+            startOfWeek1.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7));
+            const diff = now - startOfWeek1;
+            const weekNum = Math.floor(diff / (7 * 864e5)) + 1;
+            document.getElementById('mpaWeekPicker').value = `${yyyy}-W${String(weekNum).padStart(2,'0')}`;
         })();
+
+        // ── MPA view-mode state ───────────────────────────────────────────────
+        let mpaViewMode = 'monthly'; // 'weekly' | 'monthly' | 'yearly'
+
+        // ── View-mode tab wiring ──────────────────────────────────────────────
+        document.querySelectorAll('.mpa-view-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                mpaViewMode = tab.dataset.mode;
+                document.querySelectorAll('.mpa-view-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                // Show/hide the correct picker
+                document.getElementById('mpaWeekPicker').style.display  = mpaViewMode === 'weekly'  ? '' : 'none';
+                document.getElementById('mpaMonthPicker').style.display = mpaViewMode === 'monthly' ? '' : 'none';
+                document.getElementById('mpaYearPicker').style.display  = mpaViewMode === 'yearly'  ? '' : 'none';
+
+                // Update subtitle
+                const subs = {
+                    weekly:  'Best Sellers · Barely Sold · Unit rankings & week-over-week trends',
+                    monthly: 'Best Sellers · Barely Sold · Unit rankings & month-over-month trends',
+                    yearly:  'Best Sellers · Barely Sold · Unit rankings & year-over-year trends',
+                };
+                document.getElementById('mpaHeaderSub').textContent = subs[mpaViewMode];
+
+                // Reset report area
+                document.getElementById('mpaBody').innerHTML = `
+                    <div class="mpa-empty">
+                        <div class="mpa-empty-icon">📦</div>
+                        <p>Select a period and click <strong>Load Report</strong> to view product analytics.</p>
+                    </div>`;
+                document.getElementById('mpaExportBtn').style.display = 'none';
+                mpaCurrentData = null;
+            });
+        });
 
         document.getElementById('mpaLoadBtn').addEventListener('click', loadMpaReport);
         document.getElementById('mpaExportBtn').addEventListener('click', exportMpaCsv);
 
         async function loadMpaReport() {
-            const month = document.getElementById('mpaMonthPicker').value;
-            if (!month) { showToast('Please select a month', 'error'); return; }
-
             const btn = document.getElementById('mpaLoadBtn');
+            let endpoint = '';
+            let paramStr = '';
+            let labelHint = '';
+
+            if (mpaViewMode === 'weekly') {
+                const week = document.getElementById('mpaWeekPicker').value; // "2026-W21"
+                if (!week) { showToast('Please select a week', 'error'); return; }
+                paramStr = `week=${encodeURIComponent(week)}`;
+                endpoint = `/api/sales/weekly-product-summary?${paramStr}`;
+                labelHint = week;
+            } else if (mpaViewMode === 'monthly') {
+                const month = document.getElementById('mpaMonthPicker').value;
+                if (!month) { showToast('Please select a month', 'error'); return; }
+                paramStr = `month=${encodeURIComponent(month)}`;
+                endpoint = `/api/sales/monthly-product-summary?${paramStr}`;
+                labelHint = month;
+            } else {
+                const year = document.getElementById('mpaYearPicker').value;
+                if (!year) { showToast('Please enter a year', 'error'); return; }
+                paramStr = `year=${encodeURIComponent(year)}`;
+                endpoint = `/api/sales/yearly-product-summary?${paramStr}`;
+                labelHint = year;
+            }
+
             btn.disabled = true;
             btn.innerHTML = '⏳ Loading…';
 
             document.getElementById('mpaBody').innerHTML = `
                 <div class="mpa-empty">
                     <div class="mpa-empty-icon">⏳</div>
-                    <p>Fetching product data for <strong>${month}</strong>…</p>
+                    <p>Fetching product data for <strong>${labelHint}</strong>…</p>
                 </div>`;
 
             let data;
             try {
-                const res = await fetch(`/api/sales/monthly-product-summary?month=${encodeURIComponent(month)}`);
+                const res = await fetch(endpoint);
                 data = await res.json();
             } catch (e) {
                 document.getElementById('mpaBody').innerHTML = `
@@ -3646,7 +3762,8 @@
         }
 
         function renderMpa(data) {
-            const { summary, products, month_label } = data;
+            const { summary, products } = data;
+            const month_label = data.week_label || data.year_label || data.month_label || '';
 
             if (!products || !products.length) {
                 document.getElementById('mpaBody').innerHTML = `
@@ -3843,8 +3960,8 @@
                                 <th class="num">Revenue</th>
                                 <th class="num">Avg Price</th>
                                 <th class="num">Units Share</th>
-                                <th class="num">Last Month</th>
-                                <th class="num">MoM Change</th>
+                                <th class="num">${mpaViewMode === 'weekly' ? 'Last Week' : mpaViewMode === 'yearly' ? 'Last Year' : 'Last Month'}</th>
+                                <th class="num">${mpaViewMode === 'weekly' ? 'WoW Change' : mpaViewMode === 'yearly' ? 'YoY Change' : 'MoM Change'}</th>
                             </tr>
                         </thead>
                         <tbody id="mpaTableBody">${tableRows}</tbody>
@@ -3915,8 +4032,11 @@
         // ── Export CSV ────────────────────────────────────────────────────────
         function exportMpaCsv() {
             if (!mpaCurrentData || !mpaCurrentData.products.length) return;
-            const { products, month_label } = mpaCurrentData;
-            const headers = ['Rank','Product','Category','Tier','Units Sold','Revenue (₱)','Avg Price (₱)','Units Share (%)','Last Month Units','MoM Change (%)'];
+            const { products } = mpaCurrentData;
+            const prevLabel   = mpaViewMode === 'weekly' ? 'Last Week Units' : mpaViewMode === 'yearly' ? 'Last Year Units' : 'Last Month Units';
+            const changeLabel = mpaViewMode === 'weekly' ? 'WoW Change (%)' : mpaViewMode === 'yearly' ? 'YoY Change (%)' : 'MoM Change (%)';
+            const periodKey   = mpaCurrentData.week || mpaCurrentData.year || mpaCurrentData.month || 'period';
+            const headers = ['Rank','Product','Category','Tier','Units Sold','Revenue (₱)','Avg Price (₱)','Units Share (%)', prevLabel, changeLabel];
             const rows = products.map(p => [
                 p.rank,
                 `"${p.name.replace(/"/g, '""')}"`,
@@ -3934,7 +4054,7 @@
             const url  = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `product_sales_${mpaCurrentData.month}.csv`;
+            a.download = `product_sales_${periodKey}.csv`;
             a.click();
             URL.revokeObjectURL(url);
             showToast('CSV exported ✅', 'success');

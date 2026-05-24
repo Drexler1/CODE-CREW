@@ -8549,6 +8549,269 @@ def api_sales_monthly_product_summary():
         return jsonify({"success": False, "message": str(exc)}), 500
 
 
+# ── GET /api/sales/weekly-product-summary ─────────────────────────────────────
+# Per-product sales summary for a given ISO calendar week.
+# Query params:
+#   week  — YYYY-Www  e.g. "2026-W21"  (defaults to current ISO week)
+#   limit — max products (default 100, max 200)
+
+
+@app.route("/api/sales/weekly-product-summary", methods=["GET"])
+def api_sales_weekly_product_summary():
+    if not is_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    week_str = (request.args.get("week") or "").strip()
+    try:
+        limit = min(int(request.args.get("limit", 100) or 100), 200)
+    except (TypeError, ValueError):
+        limit = 100
+
+    try:
+        if week_str:
+            # Parse "YYYY-Www" → Monday of that ISO week
+            import datetime as _dt
+            week_dt = _dt.datetime.strptime(week_str + "-1", "%G-W%V-%u")
+        else:
+            today = datetime.now().date()
+            iso = today.isocalendar()
+            import datetime as _dt
+            week_dt = _dt.datetime.strptime(f"{iso[0]}-W{iso[1]:02d}-1", "%G-W%V-%u")
+    except (ValueError, ImportError):
+        return jsonify({"success": False, "message": "Invalid week format — use YYYY-Www"}), 400
+
+    week_start = week_dt.strftime("%Y-%m-%d")
+    week_end_dt = week_dt + __import__('datetime').timedelta(days=7)
+    week_end = week_end_dt.strftime("%Y-%m-%d")
+
+    # Previous week
+    prev_start_dt = week_dt - __import__('datetime').timedelta(days=7)
+    prev_start = prev_start_dt.strftime("%Y-%m-%d")
+    prev_end = week_start
+
+    # Friendly label
+    iso_obj = week_dt.isocalendar()
+    week_label = f"Week {iso_obj[1]}, {iso_obj[0]}  ({week_dt.strftime('%b %d')}–{(week_end_dt - __import__('datetime').timedelta(days=1)).strftime('%b %d, %Y')})"
+
+    try:
+        cur = mysql.connection.cursor(DictCursor)
+
+        cur.execute(
+            """
+            SELECT
+                ti.product_name                 AS name,
+                COALESCE(ti.category_name, '—') AS category,
+                SUM(ti.quantity)                AS units_sold,
+                SUM(ti.line_total)              AS revenue,
+                ROUND(SUM(ti.line_total) / SUM(ti.quantity), 2) AS avg_price
+            FROM transaction_items ti
+            JOIN transactions t ON t.transaction_id = ti.transaction_id
+            WHERE t.status = 'completed'
+              AND DATE(t.created_at) >= %s
+              AND DATE(t.created_at) < %s
+            GROUP BY ti.product_name, ti.category_name
+            ORDER BY units_sold DESC
+            LIMIT %s
+            """,
+            (week_start, week_end, limit),
+        )
+        current_rows = cur.fetchall()
+
+        prev_units_map = {}
+        if current_rows:
+            product_names = [r["name"] for r in current_rows]
+            fmt = ",".join(["%s"] * len(product_names))
+            cur.execute(
+                f"""
+                SELECT ti.product_name AS name, SUM(ti.quantity) AS units_sold
+                FROM transaction_items ti
+                JOIN transactions t ON t.transaction_id = ti.transaction_id
+                WHERE t.status = 'completed'
+                  AND DATE(t.created_at) >= %s
+                  AND DATE(t.created_at) < %s
+                  AND ti.product_name IN ({fmt})
+                GROUP BY ti.product_name
+                """,
+                [prev_start, prev_end] + product_names,
+            )
+            for r in cur.fetchall():
+                prev_units_map[r["name"]] = int(r["units_sold"])
+
+        cur.close()
+
+        if not current_rows:
+            return jsonify({
+                "success": True, "week": week_str, "week_label": week_label,
+                "summary": {"total_units": 0, "total_revenue": 0, "total_products": 0,
+                            "best_seller_threshold": 0, "barely_sold_threshold": 0},
+                "products": [],
+            })
+
+        total_units = sum(int(r["units_sold"]) for r in current_rows)
+        total_revenue = sum(float(r["revenue"]) for r in current_rows)
+        n = len(current_rows)
+        sorted_units = sorted([int(r["units_sold"]) for r in current_rows])
+        p80_idx = max(0, int(n * 0.80) - 1)
+        p20_idx = max(0, int(n * 0.20) - 1)
+        best_seller_threshold = sorted_units[p80_idx] if sorted_units else 0
+        barely_sold_threshold = sorted_units[p20_idx] if sorted_units else 0
+
+        products = []
+        for rank, r in enumerate(current_rows, 1):
+            units = int(r["units_sold"])
+            rev = float(r["revenue"])
+            prev = prev_units_map.get(r["name"])
+            units_change_pct = None
+            if prev is not None and prev > 0:
+                units_change_pct = round(((units - prev) / prev) * 100, 1)
+            tier = "best_seller" if units >= best_seller_threshold and n >= 3 else \
+                   "barely_sold" if units <= barely_sold_threshold and n >= 3 else "mid"
+            products.append({
+                "rank": rank, "name": r["name"], "category": r["category"] or "—",
+                "units_sold": units, "revenue": rev, "avg_price": float(r["avg_price"] or 0),
+                "revenue_share": round((rev / total_revenue * 100), 1) if total_revenue else 0,
+                "units_share": round((units / total_units * 100), 1) if total_units else 0,
+                "tier": tier, "prev_units": prev, "units_change_pct": units_change_pct,
+            })
+
+        return jsonify({
+            "success": True, "week": week_str, "week_label": week_label,
+            "summary": {"total_units": total_units, "total_revenue": round(total_revenue, 2),
+                        "total_products": n, "best_seller_threshold": best_seller_threshold,
+                        "barely_sold_threshold": barely_sold_threshold},
+            "products": products,
+        })
+
+    except Exception as exc:
+        app.logger.error(f"[sales] weekly-product-summary: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+# ── GET /api/sales/yearly-product-summary ─────────────────────────────────────
+# Per-product sales summary for a full calendar year.
+# Query params:
+#   year  — YYYY  (defaults to current year)
+#   limit — max products (default 100, max 200)
+
+
+@app.route("/api/sales/yearly-product-summary", methods=["GET"])
+def api_sales_yearly_product_summary():
+    if not is_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    year_str = (request.args.get("year") or "").strip()
+    try:
+        limit = min(int(request.args.get("limit", 100) or 100), 200)
+    except (TypeError, ValueError):
+        limit = 100
+
+    try:
+        year = int(year_str) if year_str else datetime.now().year
+        if not (2000 <= year <= 2099):
+            raise ValueError
+    except ValueError:
+        return jsonify({"success": False, "message": "Invalid year — use YYYY between 2000 and 2099"}), 400
+
+    year_start = f"{year:04d}-01-01"
+    year_end   = f"{year + 1:04d}-01-01"
+    prev_start = f"{year - 1:04d}-01-01"
+    prev_end   = year_start
+    year_label = str(year)
+
+    try:
+        cur = mysql.connection.cursor(DictCursor)
+
+        cur.execute(
+            """
+            SELECT
+                ti.product_name                 AS name,
+                COALESCE(ti.category_name, '—') AS category,
+                SUM(ti.quantity)                AS units_sold,
+                SUM(ti.line_total)              AS revenue,
+                ROUND(SUM(ti.line_total) / SUM(ti.quantity), 2) AS avg_price
+            FROM transaction_items ti
+            JOIN transactions t ON t.transaction_id = ti.transaction_id
+            WHERE t.status = 'completed'
+              AND t.created_at >= %s
+              AND t.created_at < %s
+            GROUP BY ti.product_name, ti.category_name
+            ORDER BY units_sold DESC
+            LIMIT %s
+            """,
+            (year_start, year_end, limit),
+        )
+        current_rows = cur.fetchall()
+
+        prev_units_map = {}
+        if current_rows:
+            product_names = [r["name"] for r in current_rows]
+            fmt = ",".join(["%s"] * len(product_names))
+            cur.execute(
+                f"""
+                SELECT ti.product_name AS name, SUM(ti.quantity) AS units_sold
+                FROM transaction_items ti
+                JOIN transactions t ON t.transaction_id = ti.transaction_id
+                WHERE t.status = 'completed'
+                  AND t.created_at >= %s
+                  AND t.created_at < %s
+                  AND ti.product_name IN ({fmt})
+                GROUP BY ti.product_name
+                """,
+                [prev_start, prev_end] + product_names,
+            )
+            for r in cur.fetchall():
+                prev_units_map[r["name"]] = int(r["units_sold"])
+
+        cur.close()
+
+        if not current_rows:
+            return jsonify({
+                "success": True, "year": year_label, "year_label": year_label,
+                "summary": {"total_units": 0, "total_revenue": 0, "total_products": 0,
+                            "best_seller_threshold": 0, "barely_sold_threshold": 0},
+                "products": [],
+            })
+
+        total_units = sum(int(r["units_sold"]) for r in current_rows)
+        total_revenue = sum(float(r["revenue"]) for r in current_rows)
+        n = len(current_rows)
+        sorted_units = sorted([int(r["units_sold"]) for r in current_rows])
+        p80_idx = max(0, int(n * 0.80) - 1)
+        p20_idx = max(0, int(n * 0.20) - 1)
+        best_seller_threshold = sorted_units[p80_idx] if sorted_units else 0
+        barely_sold_threshold = sorted_units[p20_idx] if sorted_units else 0
+
+        products = []
+        for rank, r in enumerate(current_rows, 1):
+            units = int(r["units_sold"])
+            rev = float(r["revenue"])
+            prev = prev_units_map.get(r["name"])
+            units_change_pct = None
+            if prev is not None and prev > 0:
+                units_change_pct = round(((units - prev) / prev) * 100, 1)
+            tier = "best_seller" if units >= best_seller_threshold and n >= 3 else \
+                   "barely_sold" if units <= barely_sold_threshold and n >= 3 else "mid"
+            products.append({
+                "rank": rank, "name": r["name"], "category": r["category"] or "—",
+                "units_sold": units, "revenue": rev, "avg_price": float(r["avg_price"] or 0),
+                "revenue_share": round((rev / total_revenue * 100), 1) if total_revenue else 0,
+                "units_share": round((units / total_units * 100), 1) if total_units else 0,
+                "tier": tier, "prev_units": prev, "units_change_pct": units_change_pct,
+            })
+
+        return jsonify({
+            "success": True, "year": year_label, "year_label": year_label,
+            "summary": {"total_units": total_units, "total_revenue": round(total_revenue, 2),
+                        "total_products": n, "best_seller_threshold": best_seller_threshold,
+                        "barely_sold_threshold": barely_sold_threshold},
+            "products": products,
+        })
+
+    except Exception as exc:
+        app.logger.error(f"[sales] yearly-product-summary: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
 # ── GET /api/dashboard/stats ──────────────────────────────────────────────────
 # Live stats polling used by the dashboard JS (low-stock badge, sales cards).
 
