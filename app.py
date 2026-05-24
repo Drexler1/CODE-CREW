@@ -7215,6 +7215,42 @@ def api_cup_sizes_create():
         return jsonify({"success": False, "message": str(exc)}), 500
 
 
+# ── DELETE /api/inv_items/cup-sizes/<id> ─────────────────────
+# Soft-deletes a cup-size packaging item (sets is_active = 0).
+# Only admins may remove cup sizes.
+
+@app.route("/api/inv_items/cup-sizes/<int:item_id>", methods=["DELETE"])
+@csrf.exempt
+def api_cup_sizes_delete(item_id):
+    """Soft-delete a cup size entry (sets is_active=0)."""
+    if not is_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    try:
+        cur = mysql.connection.cursor(DictCursor)
+        # Confirm the item exists, is a cup-packaging row, and is currently active
+        cur.execute(
+            "SELECT id, name, unit FROM inv_items "
+            "WHERE id=%s AND type='packaging' AND is_active=1 "
+            "  AND unit REGEXP '^[0-9]+oz$'",
+            (item_id,),
+        )
+        row = cur.fetchone()
+        if not row:
+            cur.close()
+            return jsonify({"success": False, "message": "Cup size not found"}), 404
+        cur.execute(
+            "UPDATE inv_items SET is_active=0, updated_at=NOW() WHERE id=%s",
+            (item_id,),
+        )
+        mysql.connection.commit()
+        cur.close()
+        app.logger.info(f"[cup-sizes] deleted id={item_id} unit={row['unit']}")
+        return jsonify({"success": True, "id": item_id, "unit": row["unit"]})
+    except Exception as exc:
+        app.logger.error(f"[cup-sizes] delete: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
 # ── POST /api/inv_items ───────────────────────────────────────
 
 
