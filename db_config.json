@@ -1,8 +1,8 @@
 {
   "mysql_config": {
     "host": "localhost",
-    "user": "root",
-    "password": "",
+    "user": "codecrew_user",
+    "password": "BooksAndBlooms@2026",
     "database": "pos_system",
     "port": 3306
   }
