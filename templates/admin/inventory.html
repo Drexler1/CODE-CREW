@@ -697,6 +697,81 @@
             margin-top: 0.3rem;
         }
 
+        /* ── Add Cup Size button in section header ── */
+        .add-cup-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.35rem 0.85rem;
+            background: transparent;
+            border: 1.5px solid rgba(201,169,97,0.55);
+            border-radius: 6px;
+            color: var(--gold);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .add-cup-btn:hover {
+            background: var(--gold);
+            color: var(--black);
+            border-color: var(--gold);
+        }
+
+        /* ── Add Cup Size Modal ── */
+        #addCupSizeModal .modal { max-width: 420px; }
+
+        .cup-size-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f9f9f9;
+            border-radius: 10px;
+            border: 2px dashed #e0e0e0;
+            padding: 1.2rem;
+            margin-bottom: 1.2rem;
+            transition: all 0.25s;
+        }
+        .cup-size-preview .preview-icon { font-size: 2.4rem; line-height: 1; }
+        .cup-size-preview .preview-label {
+            font-weight: 800;
+            font-size: 1.05rem;
+            margin-top: 0.35rem;
+            color: var(--black);
+        }
+        .cup-size-preview .preview-hint {
+            font-size: 0.72rem;
+            color: #aaa;
+            margin-top: 0.15rem;
+        }
+
+        .cup-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        .cup-form-grid .full-width { grid-column: 1 / -1; }
+
+        .cup-unit-input-wrap {
+            position: relative;
+        }
+        .cup-unit-input-wrap input {
+            padding-right: 2.8rem;
+        }
+        .cup-unit-suffix {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #aaa;
+            pointer-events: none;
+        }
+
         /* Auto-deduction log */
         .deduction-log {
             max-height: 260px;
@@ -3192,8 +3267,10 @@
                     <div class="section-card">
                         <div class="section-card-header">
                             <h3>☕ Cup <span>Packaging</span></h3>
-                            <span style="font-size:0.75rem;color:#888;font-family:'DM Sans',sans-serif;">Auto-deducted
-                                on each sale</span>
+                            <div style="display:flex;align-items:center;gap:0.75rem;">
+                                <span style="font-size:0.75rem;color:#888;font-family:'DM Sans',sans-serif;">Auto-deducted on each sale</span>
+                                <button class="add-cup-btn" id="openAddCupSizeBtn">＋ Add Cup Size</button>
+                            </div>
                         </div>
                         <div class="section-card-body">
                             <div class="cups-grid" id="cupsGrid">
@@ -3432,6 +3509,71 @@
     </div>
 
     <!-- ADJUST STOCK MODAL -->
+    <!-- ADD CUP SIZE MODAL -->
+    <div class="modal-overlay" id="addCupSizeModal">
+        <div class="modal" style="max-width:420px;">
+            <div class="modal-header">
+                <h2>Add Cup <span>Size</span></h2>
+                <button class="modal-close" id="closeAddCupSizeModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <!-- Live preview card -->
+                <div class="cup-size-preview" id="cupSizePreview">
+                    <div class="preview-icon">🥤</div>
+                    <div class="preview-label" id="cupPreviewLabel">New Cup</div>
+                    <div class="preview-hint">Auto-deducted on each sale</div>
+                </div>
+
+                <div class="cup-form-grid">
+                    <!-- Ounce size -->
+                    <div class="full-width">
+                        <label class="form-label">Cup Size <span style="color:var(--danger)">*</span></label>
+                        <div class="cup-unit-input-wrap" style="margin-top:0.4rem;">
+                            <input type="number" class="form-control" id="newCupOz"
+                                min="1" max="128" step="1" placeholder="e.g. 20"
+                                oninput="updateCupPreview()">
+                            <span class="cup-unit-suffix">oz</span>
+                        </div>
+                        <div style="font-size:0.73rem;color:#aaa;margin-top:0.3rem;">
+                            Enter the cup size in ounces (e.g. 20 for a 20oz cup).
+                        </div>
+                    </div>
+
+                    <!-- Display name -->
+                    <div class="full-width">
+                        <label class="form-label">Display Name</label>
+                        <input type="text" class="form-control" id="newCupName"
+                            placeholder="e.g. 20oz Cup" style="margin-top:0.4rem;"
+                            oninput="updateCupPreview()">
+                        <div style="font-size:0.73rem;color:#aaa;margin-top:0.3rem;">
+                            Leave blank to auto-generate (e.g. "20oz Cup").
+                        </div>
+                    </div>
+
+                    <!-- Initial stock -->
+                    <div>
+                        <label class="form-label">Initial Stock (pcs)</label>
+                        <input type="number" class="form-control" id="newCupStock"
+                            min="0" step="1" value="0" style="margin-top:0.4rem;">
+                    </div>
+
+                    <!-- Reorder point -->
+                    <div>
+                        <label class="form-label">Reorder At (pcs)</label>
+                        <input type="number" class="form-control" id="newCupReorder"
+                            min="1" step="1" value="20" style="margin-top:0.4rem;">
+                    </div>
+                </div>
+
+                <div id="addCupSizeError" style="display:none;margin-top:0.75rem;padding:0.6rem 0.85rem;background:#fce4ec;border-radius:6px;color:#c62828;font-size:0.82rem;font-weight:600;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelAddCupSizeBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveAddCupSizeBtn">➕ Add Cup Size</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ADJUST STOCK MODAL (used for Cup Packaging only) -->
     <div class="modal-overlay" id="adjustModal">
         <div class="modal" style="max-width:400px;">
@@ -4009,9 +4151,30 @@
         let allItems = [], adjDirection = 'add', deleteItemId = null;
         let stockFilter = '';
 
-        const CUP_SIZES = ['8oz', '12oz', '16oz'];
-        const CUP_ICONS = { '8oz': '🥤', '12oz': '🥤', '16oz': '🥤' };
-        const CUP_NAMES = { '8oz': '8oz Cup', '12oz': '12oz Cup', '16oz': '16oz Cup' };
+        // Cup size data — populated dynamically from /api/inv_items/cup-sizes
+        // These arrays are rebuilt each time loadAll() runs.
+        let CUP_SIZES = ['8oz', '12oz', '16oz']; // fallback until first fetch
+        const CUP_ICONS = {}; // unit → emoji (always 🥤 for cups)
+        const CUP_NAMES = {}; // unit → display name
+
+        // Rebuild CUP_* from a live list of cup items
+        function syncCupConstants(cupItems) {
+            CUP_SIZES.length = 0;
+            cupItems
+                .slice()
+                .sort((a, b) => parseInt(a.unit) - parseInt(b.unit))
+                .forEach(c => {
+                    CUP_SIZES.push(c.unit);
+                    CUP_ICONS[c.unit] = '🥤';
+                    CUP_NAMES[c.unit] = c.name;
+                });
+            // Also update the cups-grid column count responsively
+            const grid = document.getElementById('cupsGrid');
+            if (grid) {
+                const cols = Math.min(CUP_SIZES.length, 4);
+                grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            }
+        }
 
         /* ═══════════════════════════════════════════════════════════════════
            OFFLINE-AWARE API LAYER
@@ -4152,6 +4315,17 @@
            LOAD & RENDER ALL
         ════════════════════════════════════════════ */
         async function loadAll() {
+            // Fetch cup sizes from dedicated endpoint to keep CUP_SIZES dynamic
+            try {
+                const cupRes = await fetch('/api/inv_items/cup-sizes', { cache: 'no-store' });
+                if (cupRes.ok) {
+                    const cupData = await cupRes.json();
+                    if (cupData.success && cupData.cups.length) {
+                        syncCupConstants(cupData.cups);
+                    }
+                }
+            } catch (_) { /* offline — keep fallback */ }
+
             allItems = await fetchItems();
             renderStats();
             renderCups();
@@ -4211,10 +4385,11 @@
         }
 
         async function initCup(unit) {
-            const payload = { name: CUP_NAMES[unit], type: 'packaging', stock: 0, unit, reorder_point: 20, note: 'Cup packaging — auto-deducted on sales' };
+            const name = CUP_NAMES[unit] || `${unit} Cup`;
+            const payload = { name, type: 'packaging', stock: 0, unit, reorder_point: 20, note: 'Cup packaging — auto-deducted on sales' };
             const data = await saveItem(payload, null);
             if (data.success) {
-                showToast(`✅ ${CUP_NAMES[unit]} initialized`, 'success');
+                showToast(`✅ ${name} initialized`, 'success');
                 await loadAll();
             } else {
                 showToast('❌ ' + (data.message || 'Error'), 'error');
@@ -4506,6 +4681,89 @@
 
         ['closeAdjModal', 'cancelAdjModal'].forEach(id => document.getElementById(id).addEventListener('click', () => closeModal('adjustModal')));
         document.getElementById('adjustModal').addEventListener('click', e => { if (e.target === document.getElementById('adjustModal')) closeModal('adjustModal'); });
+
+        /* ════════════════════════════════════════════
+           ADD CUP SIZE MODAL
+        ════════════════════════════════════════════ */
+        function updateCupPreview() {
+            const oz   = (document.getElementById('newCupOz').value || '').trim();
+            const name = (document.getElementById('newCupName').value || '').trim();
+            const label = name || (oz ? `${oz}oz Cup` : 'New Cup');
+            document.getElementById('cupPreviewLabel').textContent = label;
+            const preview = document.getElementById('cupSizePreview');
+            preview.style.borderColor = oz ? 'var(--gold)' : '#e0e0e0';
+            preview.style.background  = oz ? 'rgba(201,169,97,0.06)' : '#f9f9f9';
+        }
+
+        function openAddCupSizeModal() {
+            document.getElementById('newCupOz').value      = '';
+            document.getElementById('newCupName').value    = '';
+            document.getElementById('newCupStock').value   = '0';
+            document.getElementById('newCupReorder').value = '20';
+            document.getElementById('addCupSizeError').style.display = 'none';
+            document.getElementById('cupPreviewLabel').textContent = 'New Cup';
+            const preview = document.getElementById('cupSizePreview');
+            preview.style.borderColor = '#e0e0e0';
+            preview.style.background  = '#f9f9f9';
+            openModal('addCupSizeModal');
+            document.getElementById('newCupOz').focus();
+        }
+
+        document.getElementById('openAddCupSizeBtn').addEventListener('click', openAddCupSizeModal);
+        ['closeAddCupSizeModal', 'cancelAddCupSizeBtn'].forEach(id =>
+            document.getElementById(id).addEventListener('click', () => closeModal('addCupSizeModal'))
+        );
+        document.getElementById('addCupSizeModal').addEventListener('click', e => {
+            if (e.target === document.getElementById('addCupSizeModal')) closeModal('addCupSizeModal');
+        });
+
+        document.getElementById('saveAddCupSizeBtn').addEventListener('click', async () => {
+            const oz      = (document.getElementById('newCupOz').value || '').trim();
+            const name    = (document.getElementById('newCupName').value || '').trim();
+            const stock   = parseInt(document.getElementById('newCupStock').value   || '0') || 0;
+            const reorder = parseInt(document.getElementById('newCupReorder').value || '20') || 20;
+            const errEl   = document.getElementById('addCupSizeError');
+
+            errEl.style.display = 'none';
+            if (!oz || isNaN(parseInt(oz)) || parseInt(oz) < 1) {
+                errEl.textContent = 'Please enter a valid cup size in ounces (e.g. 20).';
+                errEl.style.display = 'block';
+                document.getElementById('newCupOz').focus();
+                return;
+            }
+
+            const unit = `${parseInt(oz)}oz`;
+            if (CUP_SIZES.includes(unit)) {
+                errEl.textContent = `A "${unit}" cup size already exists. Adjust its stock from the cup cards instead.`;
+                errEl.style.display = 'block';
+                return;
+            }
+
+            const btn = document.getElementById('saveAddCupSizeBtn');
+            btn.disabled = true; btn.innerHTML = '⏳ Adding…';
+
+            try {
+                const res = await fetch('/api/inv_items/cup-sizes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ unit, name: name || `${unit} Cup`, stock, reorder_point: reorder }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`✅ ${data.name} added to cup inventory!`, 'success');
+                    closeModal('addCupSizeModal');
+                    await loadAll();
+                } else {
+                    errEl.textContent = data.message || 'Failed to add cup size.';
+                    errEl.style.display = 'block';
+                }
+            } catch (e) {
+                errEl.textContent = 'Network error — please check your connection.';
+                errEl.style.display = 'block';
+            }
+
+            btn.disabled = false; btn.innerHTML = '➕ Add Cup Size';
+        });
 
         document.getElementById('saveAdjBtn').addEventListener('click', async () => {
             const id = document.getElementById('adjItemId').value;

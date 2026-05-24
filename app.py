@@ -5824,7 +5824,7 @@ def api_pos_checkout():
         cup_stock_map = {}
         cur.execute(
             "SELECT id, name, unit, stock FROM inv_items "
-            "WHERE unit IN ('8oz','12oz','16oz') AND is_active=1"
+            "WHERE type='packaging' AND is_active=1 AND unit REGEXP '^[0-9]+oz$'"
         )
         for _cr in cur.fetchall():
             cup_stock_map[_cr["unit"]] = {
@@ -5832,6 +5832,7 @@ def api_pos_checkout():
                 "name": _cr["name"],
                 "stock": float(_cr["stock"]),
             }
+        _dynamic_cup_units = set(cup_stock_map.keys()) or CUP_UNITS
 
         # Build validated line items
         line_items = []
@@ -5849,8 +5850,8 @@ def api_pos_checkout():
 
             # cup_size is sent per-item from the cashier POS size picker
             cup_size = (str(raw.get("cup_size") or "")).strip() or None
-            if cup_size and cup_size not in {"8oz", "12oz", "16oz"}:
-                cup_size = None  # reject garbage values
+            if cup_size and cup_size not in _dynamic_cup_units:
+                cup_size = None  # reject unrecognised cup sizes
 
             # ── Stock validation ────────────────────────────────────────────
             # Product-level stock counts are NOT validated at checkout.
@@ -6015,16 +6016,16 @@ def api_pos_checkout():
         # ── Auto-deduct cup packaging from inv_items (same transaction) ─────────
         # Runs synchronously inside the open transaction so the packaging deduction
         # is atomic with the sale: either both commit or both roll back.
-        # cup_size ("8oz" / "12oz" / "16oz") was captured at the POS size-picker
-        # and forwarded on every cup-eligible line item.
-        cup_name_map = {"8oz": "8oz Cup", "12oz": "12oz Cup", "16oz": "16oz Cup"}
+        # cup_size is the unit string captured at the POS size-picker (e.g. "8oz",
+        # "12oz", "16oz", "20oz" …) and forwarded on every cup-eligible line item.
         for li in line_items:
             cup_unit = (li.get("cup_size") or "").strip()
-            if not cup_unit or cup_unit not in CUP_UNITS:
+            if not cup_unit or cup_unit not in _dynamic_cup_units:
                 continue  # non-cup item — skip
 
             qty = int(li.get("quantity", 1))
-            cup_display = cup_name_map.get(cup_unit)
+            # Derive a canonical display name from the unit (e.g. "20oz" → "20oz Cup")
+            cup_display = f"{cup_unit} Cup"
 
             # Lookup inv_items row — prefer unit match, fall back to name match
             cur.execute(
@@ -6962,7 +6963,30 @@ def ensure_migration():
 
 # ── Helpers ───────────────────────────────────────────────────
 
-CUP_UNITS = {"8oz", "12oz", "16oz"}  # units that auto-deduct from inv_items
+CUP_UNITS = {"8oz", "12oz", "16oz"}  # legacy fallback — runtime always queries DB
+
+
+def _get_cup_units(cur=None):
+    """
+    Return a set of unit strings for all active cup-packaging items in inv_items.
+    Cup items are identified by type='packaging' AND unit matching the pattern
+    '<digits>oz' (e.g. '8oz', '12oz', '20oz').
+    Falls back to the legacy hardcoded set if the DB query fails.
+    """
+    try:
+        own_cursor = cur is None
+        if own_cursor:
+            cur = mysql.connection.cursor(DictCursor)
+        cur.execute(
+            "SELECT DISTINCT unit FROM inv_items "
+            "WHERE type='packaging' AND is_active=1 AND unit REGEXP '^[0-9]+oz$'"
+        )
+        units = {r["unit"] for r in cur.fetchall()}
+        if own_cursor:
+            cur.close()
+        return units if units else CUP_UNITS
+    except Exception:
+        return CUP_UNITS
 
 
 def _log_inv_change(
@@ -7002,22 +7026,21 @@ def _log_inv_change(
 def _deduct_cups_for_sale(transaction_id, items, cashier_name=""):
     """
     Called after a successful checkout.
-    For each cart item that carries a cup_size (8oz / 12oz / 16oz),
-    deduct 1 cup per unit sold from inv_items.
-    The cup_size is chosen at the POS at the time of sale — it is NOT
-    stored on the product record any more.
+    For each cart item that carries a cup_size (any '<N>oz' unit present in
+    inv_items as type='packaging'), deduct 1 cup per unit sold from inv_items.
+    The cup_size is chosen at the POS at the time of sale.
     """
     try:
         cur = mysql.connection.cursor(DictCursor)
+        dynamic_cup_units = _get_cup_units(cur)
         for item in items:
             quantity = int(item.get("quantity", 1))
             # cup_size is passed directly from the POS cart item
             cup_unit = (item.get("cup_size") or "").strip()
-            if not cup_unit or cup_unit not in CUP_UNITS or quantity <= 0:
+            if not cup_unit or cup_unit not in dynamic_cup_units or quantity <= 0:
                 continue
-            # Map cup_unit to the canonical display name used in inv_items
-            cup_name_map = {"8oz": "8oz Cup", "12oz": "12oz Cup", "16oz": "16oz Cup"}
-            cup_display_name = cup_name_map.get(cup_unit)
+            # Derive display name: e.g. "20oz" → "20oz Cup"
+            cup_display_name = f"{cup_unit} Cup"
 
             # Try lookup by unit first, then fall back to name
             cur.execute(
@@ -7026,7 +7049,7 @@ def _deduct_cups_for_sale(transaction_id, items, cashier_name=""):
                 (cup_unit,),
             )
             cup = cur.fetchone()
-            if not cup and cup_display_name:
+            if not cup:
                 # Fallback: match by name (covers edge cases where unit column differs)
                 cur.execute(
                     "SELECT id, name, stock FROM inv_items "
@@ -7103,6 +7126,92 @@ def api_inv_items_list():
         return jsonify({"success": True, "items": items})
     except Exception as exc:
         app.logger.error(f"[inv_items] list: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+# ── GET /api/inv_items/cup-sizes ─────────────────────────────
+# Returns all cup packaging items (type='packaging', unit matches \d+oz).
+# Used by the inventory frontend to dynamically build the cup cards grid.
+
+@app.route("/api/inv_items/cup-sizes", methods=["GET"])
+def api_cup_sizes_list():
+    """Return all active cup-packaging items sorted by ounces ascending."""
+    if "employee_id" not in session and "admin_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    try:
+        cur = mysql.connection.cursor(DictCursor)
+        cur.execute(
+            """
+            SELECT id, name, type, stock, unit, reorder_point, note, updated_at
+            FROM inv_items
+            WHERE type = 'packaging' AND is_active = 1
+              AND unit REGEXP '^[0-9]+oz$'
+            ORDER BY CAST(REPLACE(unit,'oz','') AS UNSIGNED)
+            """
+        )
+        items = cur.fetchall()
+        cur.close()
+        for item in items:
+            s = float(item["stock"])
+            r = float(item["reorder_point"])
+            item["status"] = "out" if s <= 0 else ("low" if s <= r else "ok")
+            item["stock"] = float(item["stock"])
+            item["reorder_point"] = float(item["reorder_point"])
+        return jsonify({"success": True, "cups": items})
+    except Exception as exc:
+        app.logger.error(f"[cup-sizes] list: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+# ── POST /api/inv_items/cup-sizes ────────────────────────────
+# Create a new cup size. Validates that the unit is a valid '<N>oz' string
+# and that no active cup item with that unit already exists.
+
+@app.route("/api/inv_items/cup-sizes", methods=["POST"])
+@csrf.exempt
+def api_cup_sizes_create():
+    """Add a new cup size to inventory."""
+    if not is_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    data = request.get_json(silent=True) or {}
+    raw_unit = (data.get("unit") or "").strip().lower()
+    # Normalise — accept "20", "20oz", "20 oz" etc.
+    import re as _re
+    m = _re.match(r'^(\d+)\s*oz?$', raw_unit)
+    if not m:
+        return jsonify({"success": False, "message": "Unit must be a number followed by 'oz' (e.g. 20oz)"}), 400
+    unit = f"{m.group(1)}oz"
+    name = data.get("name") or f"{unit} Cup"
+    try:
+        stock = max(0, float(data.get("stock", 0) or 0))
+        reorder_point = max(1, float(data.get("reorder_point", 20) or 20))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "Stock and reorder point must be numbers"}), 400
+
+    try:
+        cur = mysql.connection.cursor(DictCursor)
+        # Duplicate check
+        cur.execute(
+            "SELECT id FROM inv_items WHERE unit=%s AND type='packaging' AND is_active=1",
+            (unit,),
+        )
+        if cur.fetchone():
+            cur.close()
+            return jsonify({"success": False, "message": f"A cup size '{unit}' already exists"}), 409
+        cur.execute(
+            """
+            INSERT INTO inv_items (name, type, stock, unit, reorder_point, note)
+            VALUES (%s, 'packaging', %s, %s, %s, %s)
+            """,
+            (name, stock, unit, reorder_point, "Cup packaging — auto-deducted on sales"),
+        )
+        new_id = cur.lastrowid
+        mysql.connection.commit()
+        cur.close()
+        return jsonify({"success": True, "id": new_id, "unit": unit, "name": name,
+                        "stock": stock, "reorder_point": reorder_point})
+    except Exception as exc:
+        app.logger.error(f"[cup-sizes] create: {exc}")
         return jsonify({"success": False, "message": str(exc)}), 500
 
 
@@ -7699,7 +7808,7 @@ def _ensure_inv_tables():
         )
         # Seed default cup items if none exist
         cur.execute(
-            "SELECT COUNT(*) AS c FROM inv_items WHERE unit IN ('8oz','12oz','16oz')"
+            "SELECT COUNT(*) AS c FROM inv_items WHERE type='packaging' AND unit REGEXP '^[0-9]+oz$'"
         )
         if cur.fetchone()[0] == 0:
             cur.executemany(
