@@ -2070,16 +2070,17 @@
             <div class="modal-body">
                 <div class="payment-method-grid">
                     <button class="pay-btn active" data-method="cash">💵 Cash</button>
-                    <button class="pay-btn" data-method="card">💳 Card</button>
                     <button class="pay-btn" data-method="gcash">📱 GCash</button>
-                    <button class="pay-btn" data-method="maya">🔵 Maya</button>
-                    <button class="pay-btn" data-method="other">⋯ Other</button>
                 </div>
                 <div class="payment-detail" id="cashDetail">
                     <div class="payment-label">Amount Tendered (₱)</div>
                     <input type="number" class="payment-input" id="tenderedInput" placeholder="0.00" min="0"
                         step="0.01">
                     <div class="change-display" id="changeDisplay" style="display:none;">Change: ₱0.00</div>
+                </div>
+                <div class="payment-detail" id="gcashDetail" style="display:none;">
+                    <div class="payment-label">GCash Reference No. (optional)</div>
+                    <input type="text" class="payment-input" id="gcashRefInput" placeholder="e.g. 1234567890" maxlength="30">
                 </div>
                 <div class="payment-summary">
                     <div class="ps-row"><span>Subtotal</span><span id="pmSubtotal">₱0.00</span></div>
@@ -2573,6 +2574,9 @@
 
             document.querySelectorAll('.pay-btn').forEach(b => b.classList.toggle('active', b.dataset.method === 'cash'));
             document.getElementById('cashDetail').style.display = 'block';
+            document.getElementById('gcashDetail').style.display = 'none';
+            document.getElementById('gcashRefInput').value = '';
+            selectedPayMethod = 'cash';
             openModal('paymentModal');
         });
 
@@ -2590,6 +2594,7 @@
                 selectedPayMethod = btn.dataset.method;
                 document.querySelectorAll('.pay-btn').forEach(b => b.classList.toggle('active', b.dataset.method === selectedPayMethod));
                 document.getElementById('cashDetail').style.display = selectedPayMethod === 'cash' ? 'block' : 'none';
+                document.getElementById('gcashDetail').style.display = selectedPayMethod === 'gcash' ? 'block' : 'none';
             });
         });
 
@@ -2636,6 +2641,7 @@
                 discount_amount: vc.discount,
                 payment_method: selectedPayMethod,
                 amount_tendered: selectedPayMethod === 'cash' ? tendered : vc.total,
+                gcash_ref: selectedPayMethod === 'gcash' ? (document.getElementById('gcashRefInput').value.trim() || null) : null,
             };
 
             try {
@@ -2650,6 +2656,12 @@
                 document.querySelectorAll('.disc-type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === 'none'));
                 document.getElementById('manualDiscountWrap').style.display = 'none';
                 document.getElementById('discountInput').value = '0';
+                // Reset payment method UI back to cash
+                selectedPayMethod = 'cash';
+                document.querySelectorAll('.pay-btn').forEach(b => b.classList.toggle('active', b.dataset.method === 'cash'));
+                document.getElementById('cashDetail').style.display = 'block';
+                document.getElementById('gcashDetail').style.display = 'none';
+                document.getElementById('gcashRefInput').value = '';
                 updateCart();
                 await loadProducts();
                 // Refresh cup stock cache so the next customer's size-picker
@@ -2666,7 +2678,7 @@
 
         /* RECEIPT */
         function showReceiptModal(receipt) {
-            const methodLabels = { cash: 'Cash', card: 'Card', gcash: 'GCash', maya: 'Maya', other: 'Other' };
+            const methodLabels = { cash: 'Cash', gcash: 'GCash' };
             const method = methodLabels[receipt.payment_method] || receipt.payment_method;
 
             const itemsHtml = receipt.items.map(i => {
