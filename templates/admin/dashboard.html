@@ -909,7 +909,9 @@
                 <li><a href="{{ url_for('inventory') }}">Inventory</a></li>
                 <li><a href="{{ url_for('staff_attendance') }}">Staff Attendance</a></li>
                 <li><a href="{{ url_for('product_management') }}">Product Management</a></li>
+                {% if session.get('role') == 'admin' %}
                 <li><a href="{{ url_for('admin_settings') }}">Settings</a></li>
+                {% endif %}
                 <li><a href="{{ url_for('employee_management') }}">Employee Management</a></li>
                 <li><a href="{{ url_for('payroll') }}">Payroll</a></li>
             </ul>

@@ -741,18 +741,35 @@ def reset_liveness(emp_id):
 
 def is_admin():
     """
-    Return True if the current session has full admin privileges.
+    Return True if the current session belongs to an admin or a manager.
 
-    Admins can log in either via the legacy 'admin' role (session['role']=='admin')
-    OR via the Manager tab (session['role']=='manager' with session['is_admin']==True).
-    All routes that previously checked 'admin_id' in session should call is_admin()
-    instead so both paths are covered.
+    Accepted session states:
+      1. Legacy admin login  — role='admin'  AND admin_id in session
+      2. Admin via Manager tab — role='manager' AND is_admin=True
+      3. Regular manager login — role='manager' AND is_admin=False
+         (employees table row with role='manager'; has access to all
+          management pages but is NOT a super-admin)
+
+    All page/API routes use this helper so both admin and manager paths
+    are covered without duplicating logic.
     """
     if session.get("role") == "admin" and "admin_id" in session:
         return True
-    if session.get("role") == "manager" and session.get("is_admin") is True:
+    if session.get("role") == "manager":
+        # Covers both is_admin=True (admin logged in via Manager tab)
+        # and is_admin=False (regular manager employee account).
         return True
     return False
+
+
+def is_super_admin():
+    """
+    Return True only for true admin accounts (not managers).
+
+    Used to restrict sensitive configuration routes — like hourly rate
+    edits and late-deduction settings — that managers must not access.
+    """
+    return session.get("role") == "admin" and "admin_id" in session
 
 
 def decode_base64_image(image_data: str):
@@ -2915,7 +2932,8 @@ def api_attendance():
 
 @app.route("/admin_settings")
 def admin_settings():
-    if not is_admin():
+    # Settings are restricted to super-admins only; managers are not permitted.
+    if not is_super_admin():
         return redirect(url_for("login"))
 
     cur = mysql.connection.cursor(DictCursor)
@@ -2990,9 +3008,9 @@ def _ensure_email_settings_table():
 # ── GET  /api/settings/email ──────────────────────────────────────────────────
 @app.route("/api/settings/email", methods=["GET"])
 def api_get_email_settings():
-    """Return the current email / alert configuration (password masked)."""
-    if not is_admin():
-        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    """Return the current email / alert configuration (password masked). Super-admin only."""
+    if not is_super_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
     _ensure_email_settings_table()
     try:
         cur = mysql.connection.cursor(DictCursor)
@@ -3020,8 +3038,8 @@ def api_save_email_settings():
     Accepts JSON body with any subset of the settings columns.
     The SMTP password is only updated when the client sends a non-placeholder value.
     """
-    if not is_admin():
-        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    if not is_super_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
     _ensure_email_settings_table()
 
     data = request.get_json(silent=True) or {}
@@ -3084,8 +3102,8 @@ def api_auto_configure_email():
     recommended host / port / TLS settings without saving anything.
     Body: { "email": "user@gmail.com" }
     """
-    if not is_admin():
-        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    if not is_super_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
 
     data  = request.get_json(silent=True) or {}
     email = data.get("email", "").strip().lower()
@@ -3143,8 +3161,8 @@ def api_test_email():
     Runs in a background thread so the HTTP response returns immediately.
     Returns { success, message } indicating whether the connection succeeded.
     """
-    if not is_admin():
-        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    if not is_super_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
     _ensure_email_settings_table()
 
     try:
@@ -3237,8 +3255,8 @@ def api_send_low_stock_alert():
     Manually trigger a low-stock alert email right now.
     Fetches the current low-stock items and sends a formatted email report.
     """
-    if not is_admin():
-        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    if not is_super_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
     _ensure_email_settings_table()
 
     try:
@@ -3429,7 +3447,7 @@ def api_danger_reset_settings():
     Clears email_alert_settings and resets app_settings keys to their
     seeded default values.  Admin-only.
     """
-    if not is_admin():
+    if not is_super_admin():
         return jsonify({"success": False, "message": "Unauthorized"}), 403
 
     try:
@@ -3478,7 +3496,7 @@ def api_danger_clear_transactions():
     and receipts from the database.  Voided transactions are also removed.
     Admin-only.  Returns the count of deleted transactions.
     """
-    if not is_admin():
+    if not is_super_admin():
         return jsonify({"success": False, "message": "Unauthorized"}), 403
 
     try:
@@ -4656,8 +4674,8 @@ def api_payroll_employees():
 @app.route("/api/payroll/update_rate", methods=["POST"])
 @csrf.exempt
 def api_payroll_update_rate():
-    """Admin: update an employee's hourly_rate."""
-    if not is_admin():
+    """Admin-only: update an employee's hourly_rate. Managers are not permitted."""
+    if not is_super_admin():
         return jsonify({"success": False, "message": "Unauthorized"}), 401
     data = request.get_json(silent=True) or {}
     employee_id = data.get("employee_id")
@@ -9028,8 +9046,8 @@ def api_admin_change_password():
     Allow the logged-in admin to change their own password.
     Requires JSON body: { current_password, new_password, confirm_password }
     """
-    if not is_admin():
-        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    if not is_super_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
 
     data = request.get_json(silent=True) or {}
     current_pw = (data.get("current_password") or "").strip()
@@ -9741,8 +9759,8 @@ def _get_late_deduction_settings() -> dict:
 
 @app.route("/api/settings/late_deduction", methods=["GET"])
 def api_get_late_deduction_settings():
-    """Return current late-deduction configuration."""
-    if not is_admin():
+    """Admin-only: return current late-deduction configuration. Managers are not permitted."""
+    if not is_super_admin():
         return jsonify({"success": False, "message": "Unauthorized"}), 401
     cfg = _get_late_deduction_settings()
     return jsonify({"success": True, "settings": cfg})
@@ -9751,8 +9769,8 @@ def api_get_late_deduction_settings():
 @app.route("/api/settings/late_deduction", methods=["POST"])
 @csrf.exempt
 def api_set_late_deduction_settings():
-    """Admin: update grace period and/or deduction amount."""
-    if not is_admin():
+    """Admin-only: update grace period and/or deduction amount. Managers are not permitted."""
+    if not is_super_admin():
         return jsonify({"success": False, "message": "Unauthorized"}), 401
 
     data = request.get_json(silent=True) or {}
