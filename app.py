@@ -1002,7 +1002,14 @@ def register_face_frame():
     Sequential safety: if a previous call for the same token is still
     running (DeepFace can take 2–5 s on CPU), this call returns immediately
     with a "busy" response so the client retries on the next tick.
+
+    SECURITY: only admins/managers may register new employee faces.
+    Without this guard, anyone on the network could POST a fabricated
+    token + face image and seed a registration session unattended.
     """
+    if not is_admin():
+        return jsonify({"success": False, "message": "Unauthorized", "captured": 0}), 401
+
     try:
         data = request.get_json(silent=True) or {}
         token = data.get("token", "")
@@ -1118,7 +1125,13 @@ def commit_face_registration():
 
     POST JSON:  { "token": str, "employee_id": int }
     Response:   { "success": bool, "message": str }
+
+    SECURITY: only admins/managers may finalize a face registration and
+    bind it to an employee record.
     """
+    if not is_admin():
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
     data = request.get_json(silent=True) or {}
     token = data.get("token", "")
     employee_id = data.get("employee_id")
