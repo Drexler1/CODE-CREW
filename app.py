@@ -8097,7 +8097,7 @@ def _sse_notify_product_change():
         cur.execute("""
             SELECT p.product_id, p.name, p.description, p.sku,
                    p.image_url, p.icon, p.price, p.cost,
-                   p.stock, p.reorder_point, p.unit,
+                   p.stock, p.reorder_point, p.unit, p.cup_eligible,
                    p.is_active,
                    c.category_id, c.name AS category_name
             FROM products p
@@ -8120,6 +8120,7 @@ def _sse_notify_product_change():
                 "stock": int(r["stock"]),
                 "reorder_point": int(r["reorder_point"]),
                 "unit": r["unit"],
+                "cup_eligible": bool(r.get("cup_eligible", 0)),
                 "category_id": r["category_id"],
                 "category_name": r["category_name"] or "Other",
             }
