@@ -15,10 +15,10 @@ from flask_mysqldb import MySQL
 from MySQLdb.cursors import DictCursor
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from deepface import DeepFace
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
-import base64, cv2, os, numpy as np, time, hashlib, bcrypt, json, secrets
+import base64, cv2, os, numpy as np, time, hashlib, bcrypt, json, secrets, re
 import smtplib, threading, csv, io
 from flask import Response
 from email.mime.multipart import MIMEMultipart
@@ -385,9 +385,7 @@ def _ensure_trash_table():
         migrated = 0
         for row in rows:
             disabled_at = row["disabled_at"] or datetime.now()
-            import datetime as _dt
-
-            delete_at = disabled_at + _dt.timedelta(hours=24)
+            delete_at = disabled_at + timedelta(hours=24)
             cur.execute(
                 """
                 INSERT INTO employees_trash
@@ -529,7 +527,7 @@ def check_lockout(username_hash: str, role: str) -> dict:
             "attempts_left": MAX_ATTEMPTS,
         }
 
-    now = datetime.utcnow()
+    now = datetime.now()
     locked_until = row.get("locked_until")
 
     if locked_until and locked_until > now:
@@ -563,7 +561,7 @@ def record_failed_attempt(username_hash: str, role: str) -> dict:
     Returns the same dict shape as check_lockout() reflecting the new state.
     """
     key = _lockout_key(username_hash, role)
-    now = datetime.utcnow()
+    now = datetime.now()
     try:
         conn = mysql.connection
         cur = conn.cursor(DictCursor)
@@ -578,8 +576,6 @@ def record_failed_attempt(username_hash: str, role: str) -> dict:
         locked_until = None
 
         if new_count >= MAX_ATTEMPTS:
-            from datetime import timedelta
-
             locked_until = now + timedelta(minutes=LOCKOUT_MINS)
 
         cur.execute(
@@ -1432,7 +1428,7 @@ def verify_face():
             app.logger.error(f"[face_mismatch_log] write failed: {log_err}")
 
         if fm["count"] >= MAX_FACE_MISMATCHES:
-            fm["locked_until"] = datetime.now() + __import__("datetime").timedelta(
+            fm["locked_until"] = datetime.now() + timedelta(
                 seconds=FACE_LOCKOUT_SECONDS
             )
             fm["count"] = 0
@@ -1466,7 +1462,7 @@ def verify_face():
     verified_tokens[verify_token] = {
         "employee_id": employee_id,
         "expires": datetime.now()
-        + __import__("datetime").timedelta(seconds=VERIFY_TOKEN_TTL),
+        + timedelta(seconds=VERIFY_TOKEN_TTL),
     }
     # Purge expired tokens to prevent unbounded memory growth
     _now = datetime.now()
@@ -1890,10 +1886,8 @@ def dashboard():
         )
         chart_rows = {str(r["day"]): float(r["total"]) for r in cur.fetchall()}
 
-        from datetime import date as _date, timedelta as _td
-
         day_labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-        week_days = [(_date.today() - _td(days=6 - i)) for i in range(7)]
+        week_days = [(date.today() - timedelta(days=6 - i)) for i in range(7)]
         week_totals = [chart_rows.get(str(d), 0.0) for d in week_days]
         max_total = max(week_totals) if any(week_totals) else 1
         for d, total in zip(week_days, week_totals):
@@ -1987,8 +1981,7 @@ def api_employee_of_month():
     if session.get("role") not in ["admin", "manager"]:
         return jsonify({"success": False, "message": "Unauthorized"}), 403
 
-    import datetime as _dt2
-    today = _dt2.date.today()
+    today = date.today()
     year  = int(request.args.get("year",  today.year))
     month = int(request.args.get("month", today.month))
 
@@ -1999,7 +1992,7 @@ def api_employee_of_month():
     else:
         period_end = f"{year:04d}-{month+1:02d}-01"
 
-    month_label = _dt2.date(year, month, 1).strftime("%B %Y")
+    month_label = date(year, month, 1).strftime("%B %Y")
 
     cur = mysql.connection.cursor(DictCursor)
     try:
@@ -2328,8 +2321,6 @@ def delete_employee(employee_id):
         return jsonify({"success": False, "message": "Unauthorized"}), 401
 
     try:
-        import datetime as _dt
-
         cur = mysql.connection.cursor(DictCursor)
 
         # Fetch the full employee row before touching it
@@ -2362,7 +2353,7 @@ def delete_employee(employee_id):
             )
 
         now = datetime.now()
-        delete_at = now + _dt.timedelta(hours=24)
+        delete_at = now + timedelta(hours=24)
 
         # Insert snapshot into trash
         cur.execute(
@@ -4216,9 +4207,7 @@ def run_auto_migration():
                 s = str(v).strip()
                 if _is_enc(s):
                     continue
-                import re as _re
-
-                if _re.fullmatch(r"[A-Za-z0-9+/=]+", s) and 16 <= len(s) < 44:
+                if re.fullmatch(r"[A-Za-z0-9+/=]+", s) and 16 <= len(s) < 44:
                     upd[f] = ""
                     app.logger.warning(
                         f"[migration] Cleared truncated ciphertext in "
@@ -4255,9 +4244,7 @@ def run_auto_migration():
                 s = str(v).strip()
                 if _is_enc(s):
                     continue
-                import re as _re
-
-                if _re.fullmatch(r"[A-Za-z0-9+/=]+", s) and 16 <= len(s) < 44:
+                if re.fullmatch(r"[A-Za-z0-9+/=]+", s) and 16 <= len(s) < 44:
                     upd[f] = ""
                     app.logger.warning(
                         f"[migration] Cleared truncated ciphertext in "
@@ -4364,7 +4351,6 @@ def run_auto_migration():
 
     # ── STEP 16: close any missed clock-outs from yesterday (server restart catch) ─
     try:
-        from datetime import timedelta
         _auto_clockout_missed((datetime.now() - timedelta(days=1)).date())
     except Exception as exc:
         app.logger.error(f"[migration] Step 16 (startup auto-clockout) failed: {exc}")
@@ -4630,7 +4616,6 @@ def _compute_period_bounds(ref_date=None):
       • 1st – 15th
       • 16th – last day of month
     """
-    from datetime import date, timedelta
     import calendar as _cal
 
     d = ref_date or date.today()
@@ -4719,12 +4704,10 @@ def api_payroll_daily():
 
     date_str = request.args.get("date")
     try:
-        from datetime import date as _date
-
         dt = (
             datetime.strptime(date_str, "%Y-%m-%d").date()
             if date_str
-            else _date.today()
+            else date.today()
         )
     except ValueError:
         return jsonify({"success": False, "message": "Invalid date"}), 400
@@ -4811,7 +4794,6 @@ def api_payroll_period():
     if not is_admin():
         return jsonify({"success": False, "message": "Unauthorized"}), 401
 
-    from datetime import date as _date, timedelta
     import calendar as _cal
 
     # ── Resolve period bounds ────────────────────────────────────────────────
@@ -4972,8 +4954,6 @@ def api_payroll_salary_detail():
         return jsonify({"success": False, "message": "Missing parameters"}), 400
 
     try:
-        from datetime import date as _date, timedelta as _td
-
         ps = datetime.strptime(period_start, "%Y-%m-%d").date()
         pe = datetime.strptime(period_end, "%Y-%m-%d").date()
     except ValueError:
@@ -5067,7 +5047,7 @@ def api_payroll_salary_detail():
                     "deduction_waived": False,
                 }
             )
-        current += _td(days=1)
+        current += timedelta(days=1)
 
     total_deductions = round(sum(d["late_deduction"] for d in days if not d["deduction_waived"]), 2)
     total_income = round(sum(d["daily_pay"] for d in days) - total_deductions, 2)
@@ -5247,16 +5227,15 @@ def api_payroll_periods():
     if not is_admin():
         return jsonify({"success": False, "message": "Unauthorized"}), 401
 
-    from datetime import date as _date
     import calendar as _cal
 
     def _bounds(year, month, first_half):
         if first_half:
-            return _date(year, month, 1), _date(year, month, 15)
+            return date(year, month, 1), date(year, month, 15)
         last = _cal.monthrange(year, month)[1]
-        return _date(year, month, 16), _date(year, month, last)
+        return date(year, month, 16), date(year, month, last)
 
-    today = _date.today()
+    today = date.today()
     is_first_half = today.day <= 15
 
     periods = []
@@ -6179,8 +6158,6 @@ def api_pos_transactions():
 
         if date_str:
             try:
-                from datetime import date as _date
-
                 datetime.strptime(date_str, "%Y-%m-%d")
                 where.append("DATE(t.created_at) = %s")
                 params.append(date_str)
@@ -7207,8 +7184,7 @@ def api_cup_sizes_create():
     data = request.get_json(silent=True) or {}
     raw_unit = (data.get("unit") or "").strip().lower()
     # Normalise — accept "20", "20oz", "20 oz" etc.
-    import re as _re
-    m = _re.match(r'^(\d+)\s*oz?$', raw_unit)
+    m = re.match(r'^(\d+)\s*oz?$', raw_unit)
     if not m:
         return jsonify({"success": False, "message": "Unit must be a number followed by 'oz' (e.g. 20oz)"}), 400
     unit = f"{m.group(1)}oz"
@@ -8746,28 +8722,26 @@ def api_sales_weekly_product_summary():
     try:
         if week_str:
             # Parse "YYYY-Www" → Monday of that ISO week
-            import datetime as _dt
-            week_dt = _dt.datetime.strptime(week_str + "-1", "%G-W%V-%u")
+            week_dt = datetime.strptime(week_str + "-1", "%G-W%V-%u")
         else:
             today = datetime.now().date()
             iso = today.isocalendar()
-            import datetime as _dt
-            week_dt = _dt.datetime.strptime(f"{iso[0]}-W{iso[1]:02d}-1", "%G-W%V-%u")
-    except (ValueError, ImportError):
+            week_dt = datetime.strptime(f"{iso[0]}-W{iso[1]:02d}-1", "%G-W%V-%u")
+    except ValueError:
         return jsonify({"success": False, "message": "Invalid week format — use YYYY-Www"}), 400
 
     week_start = week_dt.strftime("%Y-%m-%d")
-    week_end_dt = week_dt + __import__('datetime').timedelta(days=7)
+    week_end_dt = week_dt + timedelta(days=7)
     week_end = week_end_dt.strftime("%Y-%m-%d")
 
     # Previous week
-    prev_start_dt = week_dt - __import__('datetime').timedelta(days=7)
+    prev_start_dt = week_dt - timedelta(days=7)
     prev_start = prev_start_dt.strftime("%Y-%m-%d")
     prev_end = week_start
 
     # Friendly label
     iso_obj = week_dt.isocalendar()
-    week_label = f"Week {iso_obj[1]}, {iso_obj[0]}  ({week_dt.strftime('%b %d')}–{(week_end_dt - __import__('datetime').timedelta(days=1)).strftime('%b %d, %Y')})"
+    week_label = f"Week {iso_obj[1]}, {iso_obj[0]}  ({week_dt.strftime('%b %d')}–{(week_end_dt - timedelta(days=1)).strftime('%b %d, %Y')})"
 
     try:
         cur = mysql.connection.cursor(DictCursor)
@@ -9459,7 +9433,6 @@ def _auto_clockout_missed(target_date=None):
     by _midnight_clockout_thread.
     """
     import calendar as _cal
-    from datetime import timedelta
 
     if target_date is None:
         target_date = (datetime.now() - timedelta(days=1)).date()
@@ -9547,7 +9520,6 @@ def _midnight_clockout_thread():
     Runs inside the Flask app context so it can access mysql.connection.
     """
     import time as _time
-    from datetime import timedelta
 
     with app.app_context():
         while True:
@@ -9588,7 +9560,7 @@ def api_attendance_manual_clockout():
 
     Recalculates hours_worked, daily_earnings and pay columns after override.
     """
-    if session.get("role") not in ("admin", "manager"):
+    if session.get("role") not in ["admin", "manager"]:
         return jsonify({"success": False, "message": "Unauthorized"}), 401
 
     data       = request.get_json(silent=True) or {}
@@ -10140,7 +10112,7 @@ def _is_cashier():
 def cashier_inventory():
     """Render the cashier Supply Monitor page."""
     if not _is_cashier():
-        return redirect(url_for("cashier_login"))
+        return redirect(url_for("login"))
     return render_template("cashier/cashier_inventory.html")
 
 
