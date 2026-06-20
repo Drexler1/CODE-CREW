@@ -2173,24 +2173,38 @@
                 font-size: 0.88rem;
             }
 
-            /* Header buttons — full width, wrap naturally */
+            /* Header buttons — 2-col grid so every item gets a predictable
+               width and label text can wrap instead of overlapping siblings */
             .header-btns {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
                 width: 100%;
                 gap: 0.5rem;
             }
 
             .header-btns .btn {
-                flex: 1;
+                flex: initial;
+                width: 100%;
                 justify-content: center;
                 font-size: 0.78rem;
-                padding: 0.5rem 0.6rem;
+                padding: 0.5rem 0.4rem;
                 min-width: 0;
+                white-space: normal;
+                text-align: center;
+                line-height: 1.3;
+            }
+
+            /* Connection indicator joins the grid as a full-width row so it
+               doesn't compete with buttons for a half-width cell */
+            .header-btns #connIndicator {
+                grid-column: 1 / -1;
             }
 
             /* Connection indicator shrinks on mobile */
             .conn-indicator {
                 font-size: 0.7rem;
                 padding: 0.38rem 0.65rem;
+                justify-content: center;
             }
 
             /* Info banner — smaller text */

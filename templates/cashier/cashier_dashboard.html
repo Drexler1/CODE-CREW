@@ -2130,20 +2130,7 @@
             <div class="modal-body" style="padding:1.5rem;">
                 <div class="size-product-name" id="sizeProductName"></div>
                 <div class="size-product-hint">Select a cup size to add to order</div>
-                <div class="size-picker-grid">
-                    <button class="size-btn" data-size="8oz">
-                        <span class="size-oz">8oz</span>
-                        <span class="size-label">Small</span>
-                    </button>
-                    <button class="size-btn" data-size="12oz">
-                        <span class="size-oz">12oz</span>
-                        <span class="size-label">Medium</span>
-                    </button>
-                    <button class="size-btn" data-size="16oz">
-                        <span class="size-oz">16oz</span>
-                        <span class="size-label">Large</span>
-                    </button>
-                </div>
+                <div class="size-picker-grid" id="sizePickerGrid"></div>
             </div>
         </div>
     </div>
@@ -2239,64 +2226,73 @@
         let _pendingSizeProduct = null;
 
         // Detect whether a product needs a cup-size selection at POS.
-        // cup_eligible flag is canonical; unit-based check is a migration fallback.
-        const CUP_SIZES = new Set(['8oz', '12oz', '16oz', 'cup']);
+        // cup_eligible flag is canonical; unit-based check is a migration fallback
+        // (matches any "<N>oz" unit, not just a fixed list of sizes).
         function needsCupSize(product) {
-            return !!product.cup_eligible || CUP_SIZES.has(product.unit || '');
+            return !!product.cup_eligible || /^[0-9]+oz$/.test(product.unit || '');
         }
 
-        // Cache of cup stock levels fetched from /api/inv_items
+        // Cache of cup stock info fetched from /api/inv_items/cup-sizes,
+        // keyed by unit (e.g. "8oz"). Each entry: { name, stock }.
         let _cupStockCache = {};
 
         async function _refreshCupStock() {
             try {
-                const res = await fetch('/api/inv_items');
+                const res = await fetch('/api/inv_items/cup-sizes');
                 const data = await res.json();
-                _cupStockCache = {};
-                (data.items || []).forEach(item => {
-                    if (['8oz', '12oz', '16oz'].includes(item.unit)) {
-                        _cupStockCache[item.unit] = Math.floor(item.stock);
-                    }
+                const cache = {};
+                (data.cups || []).forEach(item => {
+                    cache[item.unit] = { name: item.name, stock: Math.floor(item.stock) };
                 });
+                _cupStockCache = cache;
             } catch (e) { /* silently ignore — stock labels just won't update */ }
         }
 
-        function _applyCupStockToModal() {
-            const grid = document.querySelector('.size-picker-grid');
-            const hint = document.querySelector('.size-product-hint');
-            let anyAvailable = false;
+        // Friendly size labels for common cup sizes; anything else just shows the oz value.
+        const SIZE_LABELS = { '8oz': 'Small', '12oz': 'Medium', '16oz': 'Large' };
 
-            document.querySelectorAll('.size-btn').forEach(btn => {
-                const size = btn.dataset.size;
-                // null  → size not in inv_items at all → hide the button
-                // 0     → size exists but out of stock → show disabled
-                // n > 0 → size available               → show enabled
-                if (!(size in _cupStockCache)) {
-                    // This cup size has no record in inventory — don't offer it
-                    btn.style.display = 'none';
-                    btn.disabled = true;
-                    btn.classList.remove('out-of-stock');
-                } else if (_cupStockCache[size] <= 0) {
-                    btn.style.display = '';
-                    btn.disabled = true;
-                    btn.classList.add('out-of-stock');
-                } else {
-                    btn.style.display = '';
-                    btn.disabled = false;
-                    btn.classList.remove('out-of-stock');
-                    anyAvailable = true;
-                }
-            });
+        function _renderSizeModalButtons() {
+            const grid = document.getElementById('sizePickerGrid');
+            // Sort by ounce value ascending so the picker always reads small → large.
+            const units = Object.keys(_cupStockCache).sort(
+                (a, b) => parseInt(a) - parseInt(b)
+            );
+
+            if (units.length === 0) {
+                grid.innerHTML = '';
+                return;
+            }
+
+            grid.innerHTML = units.map(unit => {
+                const info = _cupStockCache[unit];
+                const oof = info.stock <= 0;
+                const label = SIZE_LABELS[unit] || '';
+                return `<button class="size-btn ${oof ? 'out-of-stock' : ''}" data-size="${unit}" ${oof ? 'disabled' : ''}>
+                    <span class="size-oz">${unit}</span>
+                    ${label ? `<span class="size-label">${label}</span>` : ''}
+                    <span class="size-stock">${oof ? 'Out of stock' : info.stock + ' left'}</span>
+                </button>`;
+            }).join('');
+        }
+
+        function _applyCupStockToModal() {
+            const hint = document.querySelector('.size-product-hint');
+            _renderSizeModalButtons();
+            const anyAvailable = Object.values(_cupStockCache).some(info => info.stock > 0);
 
             // Show/hide the "no sizes available" message
+            const grid = document.getElementById('sizePickerGrid');
             let noSizesMsg = document.getElementById('noSizesMsg');
             if (!noSizesMsg) {
                 noSizesMsg = document.createElement('p');
                 noSizesMsg.id = 'noSizesMsg';
                 noSizesMsg.style.cssText = 'text-align:center;color:#999;font-size:0.85rem;margin-top:1rem;';
-                noSizesMsg.textContent = 'No cup sizes are currently available in inventory.';
                 grid.after(noSizesMsg);
             }
+            const hasAnySize = Object.keys(_cupStockCache).length > 0;
+            noSizesMsg.textContent = hasAnySize
+                ? 'No cup sizes are currently available in inventory.'
+                : 'No cup sizes have been set up yet. Add one from the Inventory page.';
             noSizesMsg.style.display = anyAvailable ? 'none' : 'block';
 
             // Update the hint text based on stock state
@@ -2344,15 +2340,14 @@
             if (window.innerWidth <= 768) switchPosTab('cart');
         }
 
-        // Size picker button handler
-        document.querySelectorAll('.size-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (!_pendingSizeProduct || btn.disabled) return;
-                btn.classList.add('active');
-                _pushToCart(_pendingSizeProduct, btn.dataset.size);
-                _pendingSizeProduct = null;
-                closeModal('sizeModal');
-            });
+        // Size picker button handler — delegated, since buttons are re-rendered dynamically
+        document.getElementById('sizePickerGrid').addEventListener('click', (e) => {
+            const btn = e.target.closest('.size-btn');
+            if (!btn || !_pendingSizeProduct || btn.disabled) return;
+            btn.classList.add('active');
+            _pushToCart(_pendingSizeProduct, btn.dataset.size);
+            _pendingSizeProduct = null;
+            closeModal('sizeModal');
         });
         document.getElementById('closeSizeModal').addEventListener('click', () => {
             _pendingSizeProduct = null;

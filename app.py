@@ -221,7 +221,7 @@ def _backfill_bcrypt_hashes():
 
 
 MAX_ATTEMPTS = 5  # lock after this many consecutive failures
-LOCKOUT_MINS = 15  # minutes the account stays locked
+LOCKOUT_SECONDS = 30  # seconds the account stays locked
 WARN_AT = 3  # show "X attempts remaining" when failures reach this
 
 
@@ -565,7 +565,7 @@ def record_failed_attempt(username_hash: str, role: str) -> dict:
         locked_until = None
 
         if new_count >= MAX_ATTEMPTS:
-            locked_until = now + timedelta(minutes=LOCKOUT_MINS)
+            locked_until = now + timedelta(seconds=LOCKOUT_SECONDS)
 
         cur.execute(
             """
@@ -592,7 +592,7 @@ def record_failed_attempt(username_hash: str, role: str) -> dict:
     if locked_until:
         return {
             "locked": True,
-            "seconds_left": LOCKOUT_MINS * 60,
+            "seconds_left": LOCKOUT_SECONDS,
             "fail_count": new_count,
             "attempts_left": 0,
         }
@@ -625,10 +625,11 @@ def _lockout_flash(state: dict):
     if state["locked"]:
         mins = state["seconds_left"] // 60
         secs = state["seconds_left"] % 60
+        duration = f"{mins}m {secs:02d}s" if mins else f"{secs}s"
         return (
             f"LOCKOUT:{state['seconds_left']}:"
             f"Too many failed attempts. Account locked for "
-            f"{mins}m {secs:02d}s. Try again later."
+            f"{duration}. Try again later."
         )
     if state["fail_count"] >= WARN_AT:
         left = state["attempts_left"]
